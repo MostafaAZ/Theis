@@ -1,0 +1,11 @@
+{% extends "ims/base.html" %}{% load kubbar %}
+{% block title %}Payment terms{% endblock %}
+{% block content %}
+<h1 class="h4 mb-3">Payment terms · {{ buyer.company_name }}</h1>
+{% if overdue %}<div class="alert alert-danger">This buyer has an overdue invoice.</div>{% endif %}
+<div class="row g-3"><div class="col-lg-5"><div class="card"><div class="card-body"><form method="post">{% csrf_token %}{% include "ims/_fields.html" with col="col-12" %}
+{% if overdue %}<div class="form-check mt-2"><input type="checkbox" class="form-check-input" name="confirm_overdue" id="co"><label class="form-check-label" for="co">Grant credit despite the overdue invoice</label></div>{% endif %}
+<button class="btn btn-primary mt-3">Save</button> <a href="/credit/" class="btn btn-outline-secondary mt-3">Back</a></form></div></div></div>
+<div class="col-lg-7"><div class="card mb-3"><div class="card-header">Order history · outstanding {{ outstanding|egp }} EGP</div><table class="table table-sm mb-0"><tbody>{% for o in orders %}<tr><td>{{ o.reference }}</td><td>{{ o.created_at|date:"d M Y" }}</td><td>{{ o.total|egp }}</td><td>{{ o.get_status_display }}</td></tr>{% empty %}<tr><td class="text-muted">No orders.</td></tr>{% endfor %}</tbody></table></div>
+<div class="card"><div class="card-header">Invoices</div><table class="table table-sm mb-0"><tbody>{% for i in invoices %}<tr class="{% if i.is_overdue %}table-danger{% endif %}"><td>{{ i.number }}</td><td>{{ i.amount|egp }}</td><td>due {{ i.due_date }}</td><td>{{ i.get_status_display }}</td></tr>{% empty %}<tr><td class="text-muted">No invoices.</td></tr>{% endfor %}</tbody></table></div></div></div>
+{% endblock %}

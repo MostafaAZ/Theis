@@ -1,0 +1,11 @@
+{% extends "ims/base.html" %}{% load kubbar %}
+{% block title %}Expiry scans{% endblock %}
+{% block content %}
+<div class="d-flex mb-3"><h1 class="h4">Daily expiry scan <small class="text-muted fs-6">UC-14</small></h1>
+<form method="post" action="/scans/run/" class="ms-auto">{% csrf_token %}<button class="btn btn-primary">Run scan now</button></form></div>
+<p class="text-muted">Scheduled daily at 06:00 Cairo time with <code>python manage.py run_daily_jobs</code> (cron). A failed scan is retried once and reported to the System Administrator.</p>
+<table class="table table-sm bg-white"><thead><tr><th>Started</th><th>Trigger</th><th>Result</th><th>Batches</th><th>New near-expiry</th><th>Expired</th><th>Listings withdrawn</th><th>Escalations</th><th>Value at risk (EGP)</th></tr></thead>
+<tbody>{% for r in runs %}<tr><td>{{ r.started_at|date:"d M Y H:i" }}</td><td class="small">{{ r.triggered_by }}</td><td>{% if r.succeeded %}<span class="badge text-bg-success">OK</span>{% else %}<span class="badge text-bg-danger" title="{{ r.error }}">Failed</span>{% endif %}</td>
+<td>{{ r.batches_scanned }}</td><td>{{ r.new_near_expiry }}</td><td>{{ r.expired }}</td><td>{{ r.listings_withdrawn }}</td><td>{{ r.escalations }}</td><td>{{ r.value_at_risk|egp }}</td></tr>
+{% empty %}<tr><td colspan="9" class="text-muted">No scans yet.</td></tr>{% endfor %}</tbody></table>
+{% endblock %}

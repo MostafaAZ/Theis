@@ -1,0 +1,11 @@
+{% extends "ims/base.html" %}
+{% block title %}Stock transfer{% endblock %}
+{% block content %}
+<h1 class="h4 mb-3">Transfer stock between locations <small class="text-muted fs-6">UC-07</small></h1>
+<div class="card mb-4"><div class="card-body"><form method="post">{% csrf_token %}
+{% include "ims/_fields.html" with col="col-md-3" %}
+<button class="btn btn-primary mt-3">Confirm Transfer</button></form></div></div>
+<h2 class="h6">Stock by location</h2>
+<div class="table-responsive"><table class="table table-sm bg-white"><thead><tr><th>Product</th><th>Lot</th><th>Location</th><th>Storage</th><th>Qty</th></tr></thead>
+<tbody>{% for s in stock %}<tr><td>{{ s.batch.product.name }}</td><td>{{ s.batch.lot_number }}{% if s.batch.frozen_for_count %} <span class="badge text-bg-info">frozen</span>{% endif %}</td><td>{{ s.location }}</td><td>{{ s.location.get_storage_type_display }}</td><td>{{ s.quantity }}</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

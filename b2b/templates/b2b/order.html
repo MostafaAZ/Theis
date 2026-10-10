@@ -1,0 +1,18 @@
+{% extends "b2b/base.html" %}{% load b2b kubbar %}
+{% block title %}{{ order.reference }}{% endblock %}
+{% block content %}
+<h1 class="h4">{% t "Order" %} {{ order.reference }} <span class="badge {{ order.status|status_class }}">{% t order.get_status_display %}</span></h1>
+{% if order.status == 'placed' %}<div class="alert alert-warning">{% t "Reservation held until" %} {{ order.reservation_expires_at|date:"d M Y H:i" }}. <a href="/orders/{{ order.pk }}/pay/">{% t "Pay" %}</a></div>{% endif %}
+<div class="row g-3"><div class="col-lg-8">
+<div class="card mb-3"><div class="table-responsive"><table class="table mb-0"><thead><tr><th>{% t "Product" %}</th><th>{% t "Lot number" %}</th><th>{% t "Expiry date" %}</th><th>{% t "Quantity" %}</th><th>{% t "Price" %}</th><th>{% t "Total" %}</th></tr></thead>
+<tbody>{% for l in lines %}<tr><td>{{ l.batch.product.name }}</td><td>{{ l.batch.lot_number }}</td><td>{{ l.batch.expiry_date }}</td><td>{{ l.quantity }}</td><td>{{ l.unit_price|egp }}</td><td>{{ l.line_total|egp }}</td></tr>{% endfor %}
+<tr class="fw-bold"><td colspan="5">{% t "Total" %} (EGP)</td><td>{{ order.total|egp }}</td></tr></tbody></table></div></div>
+<p class="small text-muted">{% t "Delivery address" %}: {{ order.delivery_address }}{% if order.delivery_method %} · {{ order.delivery_method }} {{ order.delivery_date|default:"" }}{% endif %}</p>
+{% if invoice %}<a href="/orders/{{ order.pk }}/invoice/" class="btn btn-outline-secondary btn-sm" target="_blank"><i class="bi bi-file-earmark-pdf"></i> {% t "Download invoice" %} {{ invoice.number }}</a> <span class="small">{{ invoice.get_status_display }} · due {{ invoice.due_date }}</span>{% endif %}
+</div><div class="col-lg-4">
+<div class="card mb-3"><div class="card-header">{% t "Status history" %}</div><ul class="list-group list-group-flush">{% for label, ts in history %}<li class="list-group-item small d-flex"><span>{% t label %}</span><span class="ms-auto text-muted">{{ ts|date:"d M Y H:i"|default:"" }}</span></li>{% endfor %}</ul></div>
+{% if order.status == 'placed' or order.status == 'awaiting_payment' %}<form method="post">{% csrf_token %}<button name="cancel" value="1" class="btn btn-outline-danger w-100" onclick="return confirm('Cancel this order?')">{% t "Cancel Order" %}</button></form>{% endif %}
+{% if order.status == 'dispatched' %}<form method="post" class="mb-2">{% csrf_token %}<button name="delivered" value="1" class="btn btn-b2b w-100">{% t "Confirm Delivery" %}</button></form>{% endif %}
+{% if order.status == 'dispatched' or order.status == 'delivered' %}<form method="post" class="card card-body">{% csrf_token %}<label class="form-label small">{% t "Report a delivery problem" %}</label><textarea name="text" class="form-control mb-2" rows="2"></textarea><button name="problem" value="1" class="btn btn-sm btn-outline-warning">{% t "Submit" %}</button></form>{% endif %}
+</div></div>
+{% endblock %}

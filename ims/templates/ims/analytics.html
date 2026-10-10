@@ -1,0 +1,27 @@
+{% extends "ims/base.html" %}{% load static %}
+{% block title %}{{ data.title }}{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap align-items-center mb-3 gap-2"><h1 class="h4 mb-0">Sales and inventory analytics</h1>
+<div class="ms-auto d-flex gap-2"><a href="?{{ query }}&export=pdf" class="btn btn-sm btn-outline-secondary"><i class="bi bi-filetype-pdf"></i> Export PDF</a><a href="?{{ query }}&export=xlsx" class="btn btn-sm btn-outline-secondary"><i class="bi bi-file-earmark-excel"></i> Export Excel</a></div></div>
+<ul class="nav nav-tabs mb-3">{% for key, label in dashboards %}<li class="nav-item"><a class="nav-link {% if data.key == key %}active{% endif %}" href="?d={{ key }}">{{ label }}</a></li>{% endfor %}</ul>
+<form class="row g-2 mb-3 align-items-end" method="get"><input type="hidden" name="d" value="{{ data.key }}">
+<div class="col-6 col-md-2"><label class="form-label small">From</label><input type="date" name="date_from" value="{{ filters.date_from|date:'Y-m-d' }}" class="form-control form-control-sm"></div>
+<div class="col-6 col-md-2"><label class="form-label small">To</label><input type="date" name="date_to" value="{{ filters.date_to|date:'Y-m-d' }}" class="form-control form-control-sm"></div>
+<div class="col-6 col-md-2"><label class="form-label small">Category</label><select name="category" class="form-select form-select-sm"><option value="">All</option>{% for c in categories %}<option value="{{ c.pk }}" {% if filters.category == c.pk|stringformat:'s' %}selected{% endif %}>{{ c }}</option>{% endfor %}</select></div>
+<div class="col-6 col-md-2"><label class="form-label small">Product</label><select name="product" class="form-select form-select-sm"><option value="">All</option>{% for p in products %}<option value="{{ p.pk }}" {% if filters.product == p.pk|stringformat:'s' %}selected{% endif %}>{{ p.name }}</option>{% endfor %}</select></div>
+<div class="col-6 col-md-2"><label class="form-label small">Region</label><select name="region" class="form-select form-select-sm"><option value="">All</option>{% for r in regions %}<option value="{{ r.pk }}" {% if filters.region == r.pk|stringformat:'s' %}selected{% endif %}>{{ r }}</option>{% endfor %}</select></div>
+<div class="col-6 col-md-1"><label class="form-label small">Warehouse</label><select name="warehouse" class="form-select form-select-sm"><option value="">All</option>{% for w in warehouses %}<option value="{{ w.pk }}" {% if filters.warehouse == w.pk|stringformat:'s' %}selected{% endif %}>{{ w }}</option>{% endfor %}</select></div>
+<div class="col-12 col-md-1"><button class="btn btn-sm btn-primary w-100">Apply</button></div></form>
+<div class="row g-3 mb-3">{% for label, value in data.kpis %}<div class="col-6 col-md-4 col-xl-3"><div class="card kpi h-100"><div class="card-body"><div class="kpi-label">{{ label }}</div><div class="kpi-value">{{ value }}</div></div></div></div>{% endfor %}</div>
+{% for c in data.charts %}<div class="card mb-3"><div class="card-header">{{ c.title }}</div><div class="card-body"><canvas id="chart-{{ c.id }}" height="80"></canvas></div></div>{% endfor %}
+{% for t in data.tables %}<div class="card mb-3"><div class="card-header d-flex">{{ t.title }}{% if t.link %}<a class="ms-auto small" href="{{ t.link }}">Drill into records</a>{% endif %}</div>
+<div class="table-responsive"><table class="table table-sm mb-0"><thead><tr>{% for h in t.headers %}<th>{{ h }}</th>{% endfor %}</tr></thead>
+<tbody>{% for row in t.rows %}<tr>{% for v in row %}<td>{{ v }}</td>{% endfor %}</tr>{% empty %}<tr><td colspan="{{ t.headers|length }}" class="text-muted">No data for these filters.</td></tr>{% endfor %}</tbody></table></div></div>{% endfor %}
+{% endblock %}
+{% block scripts %}
+<script src="{% static 'vendor/chartjs/chart.umd.js' %}"></script>
+<script>
+const charts = {{ charts_json|safe }};
+charts.forEach(c => new Chart(document.getElementById("chart-" + c.id), {type: c.type, data: {labels: c.labels, datasets: [{label: c.title, data: c.data, backgroundColor: "#4a7bb7", borderColor: "#12395b"}]}, options: {plugins: {legend: {display: false}}, scales: {y: {beginAtZero: true}}}}));
+</script>
+{% endblock %}

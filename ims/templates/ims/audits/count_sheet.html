@@ -1,0 +1,21 @@
+{% extends "ims/base.html" %}
+{% block title %}Count sheet {{ count.number }}{% endblock %}
+{% block content %}
+<h1 class="h4">Blind count sheet · {{ count.number }}</h1>
+<p class="text-muted">{{ count.warehouse }} · {{ count.get_count_type_display }}. The system quantity is hidden: count what is physically there.</p>
+{% if count.status == 'scheduled' %}<div class="alert alert-info">This count starts on {{ count.scheduled_date }}.</div>
+{% elif count.status != 'in_progress' %}<div class="alert alert-success">This count has been submitted. Thank you.</div>
+{% else %}
+<form method="post">{% csrf_token %}
+<div class="table-responsive"><table class="table bg-white blind">
+<thead><tr><th>Location</th><th>Product</th><th>Lot</th><th>Expiry on record</th><th style="width:140px">Counted qty</th><th>Not found</th><th>Expiry observed (if different)</th></tr></thead>
+<tbody>{% for l in lines %}<tr><td>{{ l.location.code }}</td><td>{{ l.batch.product.name }}{% if l.recount_round %} <span class="badge text-bg-info">recount</span>{% endif %}</td><td>{{ l.batch.lot_number }}</td><td>{{ l.batch.expiry_date }}</td>
+<td><input type="number" min="0" name="count_{{ l.pk }}" class="form-control form-control-sm"></td>
+<td><input type="checkbox" name="nf_{{ l.pk }}" class="form-check-input"></td>
+<td><input type="date" name="expiry_{{ l.pk }}" class="form-control form-control-sm"></td></tr>{% endfor %}</tbody></table></div>
+<div class="card mb-3"><div class="card-header">Stock found that is not on the sheet</div><div class="card-body">
+{% for f in extra_forms %}<div class="mb-2">{% include "ims/_fields.html" with form=f col="col-md-2" %}</div>{% endfor %}</div></div>
+<button class="btn btn-primary" onclick="return confirm('Submit the count? You cannot change it afterwards.')">Submit Count</button>
+</form>
+{% endif %}
+{% endblock %}

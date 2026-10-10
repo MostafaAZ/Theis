@@ -1,0 +1,27 @@
+{% extends "ims/base.html" %}{% load kubbar %}
+{% block title %}{{ wo }}{% endblock %}
+{% block content %}
+<h1 class="h4">Write-off {{ wo }} <span class="badge {{ wo.status|status_class }}">{{ wo.get_status_display }}</span></h1>
+<div class="row g-3"><div class="col-lg-6"><div class="card"><div class="card-body"><dl class="row small mb-0">
+<dt class="col-5">Batch</dt><dd class="col-7"><a href="/stock/batch/{{ wo.batch_id }}/">{{ wo.batch.product.name }} · {{ wo.batch.lot_number }}</a> (exp {{ wo.batch.expiry_date }})</dd>
+<dt class="col-5">Quantity</dt><dd class="col-7">{{ wo.quantity }} · value at cost {{ value|egp }} EGP</dd>
+<dt class="col-5">Reason / method</dt><dd class="col-7">{{ wo.get_reason_display }} · {{ wo.get_disposal_method_display }}</dd>
+<dt class="col-5">Requested</dt><dd class="col-7">{{ wo.requested_by }} · {{ wo.requested_at|date:"d M Y" }}</dd>
+<dt class="col-5">General Manager</dt><dd class="col-7">{% if wo.gm_approved_by %}Approved by {{ wo.gm_approved_by }} {{ wo.gm_approved_at|date:"d M" }}{% else %}Pending{% endif %}</dd>
+<dt class="col-5">QA Officer</dt><dd class="col-7">{% if wo.qa_approved_by %}Approved by {{ wo.qa_approved_by }} {{ wo.qa_approved_at|date:"d M" }}{% else %}Pending{% endif %}</dd>
+{% if wo.rejection_comment %}<dt class="col-5">Rejection</dt><dd class="col-7 text-danger">{{ wo.rejection_comment }}</dd>{% endif %}
+{% if wo.posted_at %}<dt class="col-5">Posted</dt><dd class="col-7">{{ wo.posted_at|date:"d M Y" }} · {{ wo.write_off_value|egp }} EGP{% if wo.purchase_plan %} · charged to plan <a href="/plans/{{ wo.purchase_plan_id }}/">{{ wo.purchase_plan }}</a>{% endif %}</dd>{% endif %}
+{% if wo.disposal_date %}<dt class="col-5">Disposal</dt><dd class="col-7">{{ wo.disposal_date }} · {{ wo.disposal_cost|egp }} EGP · cert {{ wo.certificate_ref }}</dd>{% endif %}
+</dl>
+<h3 class="h6 mt-3">Batch release history</h3><ul class="small mb-0">{% for r in history %}<li>{{ r.flagged_at|date:"d M" }} surplus {{ r.surplus_qty }} – {{ r.get_status_display }}</li>{% empty %}<li class="text-muted">Never flagged as surplus.</li>{% endfor %}</ul>
+</div></div></div>
+<div class="col-lg-6">
+{% if can_approve %}<form method="post" class="card card-body mb-3">{% csrf_token %}
+{% if 'qa' in user.roles %}<p class="small">As QA Officer, confirm the disposal method meets regulatory requirements.</p>{% endif %}
+<label class="form-label">Comment (required to reject)</label><textarea name="comment" class="form-control mb-2" rows="2"></textarea>
+<div class="d-flex gap-2"><button name="approve" value="1" class="btn btn-success">Approve</button><button name="reject" value="1" class="btn btn-outline-danger">Reject</button></div></form>{% endif %}
+{% if wo.status == 'rejected' and 'inventory' in user.roles %}<form method="post" class="card card-body mb-3">{% csrf_token %}<p class="small mb-2">The quantity remains blocked from sale until you resubmit or cancel.</p>
+<div class="d-flex gap-2"><button name="resubmit" value="1" class="btn btn-primary">Resubmit</button><button name="cancel" value="1" class="btn btn-outline-secondary">Cancel and release quantity</button></div></form>{% endif %}
+{% if wo.status == 'approved' and 'qa' in user.roles %}<form method="post" class="card card-body">{% csrf_token %}<h3 class="h6">Record disposal</h3>{% include "ims/_fields.html" with form=disposal_form col="col-md-4" %}<button name="disposal" value="1" class="btn btn-primary mt-3">Save disposal</button></form>{% endif %}
+</div></div>
+{% endblock %}

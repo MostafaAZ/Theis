@@ -1,0 +1,19 @@
+{% extends "ims/base.html" %}
+{% block title %}Import preview{% endblock %}
+{% block content %}
+<h1 class="h4 mb-3">Import preview · {{ imp.get_data_type_display }} · {{ imp.file_name }}</h1>
+<div class="row g-3 mb-3">
+<div class="col-6 col-md-3"><div class="card kpi"><div class="card-body"><div class="kpi-label">Rows</div><div class="kpi-value">{{ imp.rows_total }}</div></div></div></div>
+<div class="col-6 col-md-3"><div class="card kpi"><div class="card-body"><div class="kpi-label">Accepted</div><div class="kpi-value text-success">{{ imp.rows_accepted }}</div></div></div></div>
+<div class="col-6 col-md-3"><div class="card kpi"><div class="card-body"><div class="kpi-label">Corrected (region standardised)</div><div class="kpi-value text-primary">{{ imp.rows_corrected }}</div></div></div></div>
+<div class="col-6 col-md-3"><div class="card kpi"><div class="card-body"><div class="kpi-label">Rejected</div><div class="kpi-value text-danger">{{ imp.rows_rejected }}</div></div></div></div></div>
+{% if imp.messages %}<details class="mb-3"><summary>{{ imp.messages|length }} message(s)</summary><ul class="small">{% for m in imp.messages %}<li>{{ m }}</li>{% endfor %}</ul></details>{% endif %}
+{% if preview %}<h2 class="h6">First rows</h2><div class="table-responsive"><table class="table table-sm bg-white small"><thead><tr>{% for k in preview.0.keys %}<th>{{ k }}</th>{% endfor %}</tr></thead><tbody>{% for r in preview %}<tr>{% for v in r.values %}<td>{{ v|default_if_none:"" }}</td>{% endfor %}</tr>{% endfor %}</tbody></table></div>{% endif %}
+{% if imp.status == 'preview' %}
+<form method="post" class="card card-body">{% csrf_token %}
+{% if unknown %}<h2 class="h6 text-danger">Unrecognised regions – map each to a reference region</h2>
+{% for i, raw in unknown %}<div class="row mb-2 align-items-center"><div class="col-md-4"><code>{{ raw }}</code></div><div class="col-md-5"><select name="map_{{ i }}" class="form-select form-select-sm"><option value="">Choose region…</option>{% for r in regions %}<option value="{{ r.pk }}">{{ r.name }}</option>{% endfor %}</select></div></div>{% endfor %}
+<p class="form-text">The spelling is saved as an alias so future imports standardise it automatically.</p>{% endif %}
+<div class="d-flex gap-2"><button class="btn btn-primary">Confirm Import</button><button name="cancel" value="1" class="btn btn-outline-secondary">Cancel</button></div></form>
+{% else %}<div class="alert alert-info">This import is {{ imp.get_status_display|lower }}.</div>{% endif %}
+{% endblock %}

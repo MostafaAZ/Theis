@@ -1,0 +1,14 @@
+{% extends "ims/base.html" %}{% load kubbar %}
+{% block title %}Dispatch queue{% endblock %}
+{% block content %}
+<h1 class="h4 mb-3">Dispatch queue <small class="text-muted fs-6">UC-08</small></h1>
+<div class="table-responsive"><table class="table bg-white">
+<thead><tr><th>Order</th><th>Buyer</th><th>Confirmed</th><th>Lines</th><th>Total (EGP)</th><th></th></tr></thead>
+<tbody>{% for o in orders %}<tr><td>{{ o.reference }}{% if o.on_hold %} <span class="badge text-bg-danger">on hold</span>{% endif %}</td><td>{{ o.buyer }}</td><td>{{ o.confirmed_at|date:"d M H:i" }}</td>
+<td class="small">{% for l in o.lines.all %}{{ l.batch.product.name }} · lot {{ l.batch.lot_number }} × {{ l.quantity }}<br>{% endfor %}</td><td>{{ o.total|egp }}</td>
+<td><a class="btn btn-sm btn-primary" href="/dispatch/{{ o.pk }}/">Pick &amp; dispatch</a></td></tr>
+{% empty %}<tr><td colspan="6" class="text-muted">No confirmed orders waiting for dispatch.</td></tr>{% endfor %}</tbody></table></div>
+{% if issues %}<h2 class="h6 mt-4">Reported delivery problems</h2><ul class="list-group mb-4">{% for o in issues %}<li class="list-group-item"><strong>{{ o.reference }}</strong> ({{ o.buyer }}): <span class="small" style="white-space:pre-line">{{ o.delivery_issue }}</span></li>{% endfor %}</ul>{% endif %}
+<h2 class="h6 mt-4">Recently dispatched</h2>
+<ul class="list-group">{% for o in recent %}<li class="list-group-item small">{{ o.reference }} · {{ o.buyer }} · {{ o.get_status_display }} · {{ o.delivery_method }} {{ o.delivery_date|default:"" }}</li>{% empty %}<li class="list-group-item text-muted small">None yet.</li>{% endfor %}</ul>
+{% endblock %}

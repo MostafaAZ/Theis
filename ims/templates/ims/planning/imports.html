@@ -1,0 +1,17 @@
+{% extends "ims/base.html" %}
+{% block title %}Data import{% endblock %}
+{% block content %}
+<h1 class="h4 mb-1">Import sales and stock data <small class="text-muted fs-6">UC-23</small></h1>
+<p class="text-muted">Prototype data source: Excel/CSV exports from Odoo. Files are validated and previewed; nothing is written until you confirm. Sample files are in <code>sample_data/</code>.</p>
+<div class="card mb-4"><div class="card-body"><form method="post" enctype="multipart/form-data">{% csrf_token %}{% include "ims/_fields.html" %}<button class="btn btn-primary mt-3">Upload and validate</button></form>
+<details class="mt-3 small"><summary>Expected columns</summary><ul class="mb-0">
+<li><strong>Sales History:</strong> Order Number, Area, Customer, Category, Product (SKU or name), Quantity, Price, Total, Month, Year</li>
+<li><strong>Stock on Hand:</strong> Product, Lot, Expiry Date, Manufacture Date, Quantity, Location (bin code)</li>
+<li><strong>Open Purchase Orders:</strong> PO Number, Supplier, Product, Quantity, Expected Date</li>
+<li><strong>Products:</strong> SKU, Name, Category, Unit, Storage, Price, Cost, MOQ, Lead Time Days, Shelf Life Months, Supplier</li></ul></details>
+</div></div>
+<h2 class="h6">Import history</h2>
+<table class="table table-sm bg-white"><thead><tr><th>When</th><th>Type</th><th>File</th><th>By</th><th>Rows</th><th>Accepted</th><th>Corrected</th><th>Rejected</th><th>Status</th></tr></thead>
+<tbody>{% for i in history %}<tr><td>{{ i.uploaded_at|date:"d M Y H:i" }}</td><td>{{ i.get_data_type_display }}</td><td>{{ i.file_name }}</td><td>{{ i.uploaded_by|default:"Odoo sync" }}</td><td>{{ i.rows_total }}</td><td>{{ i.rows_accepted }}</td><td>{{ i.rows_corrected }}</td><td>{{ i.rows_rejected }}</td>
+<td>{% if i.status == 'preview' %}<a href="/imports/{{ i.pk }}/">{{ i.get_status_display }}</a>{% else %}{{ i.get_status_display }}{% endif %}</td></tr>{% endfor %}</tbody></table>
+{% endblock %}

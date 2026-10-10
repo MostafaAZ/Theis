@@ -1,0 +1,7 @@
+{% extends "ims/base.html" %}
+{% block title %}{{ rule.name }}{% endblock %}
+{% block content %}
+<h1 class="h4">{{ rule.name }}</h1>
+<p class="text-muted">{{ rule.description }} Current value: <strong>{{ rule.display_value }}</strong>. Allowed: {{ rule.min_value }} – {{ rule.max_value }} {{ rule.unit }}.</p>
+<div class="card"><div class="card-body"><form method="post">{% csrf_token %}{% include "ims/_fields.html" %}<button class="btn btn-primary mt-3">Save</button> <a href="/admin/rules/" class="btn btn-outline-secondary mt-3">Back</a></form></div></div>
+{% endblock %}

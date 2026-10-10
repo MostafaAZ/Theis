@@ -1,0 +1,27 @@
+{% extends "b2b/base.html" %}{% load b2b kubbar %}
+{% block title %}{% t "Catalogue" %}{% endblock %}
+{% block content %}
+<h1 class="h4 mb-3">{% t "Catalogue" %}</h1>
+{% if not show_prices %}<div class="alert alert-info">{% t "Prices and ordering are available to verified buyers only." %}{% if not user.is_authenticated %} <a href="/register/">{% t "Register" %}</a> · <a href="/login/">{% t "Log In" %}</a>{% endif %}</div>{% endif %}
+<form class="row g-2 mb-3 align-items-end" method="get">
+  <div class="col-12 col-md-2"><input name="q" value="{{ g.q }}" class="form-control" placeholder="{% t 'Search' %}"></div>
+  <div class="col-6 col-md-2"><select name="category" class="form-select"><option value="">{% t "Category" %}: {% t "All" %}</option>{% for c in categories %}<option value="{{ c.pk }}" {% if g.category == c.pk|stringformat:'s' %}selected{% endif %}>{{ c }}</option>{% endfor %}</select></div>
+  <div class="col-6 col-md-2"><input name="min_days" value="{{ g.min_days }}" type="number" min="0" class="form-control" placeholder="{% t 'Minimum shelf life (days)' %}" title="{% t 'Minimum shelf life (days)' %}"></div>
+  <div class="col-6 col-md-2"><input name="expiry_before" value="{{ g.expiry_before }}" type="date" class="form-control" title="{% t 'Expiry date' %}"></div>
+  {% if show_prices %}<div class="col-6 col-md-1"><input name="max_price" value="{{ g.max_price }}" type="number" min="0" class="form-control" placeholder="{% t 'Max price (EGP)' %}" title="{% t 'Max price (EGP)' %}"></div>{% endif %}
+  <div class="col-6 col-md-2"><select name="sort" class="form-select"><option value="expiry">{% t "Soonest expiry" %}</option>{% if show_prices %}<option value="price" {% if g.sort == 'price' %}selected{% endif %}>{% t "Lowest price" %}</option><option value="discount" {% if g.sort == 'discount' %}selected{% endif %}>{% t "Highest discount" %}</option>{% endif %}</select></div>
+  <div class="col-6 col-md-1"><button class="btn btn-b2b w-100">{% t "Filter" %}</button></div>
+</form>
+<div class="row g-3">
+{% for l in listings %}
+<div class="col-12 col-sm-6 col-lg-4"><div class="card listing-card h-100 {% if l.blocked %}opacity-75{% endif %}"><div class="card-body d-flex flex-column">
+  <div class="small text-muted">{{ l.batch.product.category }}{% if l.batch.is_cold_chain %} · <i class="bi bi-snow"></i> {% t "Cold chain" %}{% endif %}</div>
+  <h2 class="h6 mt-1"><a href="/catalogue/{{ l.pk }}/" class="stretched-link text-decoration-none text-reset">{% if LANG == 'ar' and l.batch.product.name_ar %}{{ l.batch.product.name_ar }}{% else %}{{ l.batch.product.name }}{% endif %}</a></h2>
+  <div class="small">{% t "Lot number" %}: {{ l.batch.lot_number }} · {% t "Expiry date" %}: {{ l.batch.expiry_date }}</div>
+  <div class="small"><span class="badge {{ l.batch.days_to_expiry|expiry_class }}">{{ l.batch.days_to_expiry }} {% t "days" %}</span> · {% t "Available" %}: {{ l.available_qty }} {{ l.batch.product.unit }}</div>
+  <div class="mt-auto pt-2">{% if show_prices %}<span class="price">{{ l.clearance_price|egp }} EGP</span> <span class="was small">{{ l.original_price|egp }}</span> <span class="badge text-bg-success">−{{ l.discount_pct }}% {% t "off" %}</span>
+  {% if l.blocked %}<div class="small text-danger">{% t "Not Available to Your Account" %}</div>{% endif %}{% endif %}</div>
+</div></div></div>
+{% empty %}<div class="col-12"><div class="alert alert-light border">{% t "No listings match your filters." %}{% if buyer and buyer.can_order and not buyer.listing_alerts %} <a href="/account/">{% t "Email me when new listings appear in my categories" %}</a>{% endif %}</div></div>{% endfor %}
+</div>
+{% endblock %}

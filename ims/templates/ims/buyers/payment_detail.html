@@ -1,0 +1,17 @@
+{% extends "ims/base.html" %}{% load kubbar %}
+{% block title %}{{ order.reference }}{% endblock %}
+{% block content %}
+<h1 class="h4">Order {{ order.reference }} <span class="badge {{ order.status|status_class }}">{{ order.awaiting_label }}</span></h1>
+<div class="row g-3"><div class="col-lg-7">
+<div class="card mb-3"><table class="table mb-0"><thead><tr><th>Product</th><th>Lot</th><th>Qty</th><th>Unit price</th><th>Total</th></tr></thead><tbody>
+{% for l in lines %}<tr><td>{{ l.batch.product.name }}</td><td>{{ l.batch.lot_number }}</td><td>{{ l.quantity }}</td><td>{{ l.unit_price|egp }}</td><td>{{ l.line_total|egp }}</td></tr>{% endfor %}
+<tr class="fw-semibold"><td colspan="4">Total (EGP)</td><td>{{ order.total|egp }}</td></tr></tbody></table></div>
+{% if order.payment_method == 'bank_transfer' %}<div class="card"><div class="card-header">Transfer receipts</div><ul class="list-group list-group-flush">
+{% for p in proofs %}<li class="list-group-item d-flex"><a href="/payments/proof/{{ p.pk }}/" target="_blank">{{ p.original_name }}</a><span class="ms-3">{{ p.amount|egp }} EGP</span><span class="ms-auto badge {{ p.status|status_class }}">{{ p.get_status_display }}</span></li>{% empty %}<li class="list-group-item text-muted">None.</li>{% endfor %}</ul></div>{% endif %}
+</div><div class="col-lg-5">
+<div class="card mb-3"><div class="card-body small"><strong>{{ buyer.company_name }}</strong><br>Terms: {{ buyer.get_payment_terms_display }} · limit {{ buyer.credit_limit|egp }} EGP<br>Outstanding: {{ outstanding|egp }} EGP{% if overdue %} · <span class="text-danger fw-semibold">has overdue invoice</span>{% endif %}<br>Reference to match on the bank statement: <code>{{ order.reference }}</code></div></div>
+{% if order.status == 'awaiting_payment' %}<form method="post" class="card card-body">{% csrf_token %}
+<button name="confirm" value="1" class="btn btn-success mb-3">{% if order.payment_method == 'invoice' %}Approve Credit Order{% else %}Confirm Payment{% endif %}</button>
+<label class="form-label">Reason (to reject)</label><input name="reason" class="form-control mb-2"><button name="reject" value="1" class="btn btn-outline-danger">Reject Payment</button></form>{% endif %}
+</div></div>
+{% endblock %}

@@ -1,0 +1,9 @@
+{% extends "b2b/base.html" %}{% load b2b %}
+{% block title %}{% t "Log In" %}{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-md-6 col-lg-4">
+<h1 class="h4 mb-3 text-center">{% t "Log In" %}</h1>
+<div class="card"><div class="card-body"><form method="post">{% csrf_token %}{% include "b2b/_fields.html" with col="col-12" %}<button class="btn btn-b2b w-100 mt-3">{% t "Log In" %}</button></form>
+<div class="d-flex justify-content-between mt-3 small"><a href="/password-reset/">{% t "Forgot password?" %}</a><a href="/register/">{% t "Register" %}</a></div></div></div>
+</div></div>
+{% endblock %}

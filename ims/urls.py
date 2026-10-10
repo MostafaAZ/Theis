@@ -1,0 +1,81 @@
+from django.urls import path
+
+from .views import admin, analytics, audits, auth, buyers, expiry, planning, stock, writeoffs
+
+app_name = "ims"
+
+urlpatterns = [
+    # UC-01 to UC-03
+    path("login/", auth.login_view, name="login"),
+    path("login/verify/", auth.login_verify, name="login_verify"),
+    path("logout/", auth.logout_view, name="logout"),
+    path("", auth.dashboard, name="dashboard"),
+    path("notifications/", auth.notifications, name="notifications"),
+    path("notifications/<int:pk>/", auth.open_notification, name="open_notification"),
+    path("approvals/", audits.approvals, name="approvals"),
+    # Module 1
+    path("inspections/", stock.inspections, name="inspections"),
+    path("stock/", stock.stock_search, name="stock_search"),
+    path("stock/batch/<int:pk>/", stock.batch_detail, name="batch_detail"),
+    path("stock/receipt/", stock.receipts, name="receipts"),
+    path("stock/receipt/<int:pk>/", stock.receipt, name="receipt"),
+    path("stock/transfer/", stock.transfer, name="transfer"),
+    path("dispatch/", stock.dispatch_queue, name="dispatch_queue"),
+    path("dispatch/field/", stock.field_dispatch, name="field_dispatch"),
+    path("dispatch/<int:pk>/", stock.dispatch_order, name="dispatch_order"),
+    # Module 2
+    path("audits/", audits.audits, name="audits"),
+    path("audits/new/", audits.schedule, name="audit_schedule"),
+    path("audits/mine/", audits.my_counts, name="my_counts"),
+    path("audits/<int:pk>/", audits.detail, name="audit_detail"),
+    path("audits/<int:pk>/count/", audits.count_sheet, name="count_sheet"),
+    path("audits/<int:pk>/reconcile/", audits.reconcile, name="reconcile"),
+    path("audits/adjustment/<int:pk>/", audits.adjustment, name="adjustment"),
+    # Module 3
+    path("expiry/", expiry.near_expiry, name="near_expiry"),
+    path("expiry/batch/<int:pk>/", expiry.batch_review, name="batch_review"),
+    path("releases/", expiry.releases, name="releases"),
+    path("releases/<int:pk>/", expiry.release_decide, name="release_decide"),
+    path("listings/", expiry.listings, name="listings"),
+    path("listings/<int:pk>/", expiry.listing_manage, name="listing_manage"),
+    path("registrations/", expiry.registrations, name="registrations"),
+    path("registrations/new/", expiry.registration_edit, name="registration_new"),
+    path("registrations/<int:pk>/", expiry.registration_edit, name="registration_edit"),
+    path("scans/", expiry.scans, name="scans"),
+    path("scans/run/", expiry.run_scan, name="run_scan"),
+    # Module 4
+    path("write-offs/", writeoffs.write_offs, name="write_offs"),
+    path("write-offs/new/", writeoffs.request_write_off, name="write_off_new"),
+    path("write-offs/<int:pk>/", writeoffs.write_off, name="write_off"),
+    # Module 5
+    path("imports/", planning.imports, name="imports"),
+    path("imports/<int:pk>/", planning.import_preview, name="import_preview"),
+    path("forecasts/", planning.forecasts, name="forecasts"),
+    path("forecasts/<int:pk>/", planning.forecast_detail, name="forecast_detail"),
+    path("forecasts/<int:forecast_pk>/plan/", planning.plan_new, name="plan_new"),
+    path("plans/", planning.plans, name="plans"),
+    path("plans/<int:pk>/", planning.plan_detail, name="plan_detail"),
+    # Module 6
+    path("analytics/", analytics.dashboards, name="analytics"),
+    # Platform-facing IMS screens
+    path("buyers/", buyers.buyers, name="buyers"),
+    path("buyers/<int:pk>/", buyers.buyer_detail, name="buyer_detail"),
+    path("buyers/document/<int:pk>/", buyers.buyer_document, name="buyer_document"),
+    path("payments/", buyers.payments, name="payments"),
+    path("payments/<int:pk>/", buyers.payment_detail, name="payment_detail"),
+    path("payments/proof/<int:pk>/", buyers.payment_proof, name="payment_proof"),
+    path("credit/", buyers.credit, name="credit"),
+    path("credit/<int:pk>/", buyers.credit_edit, name="credit_edit"),
+    # Module 7
+    path("admin/users/", admin.users, name="users"),
+    path("admin/users/new/", admin.user_edit, name="user_new"),
+    path("admin/users/<int:pk>/", admin.user_edit, name="user_edit"),
+    path("admin/buyers/<int:pk>/status/", admin.buyer_status, name="buyer_status"),
+    path("admin/rules/", admin.rules, name="rules"),
+    path("admin/rules/<int:pk>/", admin.rule_edit, name="rule_edit"),
+    path("admin/reference/", admin.reference, name="reference"),
+    path("admin/reference/<slug:key>/", admin.reference_list, name="reference_list"),
+    path("admin/reference/<slug:key>/new/", admin.reference_edit, name="reference_new"),
+    path("admin/reference/<slug:key>/<int:pk>/", admin.reference_edit, name="reference_edit"),
+    path("admin/audit/", admin.audit_trail, name="audit_trail"),
+]

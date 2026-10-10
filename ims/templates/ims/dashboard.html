@@ -1,0 +1,25 @@
+{% extends "ims/base.html" %}{% load kubbar %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h1 class="h4 mb-1">Welcome, {{ user.first_name|default:user.email }}</h1>
+<p class="text-muted">{{ user.role_labels|join:" · " }}</p>
+<div class="row g-3 mb-4">
+{% for label, value, link in cards %}
+  <div class="col-6 col-md-4 col-xl-3"><a href="{{ link }}" class="card kpi text-decoration-none h-100"><div class="card-body">
+    <div class="kpi-label">{{ label }}</div><div class="kpi-value">{{ value }}</div></div></a></div>
+{% endfor %}
+</div>
+{% if escalated %}
+<div class="card border-danger mb-4"><div class="card-header bg-danger text-white">Escalated near-expiry batches (no action for the escalation period)</div>
+<ul class="list-group list-group-flush">{% for a in escalated %}<li class="list-group-item"><a href="/expiry/batch/{{ a.batch_id }}/">{{ a.batch.product.name }} – lot {{ a.batch.lot_number }}</a> <span class="badge {{ a.days_to_expiry|expiry_class }}">{{ a.days_to_expiry }} days</span> <span class="text-muted small">raised {{ a.raised_date }}</span></li>{% endfor %}</ul></div>
+{% endif %}
+<div class="card"><div class="card-header d-flex"><span>Open alerts</span><a href="/notifications/" class="ms-auto small">All notifications</a></div>
+<ul class="list-group list-group-flush">
+{% for n in alerts %}
+  <li class="list-group-item d-flex align-items-start gap-2"><i class="bi bi-circle-fill small text-{% if n.level == 'danger' %}danger{% elif n.level == 'warning' %}warning{% else %}primary{% endif %} mt-1"></i>
+    <a href="/notifications/{{ n.pk }}/" class="flex-grow-1">{{ n.message }}</a><span class="text-muted small text-nowrap">{{ n.created_at|timesince }} ago</span></li>
+{% empty %}
+  <li class="list-group-item text-muted">No open alerts. You're all caught up.</li>
+{% endfor %}
+</ul></div>
+{% endblock %}

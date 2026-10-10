@@ -1,0 +1,35 @@
+{% extends "ims/base.html" %}{% load kubbar %}
+{% block title %}Review {{ batch.lot_number }}{% endblock %}
+{% block content %}
+<h1 class="h4">{{ batch.product.name }} · lot {{ batch.lot_number }}</h1>
+<p><span class="badge {{ batch.status|status_class }}">{{ batch.get_status_display }}</span> <span class="badge {{ batch.days_to_expiry|expiry_class }}">{{ batch.days_to_expiry }} days to expiry ({{ batch.expiry_date }})</span> · on hand {{ batch.qty_on_hand }} {{ batch.product.unit }} · free {{ free }} · cost value {{ batch.cost_value|egp }} EGP · <a href="/stock/batch/{{ batch.pk }}/">batch record</a></p>
+<div class="row g-3">
+<div class="col-lg-6">
+  <div class="card mb-3"><div class="card-header">Demand picture (FR-28)</div><div class="card-body">
+    <p class="mb-1">Average monthly sales, last 12 months: <strong>{{ avg }}</strong></p>
+    <p class="mb-3">Projected quantity unsold at expiry: <strong class="{% if unsold %}text-danger{% endif %}">{{ unsold }}</strong></p>
+    <h3 class="h6">Who bought this product in the last 12 months</h3>
+    <table class="table table-sm mb-0"><thead><tr><th>Customer</th><th>Region</th><th>Units</th></tr></thead><tbody>
+    {% for c in buyers %}<tr><td>{{ c.customer_name|default:"–" }}</td><td>{{ c.region__name }}</td><td>{{ c.qty }}</td></tr>{% empty %}<tr><td colspan="3" class="text-muted">No sales history.</td></tr>{% endfor %}</tbody></table>
+  </div></div>
+  <div class="card mb-3"><div class="card-header">Offers to existing customers</div>
+  <table class="table table-sm mb-0"><tbody>{% for o in offers %}<tr><td>{{ o.offered_at|date:"d M" }}</td><td>{{ o.customer }}</td><td>{{ o.qty_offered }}</td><td><span class="badge {{ o.outcome|status_class }}">{{ o.get_outcome_display }}</span></td><td class="small text-muted">{{ o.offered_by }}</td></tr>{% empty %}<tr><td class="text-muted">No offers recorded.</td></tr>{% endfor %}</tbody></table></div>
+  <div class="card"><div class="card-header">Surplus flags and release decisions</div>
+  <table class="table table-sm mb-0"><tbody>{% for r in releases %}<tr><td>{{ r.flagged_at|date:"d M" }}</td><td>{{ r.surplus_qty }}</td><td>{{ r.get_flag_reason_display }}</td><td><span class="badge {{ r.status|status_class }}">{{ r.get_status_display }}</span></td><td class="small">{% if r.clearance_price %}{{ r.release_qty }} @ {{ r.clearance_price|egp }}{% endif %} {{ r.decision_comment }}</td></tr>{% empty %}<tr><td class="text-muted">None.</td></tr>{% endfor %}</tbody></table></div>
+</div>
+<div class="col-lg-6">
+{% if is_sales and batch.status in 'near_expiry surplus released' %}
+  <div class="card mb-3"><div class="card-header">1 · Offer to an existing customer</div><div class="card-body">
+  <form method="post">{% csrf_token %}{% include "ims/_fields.html" with form=offer_form col="col-md-4" %}<button name="offer" value="1" class="btn btn-primary mt-3">Record offer</button></form></div></div>
+  <div class="card mb-3 border-warning"><div class="card-header">2 · Flag as surplus (existing customers cannot absorb it)</div><div class="card-body">
+  <form method="post">{% csrf_token %}{% include "ims/_fields.html" with form=surplus_form col="col-md-4" %}<button name="surplus" value="1" class="btn btn-warning mt-3">Flag as Surplus and route to COO</button></form></div></div>
+  <form method="post">{% csrf_token %}<button name="watch" value="1" class="btn btn-outline-secondary">Keep Under Watch (projected unsold is zero)</button></form>
+{% elif batch.status == 'expired' %}
+  <div class="alert alert-dark">This batch has expired and is blocked from sale. <a href="/write-offs/new/?batch={{ batch.pk }}">Request write-off</a>.</div>
+{% else %}
+  <div class="alert alert-light border">Offers and surplus flags are recorded by the responsible Sales Representative.</div>
+{% endif %}
+<h3 class="h6 mt-4">Alerts</h3>
+<ul class="list-group">{% for a in alerts %}<li class="list-group-item small">{{ a.raised_date }} · {{ a.get_alert_type_display }} · {{ a.days_to_expiry }} days · {{ a.get_status_display }}</li>{% empty %}<li class="list-group-item small text-muted">None.</li>{% endfor %}</ul>
+</div></div>
+{% endblock %}

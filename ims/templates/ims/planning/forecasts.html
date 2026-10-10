@@ -1,0 +1,10 @@
+{% extends "ims/base.html" %}
+{% block title %}Demand forecast{% endblock %}
+{% block content %}
+<h1 class="h4 mb-1">Demand forecast <small class="text-muted fs-6">UC-24</small></h1>
+<p class="text-muted">Monthly forecast by product and region. Seasonal exponential smoothing where 24 months of history exist; a 6-month moving average otherwise; manual estimate below 6 months. Latest sales month: {{ latest_period|date:"M Y"|default:"no data" }}.</p>
+{% if 'procurement' in user.roles %}<div class="card mb-4"><div class="card-body"><form method="post">{% csrf_token %}{% include "ims/_fields.html" with col="col-md-4" %}<button class="btn btn-primary mt-3">Generate</button></form></div></div>{% endif %}
+<table class="table bg-white"><thead><tr><th>Forecast</th><th>Horizon</th><th>From</th><th>Category</th><th>By</th><th>Products × regions</th><th></th></tr></thead>
+<tbody>{% for f in items %}<tr><td>{{ f }}</td><td>{{ f.horizon_months }} months</td><td>{{ f.start_period|date:"M Y" }}</td><td>{{ f.category|default:"All" }}</td><td>{{ f.created_by }}</td><td>{{ f.products.count }}</td><td><a class="btn btn-sm btn-outline-primary" href="/forecasts/{{ f.pk }}/">Open</a></td></tr>
+{% empty %}<tr><td colspan="7" class="text-muted">No forecasts yet.</td></tr>{% endfor %}</tbody></table>
+{% endblock %}

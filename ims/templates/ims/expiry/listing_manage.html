@@ -1,0 +1,12 @@
+{% extends "ims/base.html" %}{% load kubbar %}
+{% block title %}Manage listing{% endblock %}
+{% block content %}
+<h1 class="h4">Listing #{{ listing.pk }} · {{ listing.batch.product.name }} · lot {{ listing.batch.lot_number }}</h1>
+<p><span class="badge {{ listing.status|status_class }}">{{ listing.get_status_display }}</span> listed {{ listing.listed_qty }} · remaining {{ listing.available_qty }} · price {{ listing.clearance_price|egp }} EGP (band {{ band.0|egp }}–{{ band.1|egp }}) · {{ listing.batch.days_to_expiry }} days to expiry</p>
+{% if listing.status == 'active' and 'coo' in user.roles %}
+<div class="card mb-3"><div class="card-body"><form method="post">{% csrf_token %}{% include "ims/_fields.html" with col="col-md-3" %}<button class="btn btn-primary mt-3">Apply</button></form>
+<p class="form-text mb-0">Confirmed orders keep their price and quantity.</p></div></div>{% endif %}
+<h2 class="h6">Orders on this listing</h2>
+<table class="table table-sm bg-white"><tbody>{% for ol in orders %}<tr><td>{{ ol.order.reference }}</td><td>{{ ol.order.buyer }}</td><td>{{ ol.quantity }} @ {{ ol.unit_price|egp }}</td><td><span class="badge {{ ol.order.status|status_class }}">{{ ol.order.get_status_display }}</span></td></tr>{% empty %}<tr><td class="text-muted">No orders.</td></tr>{% endfor %}</tbody></table>
+<a href="/listings/" class="btn btn-outline-secondary">Back</a>
+{% endblock %}

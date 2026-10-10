@@ -1,0 +1,8 @@
+{% extends "ims/base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="d-flex mb-3"><h1 class="h4">{{ title }}</h1><a href="/admin/reference/{{ key }}/new/" class="btn btn-primary ms-auto">Add</a></div>
+<div class="table-responsive"><table class="table table-sm bg-white"><thead><tr>{% for h in headers %}<th>{{ h }}</th>{% endfor %}<th></th></tr></thead>
+<tbody>{% for obj, values in rows %}<tr>{% for v in values %}<td>{% if v is True %}✔{% elif v is False %}–{% else %}{{ v|default_if_none:"" }}{% endif %}</td>{% endfor %}<td><a href="/admin/reference/{{ key }}/{{ obj.pk }}/" class="btn btn-sm btn-outline-primary">Edit</a></td></tr>{% endfor %}</tbody></table></div>
+<a href="/admin/reference/" class="btn btn-outline-secondary">Back</a>
+{% endblock %}

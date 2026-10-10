@@ -1,0 +1,25 @@
+{% extends "ims/base.html" %}{% load kubbar %}
+{% block title %}Release decision{% endblock %}
+{% block content %}
+<h1 class="h4 mb-3">Approve batch release and clearance price <small class="text-muted fs-6">UC-17</small></h1>
+<div class="row g-3"><div class="col-lg-6"><div class="card"><div class="card-body"><dl class="row mb-0 small">
+<dt class="col-5">Product / lot</dt><dd class="col-7">{{ batch.product.name }} · {{ batch.lot_number }}</dd>
+<dt class="col-5">Expiry</dt><dd class="col-7">{{ batch.expiry_date }} <span class="badge {{ batch.days_to_expiry|expiry_class }}">{{ batch.days_to_expiry }} days</span></dd>
+<dt class="col-5">Surplus quantity</dt><dd class="col-7">{{ release.surplus_qty }} {{ batch.product.unit }}</dd>
+<dt class="col-5">Original sale price</dt><dd class="col-7">{{ batch.product.original_price|egp }} EGP</dd>
+<dt class="col-5">Unit cost</dt><dd class="col-7">{{ batch.product.unit_cost|egp }} EGP</dd>
+<dt class="col-5">Allowed band</dt><dd class="col-7"><strong>{{ band.0|egp }} – {{ band.1|egp }} EGP</strong> ({{ min_pct|floatformat:0 }}%–{{ max_pct|floatformat:0 }}%)</dd>
+<dt class="col-5">Sales reason</dt><dd class="col-7">{{ release.get_flag_reason_display }} – {{ release.comment|default:"no comment" }} ({{ release.flagged_by }})</dd>
+<dt class="col-5">Market registration</dt><dd class="col-7">{% if registration.0 %}<span class="text-success">Cleared</span>{% else %}<span class="text-danger">{{ registration.1 }}</span>{% endif %}</dd>
+</dl>
+<h3 class="h6 mt-3">Customer offers already made</h3>
+<ul class="small mb-0">{% for o in offers %}<li>{{ o.customer }}: {{ o.qty_offered }} – {{ o.get_outcome_display }}</li>{% empty %}<li class="text-muted">None recorded.</li>{% endfor %}</ul>
+</div></div></div>
+<div class="col-lg-6">{% if release.status == 'pending' and can_decide %}
+<div class="card"><div class="card-body"><form method="post">{% csrf_token %}
+{% include "ims/_fields.html" with col="col-md-6" %}
+<div class="mt-3 d-flex gap-2"><button class="btn btn-success">Approve Release</button><button name="reject" value="1" class="btn btn-outline-danger" onclick="return confirm('Reject this release? A comment is required.')">Reject</button></div>
+</form></div></div>
+{% elif release.status != 'pending' %}<div class="alert alert-info">Decided: {{ release.get_status_display }} by {{ release.decided_by }}.</div>
+{% else %}<div class="alert alert-light border">Awaiting the COO's decision.</div>{% endif %}</div></div>
+{% endblock %}

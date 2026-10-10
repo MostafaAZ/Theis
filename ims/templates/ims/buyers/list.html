@@ -1,0 +1,11 @@
+{% extends "ims/base.html" %}{% load kubbar %}
+{% block title %}Buyers{% endblock %}
+{% block content %}
+<h1 class="h4 mb-3">Buyer verification <small class="text-muted fs-6">UC-31</small></h1>
+<div class="btn-group mb-3 flex-wrap"><a href="?" class="btn btn-sm btn-outline-secondary {% if not status %}active{% endif %}">All</a>{% for v, l in statuses %}<a href="?status={{ v }}" class="btn btn-sm btn-outline-secondary {% if status == v %}active{% endif %}">{{ l }}</a>{% endfor %}</div>
+<div class="table-responsive"><table class="table bg-white">
+<thead><tr><th>Company</th><th>Type</th><th>Market</th><th>Commercial register</th><th>Registered</th><th>Status</th><th></th></tr></thead>
+<tbody>{% for b in buyers %}<tr><td>{{ b.company_name }}{% if b.matched_customer %} <span class="badge text-bg-warning" title="Matches existing customer {{ b.matched_customer }}">existing customer</span>{% endif %}</td><td>{{ b.buyer_type }}</td><td>{{ b.market }}</td><td>{{ b.commercial_register_no }}</td><td>{{ b.registered_at|date:"d M Y" }}</td>
+<td><span class="badge {{ b.status|status_class }}">{{ b.get_status_display }}</span>{% if b.ordering_suspended %} <span class="badge text-bg-danger">ordering suspended</span>{% endif %}</td><td><a class="btn btn-sm btn-outline-primary" href="/buyers/{{ b.pk }}/">Open</a></td></tr>
+{% empty %}<tr><td colspan="7" class="text-muted">No buyers.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "ims/base.html" %}
+{% block title %}Notifications{% endblock %}
+{% block content %}
+<div class="d-flex mb-3"><h1 class="h4">Notifications</h1>
+<form method="post" class="ms-auto">{% csrf_token %}<button class="btn btn-sm btn-outline-secondary">Mark all read</button></form></div>
+<div class="list-group">
+{% for n in items %}
+  <a href="/notifications/{{ n.pk }}/" class="list-group-item list-group-item-action {% if not n.is_read %}fw-semibold{% endif %}">
+    {{ n.message }}<div class="small text-muted">{{ n.created_at }}</div></a>
+{% empty %}<div class="list-group-item text-muted">No notifications.</div>{% endfor %}
+</div>
+{% endblock %}

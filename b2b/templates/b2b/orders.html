@@ -1,0 +1,9 @@
+{% extends "b2b/base.html" %}{% load b2b kubbar %}
+{% block title %}{% t "My Orders" %}{% endblock %}
+{% block content %}
+<h1 class="h4 mb-3">{% t "My Orders" %}</h1>
+<div class="table-responsive"><table class="table bg-white"><thead><tr><th>{% t "Order" %}</th><th>{% t "Date" %}</th><th>{% t "Total" %}</th><th>{% t "Status" %}</th><th></th></tr></thead>
+<tbody>{% for o in items %}<tr><td>{{ o.reference }}</td><td>{{ o.created_at|date:"d M Y" }}</td><td>{{ o.total|egp }} EGP</td><td><span class="badge {{ o.status|status_class }}">{% t o.get_status_display %}</span></td>
+<td>{% if o.status == 'placed' %}<a href="/orders/{{ o.pk }}/pay/" class="btn btn-sm btn-b2b">{% t "Pay" %}</a> {% endif %}<a href="/orders/{{ o.pk }}/" class="btn btn-sm btn-outline-secondary">{% t "View" %}</a></td></tr>
+{% empty %}<tr><td colspan="5" class="text-muted">—</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

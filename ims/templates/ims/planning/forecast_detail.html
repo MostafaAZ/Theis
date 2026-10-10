@@ -1,0 +1,25 @@
+{% extends "ims/base.html" %}{% load static %}
+{% block title %}{{ fc }}{% endblock %}
+{% block content %}
+<div class="d-flex mb-3 flex-wrap gap-2"><h1 class="h4">Forecast {{ fc }} · {{ fc.horizon_months }} months from {{ fc.start_period|date:"M Y" }}</h1>
+{% if 'procurement' in user.roles %}<form method="post" action="/forecasts/{{ fc.pk }}/plan/" class="ms-auto d-flex gap-2">{% csrf_token %}{{ plan_form.period_label }}<button class="btn btn-primary text-nowrap">Build purchase plan</button></form>{% endif %}</div>
+{% if focus %}
+<div class="card mb-3"><div class="card-header">{{ focus.product.name }} · {{ focus.region.name }} · {{ focus.get_method_display }} · MAPE {% if focus.mape is not None %}{{ focus.mape }}%{% else %}n/a{% endif %}{% if focus.low_confidence %} <span class="badge text-bg-warning">low confidence</span>{% endif %}</div>
+<div class="card-body"><canvas id="fc" height="90"></canvas>
+{% if focus.insufficient_history and 'procurement' in user.roles %}<form method="post" class="mt-3 border-top pt-3">{% csrf_token %}<input type="hidden" name="fp" value="{{ focus.pk }}"><p class="small text-danger mb-2">Insufficient history ({{ focus.history_months }} months). Enter a manual monthly estimate with a reason.</p>{% include "ims/_fields.html" with form=manual_form col="col-md-4" %}<button class="btn btn-sm btn-primary mt-2">Save estimate</button></form>{% endif %}
+</div></div>{% endif %}
+<div class="table-responsive"><table class="table table-sm table-hover bg-white">
+<thead><tr><th>Product</th><th>Region</th><th>Method</th><th>History (months)</th><th>MAPE</th><th>Forecast total</th><th></th></tr></thead>
+<tbody>{% for fp in fps %}<tr class="{% if focus and fp.pk == focus.pk %}table-active{% endif %}"><td>{{ fp.product.name }}</td><td>{{ fp.region.name }}</td><td>{{ fp.get_method_display }}{% if fp.insufficient_history %} <span class="badge text-bg-danger">Insufficient History</span>{% endif %}{% if fp.manual_reason %}<br><span class="small text-muted">{{ fp.manual_reason }}</span>{% endif %}</td>
+<td>{{ fp.history_months }}</td><td>{% if fp.mape is not None %}{{ fp.mape }}%{% else %}–{% endif %}{% if fp.low_confidence %} <span class="badge text-bg-warning">low</span>{% endif %}</td>
+<td>{{ fp.total|floatformat:0 }}</td><td><a href="?fp={{ fp.pk }}">Chart</a></td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}
+{% block scripts %}{% if chart %}
+<script src="{% static 'vendor/chartjs/chart.umd.js' %}"></script>
+<script>
+const c = {{ chart_json|safe }};
+new Chart(document.getElementById("fc"), {type: "line", data: {labels: c.labels, datasets: [
+  {label: "Actual sales", data: c.actual, borderColor: "#12395b", backgroundColor: "#12395b", spanGaps: false},
+  {label: "Forecast", data: c.forecast, borderColor: "#e8833a", borderDash: [6,4], backgroundColor: "#e8833a"}]},
+  options: {plugins: {legend: {position: "bottom"}}, scales: {y: {beginAtZero: true}}}});
+</script>{% endif %}{% endblock %}

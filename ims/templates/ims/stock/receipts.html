@@ -1,0 +1,12 @@
+{% extends "ims/base.html" %}{% load kubbar %}
+{% block title %}Stock receipt{% endblock %}
+{% block content %}
+<h1 class="h4 mb-3">Stock receipt <small class="text-muted fs-6">UC-05</small></h1>
+<p class="text-muted">Batches approved by QA and waiting to be booked into a warehouse location. Stock on hand updates only after booking.</p>
+<div class="table-responsive"><table class="table bg-white">
+<thead><tr><th>Product</th><th>Lot</th><th>Expiry</th><th>Storage</th><th>Approved qty</th><th>Inspected by</th><th></th></tr></thead>
+<tbody>{% for b in pending %}<tr><td>{{ b.product.name }}</td><td>{{ b.lot_number }}</td><td>{{ b.expiry_date }} <span class="badge {{ b.days_to_expiry|expiry_class }}">{{ b.days_to_expiry }}d</span></td>
+<td>{{ b.get_storage_condition_display }}</td><td>{{ b.quantity_approved }} {{ b.product.unit }}</td><td>{{ b.inspected_by }}</td>
+<td><a class="btn btn-sm btn-primary" href="/stock/receipt/{{ b.pk }}/">Book in</a></td></tr>
+{% empty %}<tr><td colspan="7" class="text-muted">No batches awaiting receipt.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

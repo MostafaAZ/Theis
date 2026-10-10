@@ -1,0 +1,14 @@
+{% extends "ims/base.html" %}{% load kubbar %}
+{% block title %}Users and roles{% endblock %}
+{% block content %}
+<div class="d-flex mb-3"><h1 class="h4">Users and roles <small class="text-muted fs-6">UC-41</small></h1><a href="/admin/users/new/" class="btn btn-primary ms-auto">New internal user</a></div>
+<div class="table-responsive"><table class="table bg-white mb-4"><thead><tr><th>Name</th><th>Email</th><th>Department</th><th>Roles</th><th>Status</th><th></th></tr></thead>
+<tbody>{% for u in internal %}<tr><td>{{ u }}</td><td>{{ u.email }}</td><td>{{ u.department }}</td><td class="small">{{ u.role_labels|join:", " }}</td>
+<td>{% if not u.is_active %}<span class="badge text-bg-secondary">Deactivated</span>{% elif u.is_locked %}<span class="badge text-bg-danger">Locked</span>{% else %}<span class="badge text-bg-success">Active</span>{% endif %}</td><td><a class="btn btn-sm btn-outline-primary" href="/admin/users/{{ u.pk }}/">Edit</a></td></tr>{% endfor %}</tbody></table></div>
+<h2 class="h5">Buyer accounts</h2>
+<div class="table-responsive"><table class="table bg-white"><thead><tr><th>Company</th><th>Email</th><th>Type</th><th>Status</th><th>Suspend / reactivate</th></tr></thead>
+<tbody>{% for b in buyers %}<tr><td><a href="/buyers/{{ b.pk }}/">{{ b.company_name }}</a></td><td>{{ b.user.email }}</td><td>{{ b.buyer_type }}</td><td><span class="badge {{ b.status|status_class }}">{{ b.get_status_display }}</span></td>
+<td><form method="post" action="/admin/buyers/{{ b.pk }}/status/" class="d-flex gap-1">{% csrf_token %}<input name="reason" class="form-control form-control-sm" placeholder="Reason" required>
+{% if b.status == 'suspended' %}<button name="action" value="reactivate" class="btn btn-sm btn-outline-success">Reactivate</button>{% else %}<button name="action" value="suspend" class="btn btn-sm btn-outline-danger">Suspend</button>{% endif %}</form></td></tr>
+{% empty %}<tr><td colspan="5" class="text-muted">No buyers.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

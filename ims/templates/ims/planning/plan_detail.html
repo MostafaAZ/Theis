@@ -1,0 +1,26 @@
+{% extends "ims/base.html" %}{% load kubbar %}
+{% block title %}{{ plan.number }}{% endblock %}
+{% block content %}
+<h1 class="h4">Purchase plan {{ plan.number }} · {{ plan.period_label }} <span class="badge {{ plan.status|status_class }}">{{ plan.get_status_display }}</span></h1>
+<p class="text-muted small">From forecast {{ plan.forecast }} · prepared by {{ plan.prepared_by }}{% if plan.approved_by %} · approved by {{ plan.approved_by }} on {{ plan.approval_date|date:"d M Y" }}{% endif %}{% if plan.decision_comment %} · “{{ plan.decision_comment }}”{% endif %}</p>
+<div class="row g-3 mb-3">
+<div class="col-md-4"><div class="card kpi"><div class="card-body"><div class="kpi-label">Plan value at cost (EGP)</div><div class="kpi-value">{{ totals.value|egp }}</div></div></div></div>
+<div class="col-md-4"><div class="card kpi"><div class="card-body"><div class="kpi-label">MOQ surplus created (EGP)</div><div class="kpi-value text-warning">{{ totals.moq_surplus_value|egp }}</div></div></div></div>
+<div class="col-md-4"><div class="card kpi"><div class="card-body"><div class="kpi-label">Lines At Risk of Surplus</div><div class="kpi-value text-danger">{{ totals.at_risk }}</div></div></div></div></div>
+<p class="small text-muted">Recommended = forecast demand over lead time + coverage, plus safety stock, minus usable stock (stock projected to reach near-expiry before it sells is excluded), minus open purchase orders; then rounded up to the supplier MOQ.</p>
+<form method="post">{% csrf_token %}
+<div class="table-responsive"><table class="table table-sm bg-white align-middle">
+<thead><tr><th>Product</th><th>Demand</th><th>Safety</th><th>Usable stock</th><th>Excluded</th><th>Open PO</th><th>Recommended</th><th>MOQ</th><th>MOQ surplus</th><th>Left at expiry</th><th>Final qty</th><th>Override reason</th>{% if deciding or plan.status != 'draft' %}<th>GM decision</th>{% endif %}</tr></thead>
+<tbody>{% for l in lines %}<tr class="{% if l.at_risk %}table-warning{% endif %}">
+<td>{{ l.product.name }}{% if l.at_risk %} <span class="badge text-bg-danger">At Risk of Surplus</span>{% endif %}</td><td>{{ l.forecast_qty }}</td><td>{{ l.safety_stock }}</td><td>{{ l.usable_stock }}</td><td>{{ l.excluded_stock }}</td><td>{{ l.open_po_qty }}</td>
+<td>{{ l.recommended_qty }}</td><td>{{ l.moq }}</td><td>{{ l.moq_surplus_qty }}<br><span class="small text-muted">{{ l.moq_surplus_value|egp }} EGP</span></td><td>{{ l.projected_left_at_expiry }}</td>
+<td>{% if editable and plan.status == 'draft' or editable and l.status == 'returned' %}<input type="number" min="0" name="final_{{ l.pk }}" value="{{ l.final_qty }}" class="form-control form-control-sm" style="width:100px">{% else %}{{ l.final_qty }}{% if l.is_overridden %} <span class="badge text-bg-info">override</span>{% endif %}{% endif %}</td>
+<td>{% if editable and plan.status == 'draft' or editable and l.status == 'returned' %}<input name="reason_{{ l.pk }}" value="{{ l.override_reason }}" class="form-control form-control-sm" placeholder="Required if changed">{% else %}<span class="small">{{ l.override_reason }}</span>{% endif %}</td>
+{% if deciding %}<td><select name="decision_{{ l.pk }}" class="form-select form-select-sm"><option value="approved">Approve</option><option value="returned">Return</option><option value="rejected">Reject</option></select><input name="comment_{{ l.pk }}" class="form-control form-control-sm mt-1" placeholder="Comment"></td>
+{% elif plan.status != 'draft' %}<td><span class="badge {{ l.status|status_class }}">{{ l.get_status_display }}</span> <span class="small">{{ l.gm_comment }}</span></td>{% endif %}
+</tr>{% endfor %}</tbody></table></div>
+{% if editable %}<div class="d-flex gap-2"><button name="save" value="1" class="btn btn-outline-primary">Save</button><button name="submit" value="1" class="btn btn-primary">Submit for Approval</button></div>{% endif %}
+{% if deciding %}<div class="card card-body mt-2"><label class="form-label">Overall comment</label><input name="comment" class="form-control mb-2"><div class="d-flex gap-2"><button name="decide" value="lines" class="btn btn-success">Apply line decisions</button><button name="decide" value="reject_all" class="btn btn-outline-danger">Reject whole plan</button></div></div>{% endif %}
+</form>
+{% if write_offs %}<h2 class="h6 mt-4">Write-offs charged back to this plan (FR-40)</h2><ul class="small">{% for w in write_offs %}<li>{{ w }} · {{ w.batch.product.name }} lot {{ w.batch.lot_number }} · {{ w.write_off_value|egp }} EGP</li>{% endfor %}</ul>{% endif %}
+{% endblock %}

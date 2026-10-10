@@ -1,0 +1,16 @@
+{% extends "b2b/base.html" %}{% load b2b kubbar %}
+{% block title %}{% t "Payment" %}{% endblock %}
+{% block content %}
+<h1 class="h4">{% t "Payment" %} · {{ order.reference }}</h1>
+<p>{% t "Total" %}: <strong>{{ order.total|egp }} EGP</strong> · {% t "Reservation held until" %} {{ order.reservation_expires_at|date:"d M Y H:i" }}</p>
+{% if order.payment_rejection_reason %}<div class="alert alert-warning">{{ order.payment_rejection_reason }}</div>{% endif %}
+<div class="row g-3">
+<div class="col-lg-6"><div class="card h-100"><div class="card-header">{% t "Bank Transfer" %}</div><div class="card-body">
+<h2 class="h6">{% t "Bank details" %}</h2><dl class="row small">{% for k, v in bank.items %}<dt class="col-5">{{ k }}</dt><dd class="col-7">{{ v }}</dd>{% endfor %}<dt class="col-5">{% t "Order reference" %}</dt><dd class="col-7"><code>{{ order.reference }}</code></dd><dt class="col-5">{% t "Total" %}</dt><dd class="col-7">{{ order.total|egp }} EGP</dd></dl>
+<form method="post" enctype="multipart/form-data">{% csrf_token %}<input type="hidden" name="method" value="bank">{% include "b2b/_fields.html" with col="col-12" %}<button class="btn btn-b2b mt-3">{% t "Submit" %}</button></form>
+</div></div></div>
+<div class="col-lg-6"><div class="card h-100"><div class="card-header">{% t "Pay on Invoice" %}</div><div class="card-body">
+{% if can_invoice %}<p class="small">{% t "Payment terms" %}: {{ buyer.get_payment_terms_display }}.</p><form method="post">{% csrf_token %}<button name="method" value="invoice" class="btn btn-outline-success">{% t "Pay on Invoice" %}</button></form>
+{% else %}<p class="text-muted small mb-0">{% if invoice_reason %}{{ invoice_reason }} {% endif %}{% t "Bank Transfer" %} only.</p>{% endif %}
+</div></div></div></div>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "ims/base.html" %}{% load kubbar %}
+{% block title %}Dispatch {{ order.reference }}{% endblock %}
+{% block content %}
+<h1 class="h4">Dispatch order {{ order.reference }}</h1>
+<p class="text-muted">{{ order.buyer }} · deliver to {{ order.delivery_address }} · <span class="badge {{ order.status|status_class }}">{{ order.get_status_display }}</span>{% if order.on_hold %} <span class="badge text-bg-danger">On hold: {{ order.hold_reason }}</span>{% endif %}</p>
+<form method="post">{% csrf_token %}
+<div class="card mb-3"><div class="card-header">Pick list (allocation from the listed batch, FEFO)</div>
+<div class="table-responsive"><table class="table mb-0"><thead><tr><th>Product</th><th>Allocated lot</th><th>Pick from</th><th>Qty</th><th>Lot picked</th></tr></thead>
+<tbody>{% for l in lines %}<tr><td>{{ l.batch.product.name }}{% if l.batch.is_cold_chain %} <span class="badge text-bg-info">cold chain</span>{% endif %}</td><td><strong>{{ l.batch.lot_number }}</strong><br><span class="small text-muted">exp {{ l.batch.expiry_date }}</span></td>
+<td class="small">{% for s in l.pick_locations %}{{ s.location }} ({{ s.quantity }})<br>{% endfor %}</td><td>{{ l.quantity }}</td>
+<td><input name="lot_{{ l.pk }}" class="form-control form-control-sm" placeholder="Scan / type lot" value="{{ l.picked_lot }}" {% if order.status != 'confirmed' %}disabled{% endif %}></td></tr>{% endfor %}</tbody></table></div></div>
+{% if order.status == 'confirmed' %}
+<div class="card mb-3"><div class="card-body">{% include "ims/_fields.html" with col="col-md-4" %}{% if not cold %}<style>#id_cold_chain_checked,label[for=id_cold_chain_checked]{display:none}</style>{% endif %}
+<button class="btn btn-primary mt-3">Confirm Dispatch</button> <button type="button" class="btn btn-link mt-3" onclick="window.print()">Print pick list</button></div></div>
+{% endif %}
+</form>
+{% if order.status == 'confirmed' %}
+<form method="post" class="card card-body border-warning">{% csrf_token %}<label class="form-label">Stock found damaged at picking?</label>
+<div class="input-group"><input name="hold_note" class="form-control" placeholder="Describe the shortage"><button name="hold" value="1" class="btn btn-outline-warning">Hold order and alert Inventory Controller</button></div></form>
+{% endif %}
+{% endblock %}

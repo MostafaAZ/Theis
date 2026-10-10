@@ -1,0 +1,59 @@
+{% load static kubbar %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Kubbar IMS{% endblock %} · Kubbar IMS</title>
+  <link rel="stylesheet" href="{% static 'vendor/bootstrap/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'vendor/bootstrap-icons/bootstrap-icons.min.css' %}">
+  <link rel="stylesheet" href="{% static 'kubbar/app.css' %}">
+</head>
+<body class="ims">
+{% if user.is_authenticated %}
+<nav class="navbar navbar-dark bg-ims px-3 sticky-top">
+  <button class="btn btn-sm btn-outline-light d-lg-none me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar"><i class="bi bi-list"></i></button>
+  <a class="navbar-brand fw-semibold" href="/"><i class="bi bi-box-seam"></i> Kubbar IMS</a>
+  <div class="ms-auto d-flex align-items-center gap-3 text-white small">
+    <a href="/notifications/" class="text-white position-relative" title="Notifications"><i class="bi bi-bell fs-5"></i>{% if unread_notifications %}<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">{{ unread_notifications }}</span>{% endif %}</a>
+    <span class="d-none d-md-inline">{{ user }} · <span class="opacity-75">{{ user.role_labels|join:", " }}</span></span>
+    <form method="post" action="/logout/" id="logout-form">{% csrf_token %}<button class="btn btn-sm btn-outline-light">Log out</button></form>
+  </div>
+</nav>
+<div class="container-fluid">
+  <div class="row">
+    <aside class="col-lg-2 offcanvas-lg offcanvas-start sidebar p-0" id="sidebar" tabindex="-1">
+      <div class="offcanvas-body d-block p-3">
+      {% for title, items in nav_sections %}
+        <div class="nav-section">{{ title }}</div>
+        <ul class="nav flex-column mb-2">
+        {% for label, url in items %}
+          <li class="nav-item"><a class="nav-link {% if request.path == url %}active{% endif %}" href="{{ url }}">{{ label }}</a></li>
+        {% endfor %}
+        </ul>
+      {% endfor %}
+      </div>
+    </aside>
+    <main class="col-lg-10 py-4 px-4">
+      {% include "ims/_messages.html" %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% else %}
+<main class="container py-5">{% include "ims/_messages.html" %}{% block anon %}{% endblock %}</main>
+{% endif %}
+<script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"></script>
+<script>
+// UC-02 A1: confirm before logging out with unsaved changes.
+let dirty = false;
+document.querySelectorAll("main form[method=post]").forEach(f => f.addEventListener("input", () => dirty = true));
+document.querySelectorAll("main form[method=post]").forEach(f => f.addEventListener("submit", () => dirty = false));
+const lf = document.getElementById("logout-form");
+if (lf) lf.addEventListener("submit", e => { if (dirty && !confirm("You have unsaved changes. Log out anyway?")) e.preventDefault(); });
+// NFR-24: inactivity timeout of 15 minutes.
+let idle; const resetIdle = () => { clearTimeout(idle); idle = setTimeout(() => location.href = "/login/?timeout=1", 15*60*1000 + 5000); };
+["click","keydown","mousemove"].forEach(ev => document.addEventListener(ev, resetIdle)); resetIdle();
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

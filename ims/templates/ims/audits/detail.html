@@ -1,0 +1,14 @@
+{% extends "ims/base.html" %}{% load kubbar %}
+{% block title %}{{ count.number }}{% endblock %}
+{% block content %}
+<div class="d-flex mb-2"><h1 class="h4">{{ count.number }} · {{ count.get_count_type_display }} · {{ count.warehouse }}</h1>
+{% if count.status == 'submitted' and 'inventory' in user.roles %}<a href="/audits/{{ count.pk }}/reconcile/" class="btn btn-primary ms-auto">Reconcile</a>{% endif %}</div>
+<p><span class="badge {{ count.status|status_class }}">{{ count.get_status_display }}</span> scheduled {{ count.scheduled_date }} · assigned to {{ count.assigned_to }}{% if count.accuracy_rate is not None %} · accuracy <strong>{{ count.accuracy_rate }}%</strong> · adjustments {{ count.adjustment_value|egp }} EGP{% endif %}</p>
+<div class="table-responsive"><table class="table table-sm bg-white">
+<thead><tr><th>Location</th><th>Product</th><th>Lot</th><th>System</th><th>Counted</th><th>Variance</th><th>EGP</th><th>Observed expiry</th><th>Reason</th><th>Status</th></tr></thead>
+<tbody>{% for l in lines %}<tr><td>{{ l.location.code }}</td><td>{% if l.is_extra %}{{ l.extra_product.name }} <span class="badge text-bg-info">found</span>{% else %}{{ l.batch.product.name }}{% endif %}</td>
+<td>{% if l.is_extra %}{{ l.extra_lot }}{% else %}{{ l.batch.lot_number }}{% endif %}</td><td>{{ l.system_qty }}</td><td>{% if l.not_found %}Not found{% else %}{{ l.counted_qty|default_if_none:"–" }}{% endif %}</td>
+<td>{{ l.variance_qty }}</td><td>{{ l.variance_value|egp }}</td><td>{{ l.observed_expiry|default:"" }}</td><td>{{ l.reason_code|default:"" }}{% if l.decision_comment %}<br><span class="small text-muted">GM: {{ l.decision_comment }}</span>{% endif %}</td>
+<td><span class="badge {{ l.status|status_class }}">{{ l.get_status_display }}</span>{% if l.recount_round %} <span class="small">r{{ l.recount_round }}</span>{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+<a href="/audits/" class="btn btn-outline-secondary">Back</a>
+{% endblock %}

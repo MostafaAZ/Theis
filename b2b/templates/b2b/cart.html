@@ -1,0 +1,18 @@
+{% extends "b2b/base.html" %}{% load b2b kubbar %}
+{% block title %}{% t "Cart" %}{% endblock %}
+{% block content %}
+<h1 class="h4 mb-3">{% t "Cart" %}</h1>
+{% if lines %}
+<form method="post">{% csrf_token %}
+<div class="table-responsive"><table class="table bg-white align-middle"><thead><tr><th>{% t "Product" %}</th><th>{% t "Lot number" %}</th><th>{% t "Expiry date" %}</th><th>{% t "Price" %}</th><th style="width:110px">{% t "Quantity" %}</th><th>{% t "Total" %}</th><th></th></tr></thead>
+<tbody>{% for line in lines %}<tr><td>{{ line.listing.batch.product.name }}{% if line.listing.batch.is_cold_chain %} <i class="bi bi-snow" title="{% t 'Cold chain' %}"></i>{% endif %}</td><td>{{ line.listing.batch.lot_number }}</td><td>{{ line.listing.batch.expiry_date }}</td><td>{{ line.listing.clearance_price|egp }}</td>
+<td><input type="number" min="0" max="{{ line.listing.available_qty }}" name="qty_{{ line.listing.pk }}" value="{{ line.qty }}" class="form-control form-control-sm"></td><td>{{ line.total|egp }}</td>
+<td><button name="remove" value="{{ line.listing.pk }}" class="btn btn-sm btn-link text-danger">{% t "Remove" %}</button></td></tr>{% endfor %}
+<tr class="fw-bold"><td colspan="5">{% t "Total" %} (EGP)</td><td>{{ total|egp }}</td><td><button name="update" value="1" class="btn btn-sm btn-outline-secondary">{% t "Update" %}</button></td></tr></tbody></table></div>
+</form>
+<div class="card"><div class="card-header">{% t "Checkout" %}</div><div class="card-body"><form method="post">{% csrf_token %}
+{% include "b2b/_field.html" with field=form.delivery_address col="col-12" %}
+{% if has_cold %}<div class="mt-3">{% include "b2b/_field.html" with field=form.cold_chain_confirmed col="col-12" %}</div>{% endif %}
+<button name="checkout" value="1" class="btn btn-b2b btn-lg mt-3">{% t "Place order" %}</button></form></div></div>
+{% else %}<div class="alert alert-light border">{% t "Your cart is empty." %} <a href="/catalogue/">{% t "Catalogue" %}</a></div>{% endif %}
+{% endblock %}

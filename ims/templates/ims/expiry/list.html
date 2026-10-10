@@ -1,0 +1,14 @@
+{% extends "ims/base.html" %}{% load kubbar %}
+{% block title %}Near-expiry stock{% endblock %}
+{% block content %}
+<h1 class="h4 mb-1">Near-expiry stock <small class="text-muted fs-6">UC-15</small></h1>
+<p class="text-muted">Route: existing customers first, the clearance channel second, disposal last.</p>
+<div class="table-responsive"><table class="table table-hover bg-white">
+<thead><tr><th>Product</th><th>Lot</th><th>Qty</th><th>Expiry</th><th>Days</th><th>Cost value (EGP)</th><th>Avg monthly sales (12m)</th><th>Projected unsold</th><th>Status</th><th></th></tr></thead>
+<tbody>{% for r in rows %}{% with b=r.batch %}<tr>
+<td>{{ b.product.name }}</td><td>{{ b.lot_number }}</td><td>{{ b.qty_on_hand }}</td><td>{{ b.expiry_date }}</td><td><span class="badge {{ b.days_to_expiry|expiry_class }}">{{ b.days_to_expiry }}</span></td>
+<td>{{ r.value|egp }}</td><td>{{ r.avg }}</td><td>{% if r.unsold %}<span class="text-danger fw-semibold">{{ r.unsold }}</span>{% else %}0{% endif %}</td>
+<td><span class="badge {{ b.status|status_class }}">{{ b.get_status_display }}</span>{% if b.escalated %} <span class="badge text-bg-danger">escalated</span>{% endif %}{% if b.keep_under_watch %} <span class="badge text-bg-light border">watch</span>{% endif %}</td>
+<td><a class="btn btn-sm btn-primary" href="/expiry/batch/{{ b.pk }}/">Review</a></td></tr>{% endwith %}
+{% empty %}<tr><td colspan="10" class="text-muted">No near-expiry stock in your scope.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

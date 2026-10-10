@@ -1,0 +1,37 @@
+{% extends "ims/base.html" %}{% load kubbar %}
+{% block title %}{{ buyer.company_name }}{% endblock %}
+{% block content %}
+<h1 class="h4">{{ buyer.company_name }} <span class="badge {{ buyer.status|status_class }}">{{ buyer.get_status_display }}</span></h1>
+{% if buyer.matched_customer %}<div class="alert alert-warning">This commercial register matches existing customer <strong>{{ buyer.matched_customer }}</strong>{% if buyer.matched_customer.sales_rep %} (Sales Rep: {{ buyer.matched_customer.sales_rep }}){% endif %}. Coordinate with the Sales Representative before deciding.</div>{% endif %}
+<div class="row g-3"><div class="col-lg-5"><div class="card"><div class="card-body"><dl class="row small mb-0">
+<dt class="col-5">Buyer type</dt><dd class="col-7">{{ buyer.buyer_type }}</dd><dt class="col-5">Market</dt><dd class="col-7">{{ buyer.market }}</dd>
+<dt class="col-5">Commercial register</dt><dd class="col-7">{{ buyer.commercial_register_no }}</dd><dt class="col-5">Tax card</dt><dd class="col-7">{{ buyer.tax_card_no }}</dd>
+<dt class="col-5">Owner</dt><dd class="col-7">{{ buyer.owner_full_name }}</dd>
+<dt class="col-5">Owner national ID</dt><dd class="col-7">{% if can_see_docs %}{{ buyer.owner_national_id }}{% else %}{{ buyer.masked_national_id }}{% endif %}</dd>
+<dt class="col-5">Contact</dt><dd class="col-7">{{ buyer.contact_person }} · {{ buyer.phone }} · {{ buyer.user.email }}</dd>
+<dt class="col-5">Address</dt><dd class="col-7">{{ buyer.address }}</dd>
+<dt class="col-5">Licence expiry</dt><dd class="col-7">{{ buyer.licence_expiry|default:"–" }}</dd>
+<dt class="col-5">Consent</dt><dd class="col-7">{{ buyer.consent_at|date:"d M Y H:i" }}</dd>
+<dt class="col-5">Categories</dt><dd class="col-7">{{ buyer.categories.all|join:", "|default:"–" }}</dd>
+<dt class="col-5">Cold chain</dt><dd class="col-7">{{ buyer.cold_chain_eligible|yesno:"Eligible,Not eligible" }}</dd>
+<dt class="col-5">Payment terms</dt><dd class="col-7">{{ buyer.get_payment_terms_display }}{% if buyer.credit_limit %} · limit {{ buyer.credit_limit|egp }}{% endif %}</dd>
+{% if buyer.decision_reason %}<dt class="col-5">Last decision</dt><dd class="col-7">{{ buyer.decision_reason }}</dd>{% endif %}
+</dl></div></div></div>
+<div class="col-lg-7">
+<div class="card mb-3"><div class="card-header">Documents (encrypted at rest; every view is logged)</div>
+<ul class="list-group list-group-flush">{% for d in docs %}<li class="list-group-item">
+<div class="d-flex align-items-center gap-2 flex-wrap"><strong>{{ d.get_doc_type_display }}</strong>
+{% if can_see_docs %}<a href="/buyers/document/{{ d.pk }}/" target="_blank">{{ d.original_name }}</a>{% else %}<span class="text-muted small">hidden – Regulatory Affairs only</span>{% endif %}
+{% if d.expiry_date %}<span class="small">exp {{ d.expiry_date }}</span>{% endif %}<span class="badge {{ d.review_status|status_class }} ms-auto">{{ d.get_review_status_display }}</span></div>
+{% if d.review_comment %}<div class="small text-muted">{{ d.review_comment }}</div>{% endif %}
+{% if is_ra and buyer.status in 'pending resubmission' %}<form method="post" class="d-flex gap-1 mt-2">{% csrf_token %}<input type="hidden" name="doc" value="{{ d.pk }}"><input name="comment_{{ d.pk }}" class="form-control form-control-sm" placeholder="Reason if not approved">
+<button name="review" value="approved" class="btn btn-sm btn-success">Approve</button><button name="review" value="resubmit" class="btn btn-sm btn-outline-info text-nowrap">Request resubmission</button><button name="review" value="rejected" class="btn btn-sm btn-outline-danger">Reject</button></form>{% endif %}
+</li>{% empty %}<li class="list-group-item text-muted">No documents.</li>{% endfor %}</ul></div>
+{% if is_ra and buyer.status in 'pending resubmission verified' %}
+<div class="card mb-3"><div class="card-header">Decision</div><div class="card-body">
+<form method="post">{% csrf_token %}{% include "ims/_fields.html" with col="col-12" %}<button name="verify" value="1" class="btn btn-success mt-3">Verify Account</button></form>
+<hr><form method="post">{% csrf_token %}<label class="form-label">Reason</label><input name="reason" class="form-control mb-2"><div class="d-flex gap-2"><button name="resubmit" value="1" class="btn btn-outline-info">Request Resubmission</button><button name="reject" value="1" class="btn btn-outline-danger">Reject application</button></div></form>
+</div></div>{% endif %}
+<h3 class="h6">Recent orders</h3><ul class="small">{% for o in orders %}<li>{{ o.reference }} · {{ o.total|egp }} EGP · {{ o.get_status_display }}</li>{% empty %}<li class="text-muted">None.</li>{% endfor %}</ul>
+</div></div>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "ims/base.html" %}{% load kubbar %}
+{% block title %}Lot {{ batch.lot_number }}{% endblock %}
+{% block content %}
+<h1 class="h4">{{ batch.product.name }} <span class="text-muted">· lot {{ batch.lot_number }}</span></h1>
+<p><span class="badge {{ batch.status|status_class }}">{{ batch.get_status_display }}</span> <span class="badge {{ batch.days_to_expiry|expiry_class }}">{{ batch.days_to_expiry }} days to expiry</span>{% if batch.frozen_for_count %} <span class="badge text-bg-info">frozen for count</span>{% endif %}</p>
+<div class="row g-3 mb-4">
+  <div class="col-md-6"><div class="card h-100"><div class="card-body"><dl class="row mb-0 small">
+    <dt class="col-5">SKU / category</dt><dd class="col-7">{{ batch.product.sku }} · {{ batch.product.category }}</dd>
+    <dt class="col-5">Manufactured / expiry</dt><dd class="col-7">{{ batch.manufacture_date }} → {{ batch.expiry_date }}</dd>
+    <dt class="col-5">Storage</dt><dd class="col-7">{{ batch.get_storage_condition_display }}</dd>
+    <dt class="col-5">Purchase order</dt><dd class="col-7">{{ batch.purchase_order|default:"–" }}{% if batch.purchase_order.plan %} (plan {{ batch.purchase_order.plan }}){% endif %}</dd>
+    <dt class="col-5">Inspection</dt><dd class="col-7">{{ batch.inspection_date }} by {{ batch.inspected_by|default:"import" }} · rec {{ batch.quantity_received }}, approved {{ batch.quantity_approved }}, rejected {{ batch.quantity_rejected }}</dd>
+    <dt class="col-5">Market registration</dt><dd class="col-7">{% if registration.0 %}<span class="text-success">Cleared</span>{% else %}<span class="text-danger">{{ registration.1 }}</span>{% endif %}</dd>
+  </dl></div></div></div>
+  <div class="col-md-6"><div class="card h-100"><div class="card-body"><dl class="row mb-0 small">
+    <dt class="col-6">On hand</dt><dd class="col-6">{{ batch.qty_on_hand }} {{ batch.product.unit }}</dd>
+    <dt class="col-6">Reserved for orders</dt><dd class="col-6">{{ batch.qty_reserved }}</dd>
+    <dt class="col-6">Blocked for write-off</dt><dd class="col-6">{{ batch.blocked_for_write_off }}</dd>
+    <dt class="col-6">Listed on platform</dt><dd class="col-6">{{ listed }}</dd>
+    <dt class="col-6">Free to allocate</dt><dd class="col-6">{{ free }}</dd>
+    <dt class="col-6">Cost value</dt><dd class="col-6">{{ batch.cost_value|egp }} EGP</dd>
+  </dl>
+  <div class="mt-2 small">{% for s in locations %}<span class="badge text-bg-light border">{{ s.location }}: {{ s.quantity }}</span> {% endfor %}</div>
+  <div class="mt-3 d-flex gap-2 flex-wrap"><a class="btn btn-sm btn-outline-primary" href="/expiry/batch/{{ batch.pk }}/">Expiry review</a><a class="btn btn-sm btn-outline-secondary" href="/stock/transfer/?batch={{ batch.pk }}">Transfer</a></div>
+  </div></div></div>
+</div>
+<h2 class="h6">Movement history</h2>
+<div class="table-responsive"><table class="table table-sm bg-white">
+<thead><tr><th>Time</th><th>Type</th><th>Qty</th><th>From</th><th>To</th><th>Reference</th><th>User</th></tr></thead>
+<tbody>{% for m in movements %}<tr><td>{{ m.timestamp|date:"d M Y H:i" }}</td><td>{{ m.get_movement_type_display }}</td><td>{{ m.quantity }}</td><td>{{ m.from_location|default:"" }}</td><td>{{ m.to_location|default:"" }}</td><td>{{ m.reference }}</td><td>{{ m.user|default:"System" }}</td></tr>
+{% empty %}<tr><td colspan="7" class="text-muted">No movements.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

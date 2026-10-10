@@ -1,0 +1,7 @@
+{% extends "b2b/base.html" %}{% load b2b %}
+{% block content %}
+<div class="text-center py-5"><i class="bi bi-envelope-check display-4 text-b2b"></i>
+<h1 class="h4 mt-3">Check your email</h1>
+<p>We sent a confirmation link to <strong>{{ email }}</strong>. After you confirm, our Regulatory Affairs team will review your documents. We will email you with the decision.</p>
+<a href="/login/" class="btn btn-b2b">{% t "Log In" %}</a></div>
+{% endblock %}

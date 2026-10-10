@@ -1,0 +1,18 @@
+{% extends "ims/base.html" %}{% load kubbar %}
+{% block title %}Approve adjustment{% endblock %}
+{% block content %}
+<h1 class="h4 mb-3">Approve stock adjustment <small class="text-muted fs-6">UC-13</small></h1>
+<div class="card mb-3"><div class="card-body"><dl class="row mb-0">
+<dt class="col-sm-3">Count</dt><dd class="col-sm-9">{{ line.count.number }} · {{ line.count.warehouse }}</dd>
+<dt class="col-sm-3">Batch</dt><dd class="col-sm-9">{{ line.batch.product.name }} · lot {{ line.batch.lot_number }} · {{ line.location }}</dd>
+<dt class="col-sm-3">System / counted</dt><dd class="col-sm-9">{{ line.system_qty }} / {% if line.not_found %}Not found{% else %}{{ line.counted_qty }}{% endif %} (variance {{ line.variance_qty }})</dd>
+<dt class="col-sm-3">Value</dt><dd class="col-sm-9"><strong>{{ line.variance_value|egp }} EGP</strong> at cost</dd>
+<dt class="col-sm-3">Reason code</dt><dd class="col-sm-9">{{ line.reason_code }}</dd>
+<dt class="col-sm-3">Recount history</dt><dd class="col-sm-9">{{ line.recount_round }} recount(s) on this count{% for h in history %}<br><span class="small text-muted">{{ h.count.number }}: variance {{ h.variance_qty }} ({{ h.get_status_display }})</span>{% endfor %}</dd>
+</dl></div></div>
+{% if line.status == 'awaiting_approval' %}
+<form method="post" class="card card-body">{% csrf_token %}
+<label class="form-label">Comment (required to reject)</label><textarea name="comment" class="form-control mb-3" rows="2"></textarea>
+<div class="d-flex gap-2"><button name="decision" value="approve" class="btn btn-success">Approve</button><button name="decision" value="reject" class="btn btn-outline-danger">Reject – recount</button></div></form>
+{% else %}<div class="alert alert-info">This adjustment is {{ line.get_status_display|lower }}.</div>{% endif %}
+{% endblock %}

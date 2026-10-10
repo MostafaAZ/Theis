@@ -1,0 +1,24 @@
+:root { --ims: #12395b; --b2b: #0f6b4f; }
+body { background: #f4f6f9; }
+.bg-ims { background: var(--ims); }
+.text-ims { color: var(--ims); }
+.bg-b2b { background: var(--b2b); }
+.text-b2b { color: var(--b2b); }
+.btn-b2b { background: var(--b2b); color: #fff; }
+.btn-b2b:hover { background: #0b5540; color: #fff; }
+.sidebar { background: #fff; border-right: 1px solid #e3e7ec; min-height: calc(100vh - 56px); }
+@media (min-width: 992px) { .sidebar { position: sticky; top: 56px; height: calc(100vh - 56px); overflow-y: auto; } }
+.nav-section { font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: #8a94a3; margin: .75rem 0 .25rem .5rem; }
+.sidebar .nav-link { color: #2b3644; padding: .3rem .5rem; border-radius: .35rem; font-size: .92rem; }
+.sidebar .nav-link.active, .sidebar .nav-link:hover { background: #e8eff6; color: var(--ims); }
+.kpi { border: 0; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+.kpi-label { font-size: .8rem; color: #6c7684; }
+.kpi-value { font-size: 1.5rem; font-weight: 600; color: #1f2933; }
+.card { border-color: #e3e7ec; }
+.table thead th { font-size: .78rem; text-transform: uppercase; letter-spacing: .03em; color: #6c7684; font-weight: 600; }
+.table-sm td { vertical-align: middle; }
+.checklist { max-height: 220px; overflow-y: auto; }
+.blind { background: #fffbea; }
+.listing-card .price { font-size: 1.35rem; font-weight: 700; color: var(--b2b); }
+.listing-card .was { text-decoration: line-through; color: #8a94a3; }
+[dir=rtl] .ms-auto { margin-right: auto !important; margin-left: 0 !important; }

@@ -1,0 +1,9 @@
+{% extends "ims/base.html" %}
+{% block title %}Business rules{% endblock %}
+{% block content %}
+<h1 class="h4 mb-1">Business rules <small class="text-muted fs-6">UC-42 · Exhibit #4</small></h1>
+<p class="text-muted">Changes need Management approval; the approving manager is recorded with every change and the new value applies from the next transaction or scan.</p>
+<table class="table bg-white"><thead><tr><th>Rule</th><th>Value</th><th>Description</th><th>Last change</th><th></th></tr></thead>
+<tbody>{% for r in rules %}<tr><td>{{ r.name }}</td><td class="fw-semibold text-nowrap">{{ r.display_value }}</td><td class="small text-muted">{{ r.description }}</td><td class="small">{% if r.changed_at %}{{ r.changed_at|date:"d M Y" }} by {{ r.changed_by }}, approved by {{ r.approved_by }}{% else %}Default{% endif %}</td>
+<td><a class="btn btn-sm btn-outline-primary" href="/admin/rules/{{ r.pk }}/">Change</a></td></tr>{% endfor %}</tbody></table>
+{% endblock %}

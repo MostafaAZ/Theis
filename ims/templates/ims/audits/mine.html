@@ -1,0 +1,9 @@
+{% extends "ims/base.html" %}{% load kubbar %}
+{% block title %}My counts{% endblock %}
+{% block content %}
+<h1 class="h4 mb-3">My counts <small class="text-muted fs-6">UC-11</small></h1>
+<div class="list-group mb-4">{% for c in counts %}
+<a href="/audits/{{ c.pk }}/count/" class="list-group-item list-group-item-action d-flex"><span>{{ c.number }} · {{ c.get_count_type_display }} · {{ c.warehouse }} · {{ c.scheduled_date }}</span><span class="ms-auto badge {{ c.status|status_class }}">{{ c.get_status_display }}</span></a>
+{% empty %}<div class="list-group-item text-muted">No counts assigned to you.</div>{% endfor %}</div>
+{% if done %}<h2 class="h6">Completed</h2><ul class="list-group">{% for c in done %}<li class="list-group-item small">{{ c.number }} · {{ c.warehouse }} · closed {{ c.closed_at|date:"d M Y" }}</li>{% endfor %}</ul>{% endif %}
+{% endblock %}

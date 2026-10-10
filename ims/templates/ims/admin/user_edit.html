@@ -1,0 +1,8 @@
+{% extends "ims/base.html" %}
+{% block title %}User{% endblock %}
+{% block content %}
+<h1 class="h4 mb-3">{% if obj %}Edit {{ obj }}{% else %}New internal user{% endif %}</h1>
+{% if obj.is_locked %}<form method="post" class="alert alert-danger d-flex align-items-center">{% csrf_token %}This account is locked after {{ obj.failed_login_attempts }} failed attempts.<button name="unlock" value="1" class="btn btn-sm btn-light ms-auto">Unlock</button></form>{% endif %}
+<div class="card"><div class="card-body"><form method="post">{% csrf_token %}{% include "ims/_fields.html" %}
+<button class="btn btn-primary mt-3">Save</button> <a href="/admin/users/" class="btn btn-outline-secondary mt-3">Back</a></form></div></div>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "ims/base.html" %}{% load kubbar %}
+{% block title %}Release requests{% endblock %}
+{% block content %}
+<h1 class="h4 mb-3">Release requests <small class="text-muted fs-6">UC-17</small></h1>
+<div class="table-responsive"><table class="table bg-white mb-4">
+<thead><tr><th>Product</th><th>Lot</th><th>Days</th><th>Surplus qty</th><th>Reason</th><th>Flagged by</th><th></th></tr></thead>
+<tbody>{% for r in pending %}<tr><td>{{ r.batch.product.name }}</td><td>{{ r.batch.lot_number }}</td><td><span class="badge {{ r.batch.days_to_expiry|expiry_class }}">{{ r.batch.days_to_expiry }}</span></td><td>{{ r.surplus_qty }}</td><td>{{ r.get_flag_reason_display }}{% if r.comment %}<br><span class="small text-muted">{{ r.comment }}</span>{% endif %}</td><td>{{ r.flagged_by }} · {{ r.flagged_at|date:"d M" }}</td>
+<td><a class="btn btn-sm btn-primary" href="/releases/{{ r.pk }}/">Decide</a></td></tr>
+{% empty %}<tr><td colspan="7" class="text-muted">No pending release requests.</td></tr>{% endfor %}</tbody></table></div>
+<h2 class="h6">Recent decisions</h2>
+<table class="table table-sm bg-white"><tbody>{% for r in decided %}<tr><td>{{ r.batch.product.name }} · {{ r.batch.lot_number }}</td><td><span class="badge {{ r.status|status_class }}">{{ r.get_status_display }}</span></td><td>{% if r.clearance_price %}{{ r.release_qty }} @ {{ r.clearance_price|egp }} EGP{% endif %}</td><td>{{ r.decided_by }} · {{ r.decided_at|date:"d M Y" }}</td><td class="small">{{ r.decision_comment }}</td></tr>{% endfor %}</tbody></table>
+{% endblock %}

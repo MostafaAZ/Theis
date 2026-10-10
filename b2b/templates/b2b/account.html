@@ -1,0 +1,25 @@
+{% extends "b2b/base.html" %}{% load b2b kubbar %}
+{% block title %}{% t "My Account" %}{% endblock %}
+{% block content %}
+<h1 class="h4">{{ buyer.company_name }}</h1>
+<p>{% t "Account status" %}: <span class="badge {{ buyer.status|status_class }}">{% t buyer.get_status_display %}</span>{% if buyer.ordering_suspended %} <span class="badge text-bg-danger">Ordering suspended – upload a renewed licence</span>{% endif %}</p>
+{% if buyer.status == 'pending_email' %}<div class="alert alert-warning">Confirm your email address using the link we sent to {{ buyer.user.email }}.</div>
+{% elif buyer.status == 'pending' %}<div class="alert alert-info">{% t "Our Regulatory Affairs team verifies your documents." %} {% t "Prices and ordering are available to verified buyers only." %}</div>
+{% elif buyer.status == 'resubmission' %}<div class="alert alert-warning">{{ buyer.decision_reason }}</div>
+{% elif buyer.status == 'rejected' %}<div class="alert alert-danger">{{ buyer.decision_reason }}</div>{% endif %}
+<div class="row g-3"><div class="col-lg-7">
+<div class="card mb-3"><div class="card-header">{% t "Documents" %}</div><ul class="list-group list-group-flush">
+{% for type, label, d in docs %}<li class="list-group-item d-flex flex-wrap gap-2"><span>{% t label %}</span>{% if d %}<span class="small text-muted">{{ d.original_name }}{% if d.expiry_date %} · exp {{ d.expiry_date }}{% endif %}</span><span class="badge {{ d.review_status|status_class }} ms-auto">{{ d.get_review_status_display }}</span>{% if d.review_comment %}<div class="w-100 small text-danger">{{ d.review_comment }}</div>{% endif %}{% else %}<span class="ms-auto small text-muted">—</span>{% endif %}</li>{% endfor %}</ul></div>
+<div class="card"><div class="card-header">{% t "Upload again" %}</div><div class="card-body"><form method="post" enctype="multipart/form-data">{% csrf_token %}{% include "b2b/_fields.html" with form=resubmit_form col="col-md-4" %}<button name="resubmit" value="1" class="btn btn-b2b mt-3">{% t "Submit" %}</button></form></div></div>
+</div><div class="col-lg-5">
+<div class="card mb-3"><div class="card-body small"><dl class="row mb-0">
+<dt class="col-6">{% t "Buyer Type" %}</dt><dd class="col-6">{{ buyer.buyer_type }}</dd>
+<dt class="col-6">{% t "Market" %}</dt><dd class="col-6">{{ buyer.market }}</dd>
+<dt class="col-6">{% t "Licensed categories" %}</dt><dd class="col-6">{{ buyer.categories.all|join:", "|default:"—" }}</dd>
+<dt class="col-6">{% t "Cold chain" %}</dt><dd class="col-6">{{ buyer.cold_chain_eligible|yesno:"✔,—" }}</dd>
+<dt class="col-6">{% t "Payment terms" %}</dt><dd class="col-6">{{ buyer.get_payment_terms_display }}{% if buyer.credit_limit %} · {{ buyer.credit_limit|egp }} EGP{% endif %}</dd>
+<dt class="col-6">{% t "National ID Number" %}</dt><dd class="col-6">{{ buyer.masked_national_id }}</dd>
+</dl></div></div>
+<div class="card"><div class="card-body"><form method="post">{% csrf_token %}{% include "b2b/_fields.html" with form=prefs col="col-12" %}<button name="prefs" value="1" class="btn btn-sm btn-outline-secondary mt-2">{% t "Save" %}</button></form></div></div>
+</div></div>
+{% endblock %}

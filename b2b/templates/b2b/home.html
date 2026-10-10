@@ -1,0 +1,19 @@
+{% extends "b2b/base.html" %}{% load b2b %}
+{% block content %}
+<div class="p-4 p-md-5 mb-4 bg-white rounded-3 border">
+  <h1 class="display-6 fw-bold text-b2b">{% t "Kubbar B2B Clearance" %}</h1>
+  <p class="lead">{% t "Licensed veterinary products at 30-35% below list price, with full batch traceability." %}</p>
+  <p class="text-muted">{% t "Verified trade buyers only" %}</p>
+  <a href="/register/" class="btn btn-b2b btn-lg">{% t "Register your company" %}</a>
+  <a href="/login/" class="btn btn-outline-secondary btn-lg">{% t "Log In" %}</a>
+</div>
+<h2 class="h5">{% t "How it works" %}</h2>
+<div class="row g-3 mb-4">
+  <div class="col-md-4"><div class="card h-100"><div class="card-body"><i class="bi bi-building-check fs-3 text-b2b"></i><p class="mt-2 mb-0">{% t "Register your company and upload your licence." %}</p></div></div></div>
+  <div class="col-md-4"><div class="card h-100"><div class="card-body"><i class="bi bi-shield-check fs-3 text-b2b"></i><p class="mt-2 mb-0">{% t "Our Regulatory Affairs team verifies your documents." %}</p></div></div></div>
+  <div class="col-md-4"><div class="card h-100"><div class="card-body"><i class="bi bi-truck fs-3 text-b2b"></i><p class="mt-2 mb-0">{% t "Browse released batches, order and pay by bank transfer or on invoice." %}</p></div></div></div>
+</div>
+{% if teaser %}<h2 class="h5">{% t "Catalogue" %}</h2>
+<div class="row g-3">{% for l in teaser %}<div class="col-6 col-md-4"><div class="card h-100"><div class="card-body"><div class="small text-muted">{{ l.batch.product.category }}</div><div class="fw-semibold">{% if LANG == 'ar' and l.batch.product.name_ar %}{{ l.batch.product.name_ar }}{% else %}{{ l.batch.product.name }}{% endif %}</div><div class="small">{% t "Remaining shelf life" %}: {{ l.batch.days_to_expiry }} {% t "days" %}</div></div></div></div>{% endfor %}</div>
+<p class="text-muted small mt-2">{% t "Prices and ordering are available to verified buyers only." %}</p>{% endif %}
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "ims/base.html" %}{% load kubbar %}
+{% block title %}Listings{% endblock %}
+{% block content %}
+<h1 class="h4 mb-3">Clearance listings <small class="text-muted fs-6">UC-40</small></h1>
+<div class="table-responsive"><table class="table bg-white">
+<thead><tr><th>#</th><th>Product</th><th>Lot</th><th>Days listed</th><th>Listed</th><th>Sold</th><th>Remaining</th><th>Days to expiry</th><th>Price (EGP)</th><th>Status</th><th></th></tr></thead>
+<tbody>{% for l in items %}<tr><td>{{ l.pk }}</td><td>{{ l.batch.product.name }}</td><td>{{ l.batch.lot_number }}</td><td>{{ l.published_at|timesince }}</td><td>{{ l.listed_qty }}</td><td>{{ l.sold_qty }}</td><td>{{ l.available_qty }}</td>
+<td><span class="badge {{ l.batch.days_to_expiry|expiry_class }}">{{ l.batch.days_to_expiry }}</span></td><td>{{ l.clearance_price|egp }} <span class="small text-muted">(−{{ l.discount_pct }}%)</span></td>
+<td><span class="badge {{ l.status|status_class }}">{{ l.get_status_display }}</span>{% if l.withdrawn_reason %}<br><span class="small text-muted">{{ l.withdrawn_reason }}</span>{% endif %}</td>
+<td>{% if 'coo' in user.roles or 'management' in user.roles %}<a class="btn btn-sm btn-outline-primary" href="/listings/{{ l.pk }}/">Manage</a>{% endif %}</td></tr>
+{% empty %}<tr><td colspan="11" class="text-muted">No listings yet.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

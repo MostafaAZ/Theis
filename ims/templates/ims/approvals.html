@@ -1,0 +1,18 @@
+{% extends "ims/base.html" %}{% load kubbar %}
+{% block title %}Pending approvals{% endblock %}
+{% block content %}
+<h1 class="h4 mb-3">Pending approvals</h1>
+{% if 'gm' in user.roles %}
+<div class="card mb-4"><div class="card-header">Stock adjustments above threshold (UC-13)</div>
+<table class="table mb-0"><thead><tr><th>Count</th><th>Batch</th><th>Variance</th><th>EGP</th><th>Reason</th><th></th></tr></thead><tbody>
+{% for l in adjustments %}<tr><td>{{ l.count.number }}</td><td>{{ l.batch.product.name }} · {{ l.batch.lot_number }}</td><td>{{ l.variance_qty }}</td><td>{{ l.variance_value|egp }}</td><td>{{ l.reason_code }}</td><td><a class="btn btn-sm btn-primary" href="/audits/adjustment/{{ l.pk }}/">Review</a></td></tr>
+{% empty %}<tr><td colspan="6" class="text-muted">None.</td></tr>{% endfor %}</tbody></table></div>
+<div class="card mb-4"><div class="card-header">Purchase plans (UC-26)</div>
+<table class="table mb-0"><tbody>{% for p in plans %}<tr><td>{{ p.number }} · {{ p.period_label }}</td><td>by {{ p.prepared_by }}</td><td>submitted {{ p.submitted_at|date:"d M Y" }}</td><td><a class="btn btn-sm btn-primary" href="/plans/{{ p.pk }}/">Review</a></td></tr>
+{% empty %}<tr><td class="text-muted">None.</td></tr>{% endfor %}</tbody></table></div>
+{% endif %}
+<div class="card mb-4"><div class="card-header">Write-offs and disposal (UC-22)</div>
+<table class="table mb-0"><thead><tr><th>Request</th><th>Batch</th><th>Qty</th><th>Reason</th><th>GM</th><th>QA</th><th></th></tr></thead><tbody>
+{% for w in write_offs %}<tr><td>{{ w }}</td><td>{{ w.batch.product.name }} · {{ w.batch.lot_number }}</td><td>{{ w.quantity }}</td><td>{{ w.get_reason_display }}</td><td>{% if w.gm_approved_by %}✔{% else %}–{% endif %}</td><td>{% if w.qa_approved_by %}✔{% else %}–{% endif %}</td><td><a class="btn btn-sm btn-primary" href="/write-offs/{{ w.pk }}/">Review</a></td></tr>
+{% empty %}<tr><td colspan="7" class="text-muted">None.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

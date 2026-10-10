@@ -1,0 +1,20 @@
+{% extends "ims/base.html" %}{% load kubbar %}
+{% block title %}Reconcile {{ count.number }}{% endblock %}
+{% block content %}
+<h1 class="h4">Reconcile count variance · {{ count.number }} <small class="text-muted fs-6">UC-12</small></h1>
+<p class="text-muted">Variances within tolerance were posted automatically. Assign a reason code or request a blind recount for each flagged line. Adjustments of {{ threshold|egp }} EGP or more go to the General Manager.</p>
+{% if count.status != 'submitted' %}<div class="alert alert-info">This count is {{ count.get_status_display|lower }}.</div>{% endif %}
+<form method="post">{% csrf_token %}
+<div class="table-responsive"><table class="table table-sm bg-white">
+<thead><tr><th>Location</th><th>Product / lot</th><th>System</th><th>Counted</th><th>Variance</th><th>EGP</th><th>Observed expiry</th><th>Status</th><th>Decision</th></tr></thead>
+<tbody>{% for l in lines %}<tr class="{% if l.status == 'flagged' %}table-warning{% endif %}">
+<td>{{ l.location.code }}</td><td>{% if l.is_extra %}{{ l.extra_product.name }} / {{ l.extra_lot }} <span class="badge text-bg-info">found</span>{% else %}{{ l.batch.product.name }} / {{ l.batch.lot_number }}{% endif %}</td>
+<td>{{ l.system_qty }}</td><td>{% if l.not_found %}Not found{% else %}{{ l.counted_qty|default_if_none:"–" }}{% endif %}</td><td>{{ l.variance_qty }}</td><td>{{ l.variance_value|egp }}</td><td>{{ l.observed_expiry|default:"" }}</td>
+<td><span class="badge {{ l.status|status_class }}">{{ l.get_status_display }}</span></td>
+<td>{% if l.status == 'flagged' and count.status == 'submitted' %}
+<div class="d-flex gap-1"><select name="action_{{ l.pk }}" class="form-select form-select-sm" style="width:auto"><option value="post">Post with reason</option><option value="recount">Request recount</option></select>
+<select name="reason_{{ l.pk }}" class="form-select form-select-sm" style="width:auto"><option value="">Reason code…</option>{% for r in reasons %}<option value="{{ r.pk }}">{{ r.label }}</option>{% endfor %}</select></div>
+{% elif l.reason_code %}{{ l.reason_code }}{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+{% if count.status == 'submitted' %}<button class="btn btn-primary">Post Adjustments</button>{% endif %} <a href="/audits/{{ count.pk }}/" class="btn btn-outline-secondary">Back</a>
+</form>
+{% endblock %}

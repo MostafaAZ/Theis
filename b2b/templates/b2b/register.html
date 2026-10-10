@@ -1,0 +1,28 @@
+{% extends "b2b/base.html" %}{% load b2b %}
+{% block title %}{% t "Register" %}{% endblock %}
+{% block content %}
+<h1 class="h4 mb-3">{% t "Register your company" %}</h1>
+<form method="post" enctype="multipart/form-data" novalidate>{% csrf_token %}
+{% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+<div class="card mb-3"><div class="card-header">{% t "Company details" %}</div><div class="card-body"><div class="row g-3">
+{% include "b2b/_field.html" with field=form.company_name %}{% include "b2b/_field.html" with field=form.commercial_register_no %}
+{% include "b2b/_field.html" with field=form.tax_card_no %}{% include "b2b/_field.html" with field=form.buyer_type %}
+{% include "b2b/_field.html" with field=form.market %}{% include "b2b/_field.html" with field=form.address %}
+{% include "b2b/_field.html" with field=form.contact_person %}{% include "b2b/_field.html" with field=form.phone %}
+</div></div></div>
+<div class="card mb-3"><div class="card-header">{% t "Owner" %}</div><div class="card-body"><div class="row g-3">
+{% include "b2b/_field.html" with field=form.owner_full_name %}{% include "b2b/_field.html" with field=form.owner_national_id %}
+</div></div></div>
+<div class="card mb-3"><div class="card-header">{% t "Documents" %} <span class="small text-muted">· {% t "PDF, JPG or PNG, up to 10 MB each." %}</span></div><div class="card-body"><div class="row g-3">
+{% include "b2b/_field.html" with field=form.doc_owner_id %}{% include "b2b/_field.html" with field=form.doc_commercial_register %}
+{% include "b2b/_field.html" with field=form.doc_tax_card %}{% include "b2b/_field.html" with field=form.doc_licence %}
+{% include "b2b/_field.html" with field=form.licence_expiry %}{% include "b2b/_field.html" with field=form.doc_cold_storage %}
+</div></div></div>
+<div class="card mb-3"><div class="card-header">{% t "Account" %}</div><div class="card-body"><div class="row g-3">
+{% include "b2b/_field.html" with field=form.email %}<div class="col-md-6"></div>
+{% include "b2b/_field.html" with field=form.password %}{% include "b2b/_field.html" with field=form.password2 %}
+{% include "b2b/_field.html" with field=form.accept_terms col="col-12" %}{% include "b2b/_field.html" with field=form.consent col="col-12" %}
+</div></div></div>
+<button class="btn btn-b2b btn-lg">{% t "Submit" %}</button>
+</form>
+{% endblock %}
