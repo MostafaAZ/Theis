@@ -28,7 +28,18 @@ the Odoo API.
 
 ### Run it
 
-Requires Python 3.11+.
+Requires Python 3.11+ ([python.org](https://www.python.org/downloads/); on Windows tick
+"Add python.exe to PATH").
+
+**Quickest way:** download the repository (*Code → Download ZIP*, then unzip) and
+double-click **`start.bat`** on Windows or **`start.command`** on macOS
+(Linux: `./start.command`). The first run sets everything up and loads the demo
+data; then both apps open in your browser. Close the app windows (Windows) or
+press Ctrl+C (macOS/Linux) to stop.
+
+On macOS, if the file won't open the first time, right-click it → *Open* → *Open*.
+
+**Manually:**
 
 ```bash
 python -m venv .venv
