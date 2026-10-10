@@ -88,22 +88,41 @@ on screen and printed in the server console.
 | `buyer@newdistrib.example` | Pending verification (prices hidden) |
 | `buyer@sharkia.example` | Pending, matches an existing Kubbar customer (FR-70) |
 
+### Finding your way around
+
+- **Every user lands on a dashboard with "Your tasks"**: each line says what is
+  waiting (e.g. *2 release requests to decide*) and opens the screen where it is
+  done. Numbers in the left menu show the same counts.
+- The **left menu is grouped by module** (Inventory, Expiry & clearance, B2B sales,
+  Warehouse audit, Disposal, Purchasing, Customers, Reports, Administration) and
+  only shows what your role can do.
+- The **search bar** at the top finds products, lot numbers, orders, buyers,
+  purchase orders and customers.
+- Every page shows a one-line purpose under the breadcrumb; the **?** button opens
+  "How it works" steps for that page.
+- Your name (top right) → **My profile** and **Change password**.
+
 ### A five-minute walkthrough
 
-1. **COO** → *Release requests*: approve a surplus batch. A price outside 65–70%
-   of the original is refused. The batch is published to the platform.
-2. **buyer@vetclinic** on the platform → *Catalogue* → add to cart → checkout →
-   upload a transfer receipt (any PDF/JPG/PNG).
+1. **COO** → *Expiry & clearance → Post to B2B*: pick a batch, set quantity and
+   price (65–70% of the original; anything else is refused) → it is live on the
+   platform. *Release requests* holds batches Sales asked to release.
+2. **buyer@vetclinic** on the platform → browse a category → open a product →
+   add to cart → checkout → upload a transfer receipt (any PDF/JPG/PNG). Track it
+   under *My Orders*.
 3. **Finance** → *Payment queue* → confirm; an invoice is issued.
 4. **Warehouse** → *Dispatch queue* → type the allocated lot number → dispatch.
-   The buyer can now confirm delivery and download the invoice.
-5. **Sales** → *Near-expiry stock* → review a batch, record a customer offer,
-   flag the remainder as surplus.
-6. **Inventory Controller** → *Audits* → reconcile CNT-00001 (one flagged variance).
-7. **Procurement** → *Data import* → upload `sample_data/sales_history_sample.csv`
-   (regions are standardised, bad rows rejected, "Ismailia" must be mapped) →
-   *Demand forecast* → generate → build a purchase plan and see the MOQ surplus.
-8. **GM** → *Pending approvals* → approve the plan; **Admin** → *Business rules*.
+   The buyer confirms delivery and downloads the invoice.
+5. **Sales** → *Near-expiry stock* → open a batch, record a customer offer, then
+   *Post to B2B* (goes to the COO for approval).
+6. **Inventory Controller** → *Warehouse audit → Audits* → reconcile CNT-00001.
+7. **Procurement** → *Purchasing*: import `sample_data/sales_history_sample.csv`,
+   generate a forecast, build a purchase plan; after the GM approves it, create
+   the purchase orders in one click. *Products* and *Suppliers* are edited here too.
+8. **GM** → *Approvals* → approve the waiting plan and write-off.
+9. **Regulatory Affairs** → *B2B sales → Buyers* → verify a pending buyer.
+10. **Any staff role** → *Reports → Reports & exports* for PDF / Excel downloads;
+    *B2B sales → Buyer messages* to answer questions sent from the platform.
 
 ### Daily jobs
 
@@ -122,7 +141,7 @@ It can also be run from the IMS (*Expiry scans* → *Run scan now*).
 python manage.py test --settings=kubbar.settings.test
 ```
 
-70 tests cover the business rules (FEFO, price band, atomic reservation,
+82 tests cover the business rules (FEFO, price band, atomic reservation,
 tolerance and approval thresholds, dual-approval write-offs, forecasting and MOQ
 rounding, imports, encryption, lockout, two-factor login, role-based access,
 separation of the two applications) and render every screen for every role.

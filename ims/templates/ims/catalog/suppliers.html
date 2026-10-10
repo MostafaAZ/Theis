@@ -1,0 +1,7 @@
+{% extends "ims/base.html" %}
+{% block content %}
+<div class="page-actions"><h1 class="h4">Suppliers</h1>{% if can_edit %}<a href="/suppliers/new/" class="btn btn-primary ms-auto"><i class="bi bi-plus-lg me-1"></i>New supplier</a>{% endif %}</div>
+<div class="table-wrap"><table class="table table-hover"><thead><tr><th>Supplier</th><th>Country</th><th class="num">Lead time (days)</th><th class="num">Products</th><th class="num">Open POs</th><th>Status</th><th></th></tr></thead>
+<tbody>{% for s in suppliers %}<tr><td class="fw-semibold">{{ s.name }}</td><td>{{ s.country }}</td><td class="num">{{ s.default_lead_time_days }}</td><td class="num">{{ s.products }}</td><td class="num">{{ s.open_pos }}</td><td>{% if s.is_active %}<span class="badge text-bg-success">Active</span>{% else %}<span class="badge text-bg-secondary">Inactive</span>{% endif %}</td>
+<td class="text-end">{% if can_edit %}<a href="/suppliers/{{ s.pk }}/" class="btn btn-sm btn-outline-primary">Edit</a>{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

@@ -30,6 +30,9 @@ class Product(models.Model):
     moq = models.PositiveIntegerField("Supplier MOQ", default=1)
     lead_time_days = models.PositiveIntegerField(default=90)
     shelf_life_months = models.PositiveIntegerField("Typical shelf life (months)", default=24)
+    description = models.TextField(blank=True, help_text="Shown to buyers on the platform")
+    image = models.FileField(upload_to="products/", blank=True,
+                             help_text="JPG or PNG; a drawing is shown when empty")
     is_active = models.BooleanField(default=True)
 
     class Meta:

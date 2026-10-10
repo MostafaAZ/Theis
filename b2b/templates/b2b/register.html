@@ -1,7 +1,9 @@
 {% extends "b2b/base.html" %}{% load b2b %}
 {% block title %}{% t "Register" %}{% endblock %}
 {% block content %}
-<h1 class="h4 mb-3">{% t "Register your company" %}</h1>
+<div class="row justify-content-center"><div class="col-xl-9">
+<h1 class="h3 mb-1">{% t "Register your company" %}</h1><p class="text-muted">About 10 minutes. Have your commercial register, tax card, the owner's national ID and your veterinary trading licence ready (PDF, JPG or PNG).</p>
+<div class="steps"><span class="step active"><b>1</b>{% t "Company details" %}</span><span class="step active"><b>2</b>{% t "Owner" %}</span><span class="step active"><b>3</b>{% t "Documents" %}</span><span class="step active"><b>4</b>{% t "Account" %}</span></div>
 <form method="post" enctype="multipart/form-data" novalidate>{% csrf_token %}
 {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
 <div class="card mb-3"><div class="card-header">{% t "Company details" %}</div><div class="card-body"><div class="row g-3">
@@ -25,4 +27,5 @@
 </div></div></div>
 <button class="btn btn-b2b btn-lg">{% t "Submit" %}</button>
 </form>
+</div></div>
 {% endblock %}

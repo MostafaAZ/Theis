@@ -3,56 +3,113 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}Kubbar IMS{% endblock %} · Kubbar IMS</title>
+  <title>{% block title %}{{ page.title|default:"Kubbar IMS" }}{% endblock %} · Kubbar IMS</title>
   <link rel="stylesheet" href="{% static 'vendor/bootstrap/bootstrap.min.css' %}">
   <link rel="stylesheet" href="{% static 'vendor/bootstrap-icons/bootstrap-icons.min.css' %}">
   <link rel="stylesheet" href="{% static 'kubbar/app.css' %}">
 </head>
 <body class="ims">
 {% if user.is_authenticated %}
-<nav class="navbar navbar-dark bg-ims px-3 sticky-top">
-  <button class="btn btn-sm btn-outline-light d-lg-none me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar"><i class="bi bi-list"></i></button>
-  <a class="navbar-brand fw-semibold" href="/"><i class="bi bi-box-seam"></i> Kubbar IMS</a>
-  <div class="ms-auto d-flex align-items-center gap-3 text-white small">
-    <a href="/notifications/" class="text-white position-relative" title="Notifications"><i class="bi bi-bell fs-5"></i>{% if unread_notifications %}<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">{{ unread_notifications }}</span>{% endif %}</a>
-    <span class="d-none d-md-inline">{{ user }} · <span class="opacity-75">{{ user.role_labels|join:", " }}</span></span>
-    <form method="post" action="/logout/" id="logout-form">{% csrf_token %}<button class="btn btn-sm btn-outline-light">Log out</button></form>
-  </div>
-</nav>
-<div class="container-fluid">
-  <div class="row">
-    <aside class="col-lg-2 offcanvas-lg offcanvas-start sidebar p-0" id="sidebar" tabindex="-1">
-      <div class="offcanvas-body d-block p-3">
-      {% for title, items in nav_sections %}
-        <div class="nav-section">{{ title }}</div>
-        <ul class="nav flex-column mb-2">
-        {% for label, url in items %}
-          <li class="nav-item"><a class="nav-link {% if request.path == url %}active{% endif %}" href="{{ url }}">{{ label }}</a></li>
-        {% endfor %}
-        </ul>
-      {% endfor %}
+<div class="app-shell">
+  <aside class="sidebar offcanvas-lg offcanvas-start" id="sidebar" tabindex="-1">
+    <div class="sidebar-brand">
+      <span class="brand-mark"><i class="bi bi-box-seam"></i></span>
+      <div><div class="brand-name">KUBBAR</div><div class="brand-sub">Inventory Management</div></div>
+      <button type="button" class="btn-close btn-close-white ms-auto d-lg-none" data-bs-dismiss="offcanvas" data-bs-target="#sidebar"></button>
+    </div>
+    <nav class="sidebar-nav">
+    {% for s in nav_sections %}
+      {% if s.items|length == 1 and s.title != "Home" %}
+        {% with i=s.items.0 %}
+        <a class="nav-mod {% if i.active %}active{% endif %}" href="{{ i.url }}"><i class="bi {{ s.icon }}"></i><span>{{ i.label }}</span>{% if i.badge %}<span class="nav-badge">{{ i.badge }}</span>{% endif %}</a>
+        {% endwith %}
+      {% elif s.title == "Home" %}
+        {% for i in s.items %}<a class="nav-mod {% if i.active %}active{% endif %}" href="{{ i.url }}"><i class="bi {% if forloop.first %}bi-house-door{% elif i.url == '/approvals/' %}bi-check2-square{% else %}bi-bell{% endif %}"></i><span>{{ i.label }}</span>{% if i.badge %}<span class="nav-badge">{{ i.badge }}</span>{% endif %}</a>{% endfor %}
+        <div class="nav-divider"></div>
+      {% else %}
+        <button class="nav-mod nav-toggle {% if not s.open %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#nav-{{ forloop.counter }}" aria-expanded="{{ s.open|yesno:'true,false' }}">
+          <i class="bi {{ s.icon }}"></i><span>{{ s.title }}</span><i class="bi bi-chevron-down chev"></i>
+        </button>
+        <div class="collapse {% if s.open %}show{% endif %}" id="nav-{{ forloop.counter }}">
+          {% for i in s.items %}<a class="nav-sub {% if i.active %}active{% endif %}" href="{{ i.url }}">{{ i.label }}{% if i.badge %}<span class="nav-badge">{{ i.badge }}</span>{% endif %}</a>{% endfor %}
+        </div>
+      {% endif %}
+    {% endfor %}
+    </nav>
+    <div class="sidebar-foot">Kubbar International · IMS</div>
+  </aside>
+
+  <div class="main-col">
+    <header class="topbar">
+      <button class="btn btn-icon d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-label="Menu"><i class="bi bi-list"></i></button>
+      <form class="topbar-search" action="/search/" method="get" role="search">
+        <i class="bi bi-search"></i>
+        <input name="q" value="{{ request.GET.q|default:'' }}" placeholder="Search products, lots, orders, buyers, POs…" aria-label="Search">
+      </form>
+      <div class="topbar-right">
+        <button class="btn btn-icon" type="button" data-bs-toggle="offcanvas" data-bs-target="#help" title="Help for this page"><i class="bi bi-question-circle"></i></button>
+        <div class="dropdown">
+          <button class="btn btn-icon position-relative" data-bs-toggle="dropdown" aria-label="Notifications"><i class="bi bi-bell"></i>{% if unread_notifications %}<span class="dot-badge">{{ unread_notifications }}</span>{% endif %}</button>
+          <div class="dropdown-menu dropdown-menu-end notif-menu shadow">
+            <div class="d-flex align-items-center px-3 py-2 border-bottom"><strong>Notifications</strong><a href="/notifications/" class="ms-auto small">See all</a></div>
+            {% for n in recent_notifications %}
+              <a class="dropdown-item notif {% if not n.is_read %}unread{% endif %}" href="/notifications/{{ n.pk }}/"><span class="notif-dot lvl-{{ n.level }}"></span><span class="notif-text">{{ n.message }}<span class="d-block small text-muted">{{ n.created_at|timesince }} ago</span></span></a>
+            {% empty %}<div class="px-3 py-3 text-muted small">You're all caught up.</div>{% endfor %}
+          </div>
+        </div>
+        <div class="dropdown">
+          <button class="btn user-chip" data-bs-toggle="dropdown"><span class="avatar">{{ initials }}</span><span class="d-none d-md-inline text-start"><span class="d-block lh-1 fw-semibold">{{ user }}</span><span class="small text-muted">{{ user.role_labels|join:", " }}</span></span><i class="bi bi-chevron-down small ms-1"></i></button>
+          <ul class="dropdown-menu dropdown-menu-end shadow">
+            <li><a class="dropdown-item" href="/profile/"><i class="bi bi-person me-2"></i>My profile</a></li>
+            <li><a class="dropdown-item" href="/profile/#password"><i class="bi bi-key me-2"></i>Change password</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><form method="post" action="/logout/" id="logout-form">{% csrf_token %}<button class="dropdown-item text-danger"><i class="bi bi-box-arrow-right me-2"></i>Log out</button></form></li>
+          </ul>
+        </div>
       </div>
-    </aside>
-    <main class="col-lg-10 py-4 px-4">
+    </header>
+
+    {% if page.title %}
+    <div class="page-crumb">
+      <nav aria-label="breadcrumb"><ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a href="/"><i class="bi bi-house-door"></i></a></li>
+        {% if page.module and page.module != "Home" %}<li class="breadcrumb-item"><i class="bi {{ page.icon }} me-1"></i>{{ page.module }}</li>{% endif %}
+        <li class="breadcrumb-item active">{{ page.title }}</li>
+      </ol></nav>
+      {% if page.purpose %}<div class="page-purpose"><i class="bi bi-info-circle me-1"></i>{{ page.purpose }}{% if page.steps %} <a href="#" data-bs-toggle="offcanvas" data-bs-target="#help">How it works</a>{% endif %}</div>{% endif %}
+    </div>
+    {% endif %}
+
+    <main class="content">
       {% include "ims/_messages.html" %}
       {% block content %}{% endblock %}
     </main>
   </div>
 </div>
+
+<div class="offcanvas offcanvas-end" tabindex="-1" id="help">
+  <div class="offcanvas-header border-bottom"><h5 class="offcanvas-title"><i class="bi bi-question-circle me-2"></i>{{ page.title|default:"Help" }}</h5><button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button></div>
+  <div class="offcanvas-body">
+    {% if page.purpose %}<p class="lead fs-6">{{ page.purpose }}</p>{% endif %}
+    {% if page.steps %}<h6 class="text-uppercase small text-muted mt-3">How it works</h6><ol class="help-steps">{% for s in page.steps %}<li>{{ s }}</li>{% endfor %}</ol>{% endif %}
+    <h6 class="text-uppercase small text-muted mt-4">Your role</h6>
+    <p class="small">{{ user.role_labels|join:", " }}. The menu on the left only shows what your role can do. Numbers next to menu items are things waiting for you.</p>
+    <a href="/" class="btn btn-sm btn-outline-primary">Back to my tasks</a>
+  </div>
+</div>
 {% else %}
-<main class="container py-5">{% include "ims/_messages.html" %}{% block anon %}{% endblock %}</main>
+<main class="auth-wrap">{% include "ims/_messages.html" %}{% block anon %}{% endblock %}</main>
 {% endif %}
 <script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"></script>
 <script>
 // UC-02 A1: confirm before logging out with unsaved changes.
 let dirty = false;
-document.querySelectorAll("main form[method=post]").forEach(f => f.addEventListener("input", () => dirty = true));
-document.querySelectorAll("main form[method=post]").forEach(f => f.addEventListener("submit", () => dirty = false));
+document.querySelectorAll("main form[method=post]").forEach(f => { f.addEventListener("input", () => dirty = true); f.addEventListener("submit", () => dirty = false); });
 const lf = document.getElementById("logout-form");
 if (lf) lf.addEventListener("submit", e => { if (dirty && !confirm("You have unsaved changes. Log out anyway?")) e.preventDefault(); });
-// NFR-24: inactivity timeout of 15 minutes.
+{% if user.is_authenticated %}// NFR-24: inactivity timeout of 15 minutes.
 let idle; const resetIdle = () => { clearTimeout(idle); idle = setTimeout(() => location.href = "/login/?timeout=1", 15*60*1000 + 5000); };
-["click","keydown","mousemove"].forEach(ev => document.addEventListener(ev, resetIdle)); resetIdle();
+["click","keydown","mousemove"].forEach(ev => document.addEventListener(ev, resetIdle)); resetIdle();{% endif %}
 </script>
 {% block scripts %}{% endblock %}
 </body>

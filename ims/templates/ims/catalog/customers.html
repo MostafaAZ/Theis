@@ -1,0 +1,10 @@
+{% extends "ims/base.html" %}{% load kubbar %}
+{% block content %}
+<div class="page-actions"><h1 class="h4">Customers</h1>{% if can_edit %}<a href="/customers/new/" class="btn btn-primary ms-auto"><i class="bi bi-plus-lg me-1"></i>New customer</a>{% endif %}</div>
+<form class="row g-2 mb-3"><div class="col-md-6"><input name="q" value="{{ q }}" class="form-control" placeholder="Search by name or commercial register"></div>
+{% if 'sales' in user.roles %}<div class="col-md-3"><select name="mine" class="form-select"><option value="">All customers</option><option value="1" {% if request.GET.mine %}selected{% endif %}>My customers</option></select></div>{% endif %}
+<div class="col-md-2"><button class="btn btn-outline-primary w-100">Filter</button></div></form>
+<div class="table-wrap"><table class="table table-hover"><thead><tr><th>Customer</th><th>Commercial register</th><th>Region</th><th>Sales rep</th><th class="num">Sales, last 12 months (EGP)</th></tr></thead>
+<tbody>{% for c in customers %}<tr class="pick" onclick="location.href='/customers/{{ c.pk }}/'"><td><a href="/customers/{{ c.pk }}/" class="fw-semibold">{{ c.name }}</a></td><td>{{ c.commercial_register_no|default:"–" }}</td><td>{{ c.region|default:"–" }}</td><td>{{ c.sales_rep|default:"–" }}</td><td class="num">{{ c.sales12|egp }}</td></tr>
+{% empty %}<tr><td colspan="5"><div class="empty-state">No customers.</div></td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

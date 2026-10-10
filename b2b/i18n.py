@@ -140,6 +140,96 @@ AR = {
 }
 
 
+AR.update({
+    "Clearance stock for licensed trade buyers": "مخزون تصفية للتجار المرخصين",
+    "Genuine veterinary products from Kubbar International, batch-traceable and registered "
+    "in Egypt, at 30–35% below list price.":
+        "منتجات بيطرية أصلية من كبار إنترناشونال، مسجلة في مصر وقابلة للتتبع بالتشغيلة، "
+        "بخصم ٣٠-٣٥٪ عن سعر القائمة.",
+    "Browse the catalogue": "تصفح الكتالوج",
+    "Live offers": "عروض متاحة",
+    "Average saving": "متوسط التوفير",
+    "Categories": "الفئات",
+    "Shop by category": "تسوق حسب الفئة",
+    "Best deals expiring soon": "أفضل العروض قبل انتهاء الصلاحية",
+    "View all": "عرض الكل",
+    "Why buy from Kubbar": "لماذا تشتري من كبار",
+    "Registered products": "منتجات مسجلة",
+    "Every listing is registered with EDA or GOVS for the Egyptian market.":
+        "كل عرض مسجل لدى هيئة الدواء أو الهيئة العامة للخدمات البيطرية.",
+    "Full batch traceability": "تتبع كامل للتشغيلة",
+    "Lot number, expiry date and storage condition on every product.":
+        "رقم التشغيلة وتاريخ الانتهاء وظروف التخزين لكل منتج.",
+    "Cold-chain handled": "سلسلة تبريد مضمونة",
+    "Vaccines ship refrigerated to buyers who can store them.":
+        "تُشحن اللقاحات مبردة للمشترين القادرين على تخزينها.",
+    "Pay by transfer or invoice": "ادفع بالتحويل أو بالفاتورة",
+    "Bank transfer for everyone; 15–45 day terms for approved accounts.":
+        "تحويل بنكي للجميع وآجال ١٥-٤٥ يوماً للحسابات المعتمدة.",
+    "Register": "تسجيل",
+    "Get verified": "التحقق من الحساب",
+    "Order": "الطلب",
+    "Receive": "الاستلام",
+    "Create a company account and upload your licence.": "أنشئ حساب شركتك وارفع الترخيص.",
+    "Our team checks your documents, usually within 2 working days.":
+        "يراجع فريقنا مستنداتك خلال يومي عمل عادةً.",
+    "Add batches to your cart and pay by transfer or invoice.":
+        "أضف التشغيلات إلى السلة وادفع بالتحويل أو بالفاتورة.",
+    "We pick your lot and deliver; track it in My Orders.":
+        "نجهز التشغيلة ونسلمها؛ تابعها في طلباتي.",
+    "Frequently asked questions": "الأسئلة الشائعة",
+    "Contact us": "تواصل معنا",
+    "Help": "المساعدة",
+    "Company": "الشركة",
+    "Shop": "التسوق",
+    "Legal": "قانوني",
+    "Terms of Service": "شروط الخدمة",
+    "Privacy & data protection": "الخصوصية وحماية البيانات",
+    "How it works": "كيف تعمل المنصة",
+    "Account": "الحساب",
+    "Overview": "نظرة عامة",
+    "Invoices": "الفواتير",
+    "Company profile": "ملف الشركة",
+    "Messages": "الرسائل",
+    "Change password": "تغيير كلمة المرور",
+    "Preferences": "التفضيلات",
+    "Sign in to see prices": "سجّل الدخول لرؤية الأسعار",
+    "Verified buyers see prices": "الأسعار للمشترين الموثقين",
+    "You save": "توفر",
+    "Expires in": "تنتهي خلال",
+    "Similar offers": "عروض مشابهة",
+    "In stock": "متوفر",
+    "Send message": "إرسال الرسالة",
+    "Topic": "الموضوع",
+    "Message": "الرسالة",
+    "Name": "الاسم",
+    "results": "نتيجة",
+    "Shelf life": "الصلاحية",
+    "Any": "أي",
+    "More than 90 days": "أكثر من ٩٠ يوماً",
+    "More than 60 days": "أكثر من ٦٠ يوماً",
+    "Clear filters": "مسح التصفية",
+    "Search products or lot numbers": "ابحث عن منتج أو رقم تشغيلة",
+    "Your account is pending verification.": "حسابك قيد التحقق.",
+    "Next steps": "الخطوات التالية",
+    "Recent orders": "أحدث الطلبات",
+    "Track": "تتبع",
+    "Due": "الاستحقاق",
+    "Amount": "المبلغ",
+    "Paid": "مدفوع",
+    "Unpaid": "غير مدفوع",
+    "Download": "تحميل",
+    "Trade buyers only · Egypt": "للتجار فقط · مصر",
+    "Order total": "إجمالي الطلب",
+    "Vaccines": "اللقاحات",
+    "Veterinary Medicaments": "الأدوية البيطرية",
+    "Feed Additives": "إضافات الأعلاف",
+    "Nutritional Products": "المنتجات الغذائية",
+    "Capital Equipment": "المعدات",
+    "Placed ": "تم الطلب",
+})
+
+
 def translate(text, lang):
     if lang == "ar":
         return AR.get(text, text)
@@ -147,5 +237,15 @@ def translate(text, lang):
 
 
 def language(request):
+    """Language, layout direction and shop navigation for every platform page."""
     lang = request.session.get("lang", "en") if hasattr(request, "session") else "en"
-    return {"LANG": lang, "DIR": "rtl" if lang == "ar" else "ltr"}
+    ctx = {"LANG": lang, "DIR": "rtl" if lang == "ar" else "ltr"}
+    from core.models import ProductCategory
+
+    ctx["shop_categories"] = ProductCategory.objects.filter(is_active=True, is_expiring=True)
+    cart = request.session.get("cart", {}) if hasattr(request, "session") else {}
+    ctx["cart_count"] = len(cart)
+    user = getattr(request, "user", None)
+    ctx["shop_buyer"] = user.buyer if user is not None and user.is_authenticated and \
+        getattr(user, "is_buyer", False) and hasattr(user, "buyer") else None
+    return ctx

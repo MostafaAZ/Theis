@@ -1,0 +1,22 @@
+{% extends "ims/base.html" %}{% load kubbar %}
+{% block content %}
+<div class="page-actions"><h1 class="h4">Products</h1>
+  {% if can_edit %}<a href="/products/new/" class="btn btn-primary ms-auto"><i class="bi bi-plus-lg me-1"></i>New product</a>{% endif %}</div>
+<form class="row g-2 mb-3" method="get">
+  <div class="col-md-5"><input name="q" value="{{ q }}" class="form-control" placeholder="Search by name or SKU"></div>
+  <div class="col-md-3"><select name="category" class="form-select"><option value="">All categories</option>{% for c in categories %}<option value="{{ c.pk }}" {% if request.GET.category == c.pk|stringformat:'s' %}selected{% endif %}>{{ c }}</option>{% endfor %}</select></div>
+  <div class="col-md-2"><select name="show" class="form-select"><option value="">Active only</option><option value="all" {% if request.GET.show == 'all' %}selected{% endif %}>Include inactive</option></select></div>
+  <div class="col-md-2"><button class="btn btn-outline-primary w-100">Filter</button></div>
+</form>
+<div class="table-wrap"><table class="table table-hover align-middle">
+<thead><tr><th></th><th>Product</th><th>Category</th><th>Storage</th><th class="num">Price (EGP)</th><th class="num">On hand</th><th>Near-expiry</th><th>On B2B</th><th></th></tr></thead>
+<tbody>{% for p in products %}<tr class="pick" onclick="location.href='/products/{{ p.pk }}/'">
+<td style="width:56px"><img src="/products/{{ p.pk }}/image/" class="prod-thumb" alt=""></td>
+<td><a href="/products/{{ p.pk }}/" class="fw-semibold">{{ p.name }}</a><div class="small text-muted">{{ p.sku }}{% if not p.is_active %} · inactive{% endif %}</div></td>
+<td>{{ p.category }}</td><td>{% if p.is_cold_chain %}<i class="bi bi-snow text-info me-1"></i>{% endif %}{{ p.get_storage_condition_display }}</td>
+<td class="num">{{ p.original_price|egp }}</td><td class="num">{{ p.on_hand|default:0 }} <span class="small text-muted">{{ p.unit }}</span></td>
+<td>{% if p.near %}<span class="badge text-bg-warning">{{ p.near }} batch{{ p.near|pluralize:"es" }}</span>{% else %}<span class="text-muted">–</span>{% endif %}</td>
+<td>{% if p.live %}<span class="badge text-bg-success">{{ p.live }} live</span>{% else %}<span class="text-muted">–</span>{% endif %}</td>
+<td><i class="bi bi-chevron-right text-muted"></i></td></tr>
+{% empty %}<tr><td colspan="9"><div class="empty-state"><i class="bi bi-box"></i>No products match.</div></td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

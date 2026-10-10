@@ -1,0 +1,8 @@
+{% extends "ims/base.html" %}
+{% block content %}
+<h1 class="h4">Buyer messages</h1>
+<ul class="nav nav-tabs mb-3"><li class="nav-item"><a class="nav-link {% if status == 'open' %}active{% endif %}" href="?status=open">Open</a></li><li class="nav-item"><a class="nav-link {% if status == 'answered' %}active{% endif %}" href="?status=answered">Answered</a></li><li class="nav-item"><a class="nav-link {% if status == 'all' %}active{% endif %}" href="?status=all">All</a></li></ul>
+<div class="table-wrap"><table class="table table-hover align-middle"><thead><tr><th>Received</th><th>From</th><th>Topic</th><th>Message</th><th>Status</th><th></th></tr></thead><tbody>
+{% for m in items %}<tr><td class="text-nowrap">{{ m.created_at|date:"d M H:i" }}</td><td>{{ m.company|default:m.name }}<div class="small text-muted">{{ m.email }}</div></td><td>{{ m.get_topic_display }}{% if m.order %}<div class="small"><a href="/b2b/orders/{{ m.order.pk }}/">{{ m.order.reference }}</a></div>{% endif %}</td><td class="small">{{ m.message|truncatechars:90 }}</td><td><span class="badge {% if m.status == 'open' %}text-bg-warning{% else %}text-bg-success{% endif %}">{{ m.get_status_display }}</span></td><td class="text-end"><a href="/b2b/messages/{{ m.pk }}/" class="btn btn-sm btn-primary">{% if m.status == 'open' %}Reply{% else %}View{% endif %}</a></td></tr>
+{% empty %}<tr><td colspan="6"><div class="empty-state"><i class="bi bi-chat-dots"></i>No messages.</div></td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

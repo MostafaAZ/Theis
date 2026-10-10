@@ -6,14 +6,13 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
-from analytics.services import dashboard_cards
 from core.models import AuditLog, LoginCode, Notification, Role, User
 from core.rules import rule_int
 from core.services import audit, notify_roles
-from inventory.models import ExpiryAlert
 
 from ..access import role_required
 from ..forms import CodeForm, LoginForm
@@ -111,15 +110,18 @@ def logout_view(request):
 
 @role_required()
 def dashboard(request):
+    import json
+
+    from .. import dashboard as dash
+
     user = request.user
-    alerts = user.notifications.filter(is_read=False)[:15]
-    escalated = []
-    if user.has_role(Role.GM):
-        escalated = ExpiryAlert.objects.filter(alert_type=ExpiryAlert.ESCALATION,
-                                               status=ExpiryAlert.OPEN).select_related(
-            "batch__product")[:10]
+    hour = timezone.localtime().hour
+    greeting = "Good morning" if hour < 12 else "Good afternoon" if hour < 18 else "Good evening"
+    charts = dash.charts_for(user)
     return render(request, "ims/dashboard.html", {
-        "cards": dashboard_cards(user), "alerts": alerts, "escalated": escalated})
+        "greeting": greeting, "tasks": dash.tasks_for(user), "kpis": dash.kpis_for(user),
+        "quick": dash.quick_for(user), "charts": charts, "charts_json": json.dumps(charts),
+        "alerts": user.notifications.filter(is_read=False)[:6]})
 
 
 @role_required()

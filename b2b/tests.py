@@ -96,3 +96,41 @@ class PlatformTests(TestCase):
         r = self.client.get("/")
         self.assertContains(r, 'dir="rtl"')
         self.assertContains(r, "سجّل شركتك")
+
+
+@override_settings(ROOT_URLCONF="kubbar.urls_b2b", APP_NAME="b2b", LOGIN_URL="b2b:login")
+class StorefrontTests(TestCase):
+    def setUp(self):
+        self.w = World()
+        self.listing = self.w.listing(qty=50)
+
+    def test_public_pages(self):
+        for url in ("/", "/catalogue/", f"/catalogue/{self.listing.pk}/", "/how-it-works/",
+                    "/faq/", "/terms/", "/privacy/", "/contact/",
+                    f"/products/{self.w.product.pk}/image/"):
+            self.assertEqual(self.client.get(url).status_code, 200, url)
+
+    def test_catalogue_filters(self):
+        self.w.buyer()
+        self.client.post("/login/", {"email": "buyer@test.example", "password": PASSWORD})
+        r = self.client.get(f"/catalogue/?category={self.w.vaccines.pk}")
+        self.assertNotContains(r, self.w.product.name)
+        r = self.client.get(f"/catalogue/?category={self.w.meds.pk}&q=Enro")
+        self.assertContains(r, self.w.product.name)
+
+    def test_account_area_and_contact(self):
+        b = self.w.buyer()
+        self.client.post("/login/", {"email": "buyer@test.example", "password": PASSWORD})
+        for url in ("/account/", "/account/profile/", "/account/documents/",
+                    "/account/invoices/", "/account/messages/", "/orders/"):
+            self.assertEqual(self.client.get(url).status_code, 200, url)
+        r = self.client.post("/account/profile/", {"company": "1", "contact_person": "New Name",
+                                                   "phone": "0122", "address": "New address"})
+        b.refresh_from_db()
+        self.assertEqual(b.contact_person, "New Name")
+        r = self.client.post("/contact/", {"name": "N", "email": "buyer@test.example",
+                                           "topic": "order", "message": "When?"})
+        self.assertRedirects(r, "/account/messages/")
+        self.assertEqual(b.messages.count(), 1)
+        self.assertTrue(self.w.user(Role.FINANCE).notifications.filter(
+            message__contains="New buyer message").exists())

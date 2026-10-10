@@ -1,0 +1,12 @@
+{% extends "b2b/base.html" %}{% load b2b %}
+{% block title %}{% t "Terms of Service" %}{% endblock %}
+{% block content %}
+<div class="bg-white border rounded-4 p-4" style="max-width:860px">
+<h1 class="h3">{% t "Terms of Service" %}</h1><p class="text-muted small">Prototype terms for the Kubbar B2B Clearance Platform (graduation project).</p>
+<h2 class="h6 mt-4">1. Eligibility</h2><p>The platform is for licensed businesses in Egypt that are authorised to trade veterinary products. Kubbar may suspend accounts whose licence expires or whose documents cannot be verified.</p>
+<h2 class="h6">2. Products and shelf life</h2><p>Listings are near-expiry batches of registered products. Each listing states the lot number, expiry date, storage condition and quantity. Buyers are responsible for using or reselling products before expiry and for storing them correctly, including cold-chain products.</p>
+<h2 class="h6">3. Prices and orders</h2><p>Prices are in Egyptian pounds and shown to verified buyers only. Stock is reserved for 48 hours after checkout; unpaid orders are cancelled automatically.</p>
+<h2 class="h6">4. Payment</h2><p>Payment is by bank transfer, or on invoice for approved accounts within their credit limit and terms. Orders are dispatched after payment or credit approval.</p>
+<h2 class="h6">5. Delivery and problems</h2><p>Report delivery problems through the order page. Kubbar records the lot dispatched for every order line.</p>
+</div>
+{% endblock %}

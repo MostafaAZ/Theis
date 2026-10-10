@@ -1,7 +1,7 @@
 {% extends "ims/base.html" %}{% load kubbar %}
 {% block title %}Field dispatch{% endblock %}
 {% block content %}
-<h1 class="h4 mb-1">Dispatch with FEFO allocation <small class="text-muted fs-6">UC-08 / UC-09</small></h1>
+<h1 class="h4 mb-1">Dispatch with FEFO allocation</h1>
 <p class="text-muted">For dispatches outside the platform. The system allocates the earliest-expiring eligible batch first, skipping batches below the minimum sellable shelf life, frozen for audit, reserved or listed.</p>
 <div class="card mb-3"><div class="card-body"><form method="post">{% csrf_token %}
 {% include "ims/_fields.html" with col="col-md-3" %}

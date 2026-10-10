@@ -1,0 +1,15 @@
+{% load b2b kubbar %}<div class="p-card">
+  <a href="/catalogue/{{ l.pk }}/" class="img d-block"><img src="/products/{{ l.batch.product.pk }}/image/" alt="{{ l.batch.product.name }}" loading="lazy">
+    {% if show_prices %}<span class="off">−{{ l.discount_pct }}%</span>{% endif %}{% if l.batch.is_cold_chain %}<span class="cold"><i class="bi bi-snow"></i> {% t "Cold chain" %}</span>{% endif %}</a>
+  <div class="body">
+    <div class="cat">{% t l.batch.product.category.name %}</div>
+    <a href="/catalogue/{{ l.pk }}/" class="name text-decoration-none">{% if LANG == 'ar' and l.batch.product.name_ar %}{{ l.batch.product.name_ar }}{% else %}{{ l.batch.product.name }}{% endif %}</a>
+    <div class="meta">{% t "Lot number" %} {{ l.batch.lot_number }} · {{ l.available_qty }} {{ l.batch.product.unit }}</div>
+    <div class="shelf"><div class="d-flex small"><span>{% t "Expires in" %} {{ l.batch.days_to_expiry }} {% t "days" %}</span><span class="ms-auto text-muted">{{ l.batch.expiry_date|date:"d M Y" }}</span></div><div class="bar"><span style="width:{{ l.shelf_pct }}%;background:{{ l.shelf_colour }}"></span></div></div>
+    <div class="mt-auto pt-1">
+    {% if show_prices %}<div><span class="price">{{ l.clearance_price|egp }}</span> <small class="text-muted">EGP</small> <span class="was ms-1">{{ l.original_price|egp }}</span></div>
+      {% if l.blocked %}<div class="small text-danger mt-1"><i class="bi bi-slash-circle"></i> {% t "Not Available to Your Account" %}</div>{% else %}<div class="save">{% t "You save" %} {{ l.saving|egp }} EGP</div>{% endif %}
+    {% else %}<div class="lock-price"><i class="bi bi-lock me-1"></i>{% if user.is_authenticated %}{% t "Verified buyers see prices" %}{% else %}<a href="/login/" class="text-reset">{% t "Sign in to see prices" %}</a>{% endif %}</div>{% endif %}
+    </div>
+  </div>
+</div>

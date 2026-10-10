@@ -1,7 +1,7 @@
 {% extends "ims/base.html" %}
 {% block title %}Schedule count{% endblock %}
 {% block content %}
-<h1 class="h4 mb-3">Schedule warehouse audit <small class="text-muted fs-6">UC-10</small></h1>
+<h1 class="h4 mb-3">Schedule warehouse audit</h1>
 <div class="card"><div class="card-body"><form method="post">{% csrf_token %}
 {% include "ims/_fields.html" with col="col-md-4" %}
 <p class="form-text mt-3">Category applies to a category scope; batches apply to a selected-batches scope. Movements on the batches in scope are frozen from the count date until the count is submitted and reconciled.</p>
