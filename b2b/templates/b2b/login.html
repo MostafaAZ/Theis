@@ -1,9 +1,11 @@
 {% extends "b2b/base.html" %}{% load b2b %}
 {% block title %}{% t "Log In" %}{% endblock %}
 {% block content %}
-<div class="row justify-content-center"><div class="col-md-6 col-lg-4">
-<h1 class="h4 mb-3 text-center">{% t "Log In" %}</h1>
-<div class="card"><div class="card-body"><form method="post">{% csrf_token %}{% include "b2b/_fields.html" with col="col-12" %}<button class="btn btn-b2b w-100 mt-3">{% t "Log In" %}</button></form>
-<div class="d-flex justify-content-between mt-3 small"><a href="/password-reset/">{% t "Forgot password?" %}</a><a href="/register/">{% t "Register" %}</a></div></div></div>
+<div class="row justify-content-center py-3"><div class="col-md-7 col-lg-5">
+<div class="card"><div class="card-body p-4 p-md-5">
+  <div class="text-center mb-4"><span class="shop-brand justify-content-center"><span class="mark"><i class="bi bi-shop"></i></span></span><h1 class="h4 mt-3 mb-1">{% t "Log In" %}</h1><p class="text-muted small mb-0">{% t "Verified trade buyers only" %}</p></div>
+  <form method="post">{% csrf_token %}{% include "b2b/_fields.html" with col="col-12" %}<button class="btn btn-b2b w-100 mt-4 py-2">{% t "Log In" %}</button></form>
+  <div class="d-flex justify-content-between mt-3 small"><a href="/password-reset/">{% t "Forgot password?" %}</a><a href="/register/">{% t "Register your company" %}</a></div>
+</div></div>
 </div></div>
 {% endblock %}

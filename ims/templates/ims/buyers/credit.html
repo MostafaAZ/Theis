@@ -1,7 +1,7 @@
 {% extends "ims/base.html" %}{% load kubbar %}
 {% block title %}Buyer credit{% endblock %}
 {% block content %}
-<h1 class="h4 mb-3">Buyer payment terms <small class="text-muted fs-6">UC-39</small></h1>
+<h1 class="h4 mb-3">Buyer payment terms</h1>
 <table class="table bg-white"><thead><tr><th>Buyer</th><th>Type</th><th>Terms</th><th>Credit limit (EGP)</th><th>Outstanding</th><th></th></tr></thead>
 <tbody>{% for b in items %}<tr><td>{{ b.company_name }}{% if b.has_overdue_invoice %} <span class="badge text-bg-danger">overdue</span>{% endif %}</td><td>{{ b.buyer_type }}</td><td>{{ b.get_payment_terms_display }}</td><td>{{ b.credit_limit|egp }}</td><td>{{ b.outstanding_credit|egp }}</td><td><a class="btn btn-sm btn-outline-primary" href="/credit/{{ b.pk }}/">Set terms</a></td></tr>
 {% empty %}<tr><td colspan="6" class="text-muted">No verified buyers.</td></tr>{% endfor %}</tbody></table>

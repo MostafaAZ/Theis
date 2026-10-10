@@ -1,7 +1,7 @@
 {% extends "ims/base.html" %}{% load kubbar %}
 {% block title %}Request write-off{% endblock %}
 {% block content %}
-<h1 class="h4 mb-3">Request write-off and disposal <small class="text-muted fs-6">UC-21</small></h1>
+<h1 class="h4 mb-3">Request write-off and disposal</h1>
 {% if batch %}<div class="alert alert-light border small">{{ batch.product.name }} · lot {{ batch.lot_number }} · on hand {{ batch.qty_on_hand }} · cost value {{ batch.cost_value|egp }} EGP · expiry {{ batch.expiry_date }} · status {{ batch.get_status_display }}{% if batch.releases.exists %} · has surplus/release history{% endif %}</div>{% endif %}
 <div class="card"><div class="card-body"><form method="post">{% csrf_token %}{% include "ims/_fields.html" with col="col-md-6" %}
 <button class="btn btn-danger mt-3">Submit for dual approval</button> <a href="/write-offs/" class="btn btn-outline-secondary mt-3">Back</a></form></div></div>

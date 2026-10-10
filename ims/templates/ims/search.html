@@ -1,0 +1,10 @@
+{% extends "ims/base.html" %}
+{% block content %}
+<h1 class="h4">Search{% if q %} results for “{{ q }}”{% endif %}</h1>
+<form class="mb-4" style="max-width:560px"><div class="input-group"><input name="q" value="{{ q }}" class="form-control" placeholder="Product, SKU, lot, order, buyer, PO, customer" autofocus><button class="btn btn-primary"><i class="bi bi-search"></i></button></div></form>
+{% if q and not groups %}<div class="empty-state"><i class="bi bi-search"></i>Nothing found for “{{ q }}”.{% if q|length < 2 %} Type at least 2 characters.{% endif %}</div>{% endif %}
+<div class="row g-3">{% for title, icon, items in groups %}
+<div class="col-lg-6"><div class="card"><div class="card-header"><i class="bi {{ icon }} me-2 text-primary"></i>{{ title }} <span class="badge text-bg-light ms-1">{{ items|length }}</span></div>
+<div class="list-group list-group-flush">{% for label, sub, url in items %}<a href="{{ url }}" class="list-group-item list-group-item-action"><div class="fw-semibold">{{ label }}</div><div class="small text-muted">{{ sub }}</div></a>{% endfor %}</div></div></div>
+{% endfor %}</div>
+{% endblock %}

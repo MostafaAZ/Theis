@@ -1,0 +1,10 @@
+{% extends "ims/base.html" %}{% load kubbar %}
+{% block content %}
+<div class="page-actions"><div><h1 class="h4 mb-0">{{ c.name }}</h1><div class="text-muted small">{{ c.commercial_register_no }} · {{ c.region|default:"no region" }} · sales rep {{ c.sales_rep|default:"–" }} · Odoo {{ c.odoo_ref|default:"–" }}</div></div>
+{% if can_edit %}<a href="/customers/{{ c.pk }}/edit/" class="btn btn-outline-primary ms-auto"><i class="bi bi-pencil me-1"></i>Edit</a>{% endif %}</div>
+<div class="row g-3">
+<div class="col-lg-6"><div class="card"><div class="card-header">Products bought · total {{ total|egp }} EGP</div><div class="table-wrap"><table class="table table-sm"><thead><tr><th>Product</th><th class="num">Units</th><th class="num">EGP</th></tr></thead><tbody>{% for r in by_product %}<tr><td><a href="/products/{{ r.product_id }}/">{{ r.product__name }}</a></td><td class="num">{{ r.q }}</td><td class="num">{{ r.v|egp }}</td></tr>{% empty %}<tr><td colspan="3" class="text-muted">No sales.</td></tr>{% endfor %}</tbody></table></div></div></div>
+<div class="col-lg-6"><div class="card mb-3"><div class="card-header">Near-expiry offers made to this customer</div><div class="table-wrap"><table class="table table-sm"><tbody>{% for o in offers %}<tr><td>{{ o.offered_at|date:"d M Y" }}</td><td>{{ o.batch.product.name }}</td><td class="num">{{ o.qty_offered }}</td><td><span class="badge {{ o.outcome|status_class }}">{{ o.get_outcome_display }}</span></td></tr>{% empty %}<tr><td class="text-muted">No offers yet.</td></tr>{% endfor %}</tbody></table></div></div>
+<div class="card"><div class="card-header">Recent sales lines</div><div class="table-wrap"><table class="table table-sm"><tbody>{% for s in recent %}<tr><td>{{ s.period|date:"M Y" }}</td><td>{{ s.product.name }}</td><td class="num">{{ s.quantity }}</td><td class="num">{{ s.total|egp }}</td></tr>{% endfor %}</tbody></table></div></div></div>
+</div>
+{% endblock %}

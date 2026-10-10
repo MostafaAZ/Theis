@@ -1,7 +1,7 @@
 {% extends "ims/base.html" %}
 {% block title %}Audit trail{% endblock %}
 {% block content %}
-<h1 class="h4 mb-3">Audit trail <small class="text-muted fs-6">UC-44</small></h1>
+<h1 class="h4 mb-3">Audit trail</h1>
 <form class="card card-body mb-3" method="get">{% include "ims/_fields.html" with col="col-md-2" %}
 <div class="mt-3 d-flex gap-2"><button class="btn btn-primary">Filter</button><a href="?{{ query }}&export=pdf" class="btn btn-outline-secondary">Export PDF</a><a href="?{{ query }}&export=xlsx" class="btn btn-outline-secondary">Export Excel</a></div></form>
 <p class="small text-muted">Entries are append-only and cannot be edited or deleted by any role.</p>

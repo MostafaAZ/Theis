@@ -1,0 +1,7 @@
+{% extends "b2b/account/_layout.html" %}{% load b2b kubbar %}
+{% block account %}
+<h1 class="h4 mb-3">{% t "Invoices" %}</h1>
+<div class="table-wrap"><table class="table align-middle"><thead><tr><th>Invoice</th><th>{% t "Order" %}</th><th>{% t "Date" %}</th><th>{% t "Due" %}</th><th class="num">{% t "Amount" %}</th><th>{% t "Status" %}</th><th></th></tr></thead><tbody>
+{% for i in invoices %}<tr><td class="fw-semibold">{{ i.number }}</td><td><a href="/orders/{{ i.order.pk }}/">{{ i.order.reference }}</a></td><td>{{ i.issue_date }}</td><td>{{ i.due_date }}{% if i.is_overdue %} <span class="badge text-bg-danger">overdue</span>{% endif %}</td><td class="num">{{ i.amount|egp }} EGP</td><td><span class="badge {% if i.status == 'paid' %}text-bg-success{% else %}text-bg-warning{% endif %}">{% if i.status == 'paid' %}{% t "Paid" %}{% else %}{% t "Unpaid" %}{% endif %}</span></td><td class="text-end"><a href="/orders/{{ i.order.pk }}/invoice/" class="btn btn-sm btn-outline-b2b" target="_blank"><i class="bi bi-download me-1"></i>{% t "Download" %}</a></td></tr>
+{% empty %}<tr><td colspan="7"><div class="empty-state"><i class="bi bi-receipt"></i>—</div></td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

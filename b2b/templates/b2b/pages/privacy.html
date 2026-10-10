@@ -1,0 +1,11 @@
+{% extends "b2b/base.html" %}{% load b2b %}
+{% block title %}{% t "Privacy & data protection" %}{% endblock %}
+{% block content %}
+<div class="bg-white border rounded-4 p-4" style="max-width:860px">
+<h1 class="h3">{% t "Privacy & data protection" %}</h1><p class="text-muted small">In line with Egyptian Personal Data Protection Law No. 151 of 2020.</p>
+<h2 class="h6 mt-4">What we collect and why</h2><p>Company details, the owner's name and national ID, and the documents you upload are used only to verify that your company may buy veterinary products, and to process your orders and invoices.</p>
+<h2 class="h6">How we protect it</h2><ul><li>Documents and the national ID number are encrypted when stored.</li><li>Only the Regulatory Affairs Officer and the System Administrator can open documents, and every view is logged.</li><li>All traffic uses HTTPS.</li></ul>
+<h2 class="h6">How long we keep it</h2><p>Documents of rejected applications are deleted after 90 days. Records of verified accounts are kept while the account is active.</p>
+<h2 class="h6">Your consent</h2><p>You gave consent when registering; the date is stored with your account. To ask about your data, <a href="/contact/">contact us</a>.</p>
+</div>
+{% endblock %}

@@ -1,7 +1,7 @@
 {% extends "ims/base.html" %}{% load kubbar %}
 {% block title %}Product registrations{% endblock %}
 {% block content %}
-<div class="d-flex mb-3"><h1 class="h4">Product registrations <small class="text-muted fs-6">UC-20</small></h1>{% if 'regulatory' in user.roles %}<a class="btn btn-primary ms-auto" href="/registrations/new/">New registration</a>{% endif %}</div>
+<div class="d-flex mb-3"><h1 class="h4">Product registrations</h1>{% if 'regulatory' in user.roles %}<a class="btn btn-primary ms-auto" href="/registrations/new/">New registration</a>{% endif %}</div>
 <div class="table-responsive"><table class="table table-sm bg-white">
 <thead><tr><th>Product</th><th>Market</th><th>Authority</th><th>Registration no.</th><th>Status</th><th>Expires</th><th>Certificate</th><th></th></tr></thead>
 <tbody>{% for r in regs %}<tr><td>{{ r.product.name }}</td><td>{{ r.market }}</td><td>{{ r.authority }}</td><td>{{ r.registration_no }}</td><td><span class="badge {{ r.status|status_class }}">{{ r.get_status_display }}</span></td>

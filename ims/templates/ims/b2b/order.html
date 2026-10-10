@@ -1,0 +1,16 @@
+{% extends "ims/base.html" %}{% load kubbar %}
+{% block content %}
+<div class="page-actions"><div><h1 class="h4 mb-0">Order {{ order.reference }} <span class="badge {{ order.status|status_class }} align-middle">{{ order.awaiting_label }}</span></h1><div class="text-muted small">{{ order.buyer }} · placed {{ order.created_at|date:"d M Y H:i" }} · {{ order.get_payment_method_display|default:"payment not chosen" }}</div></div></div>
+<div class="row g-3"><div class="col-lg-8"><div class="table-wrap"><table class="table"><thead><tr><th>Product</th><th>Lot</th><th>Expiry</th><th class="num">Qty</th><th class="num">Unit price</th><th class="num">Total</th></tr></thead><tbody>
+{% for l in lines %}<tr><td>{{ l.batch.product.name }}</td><td><a href="/stock/batch/{{ l.batch.pk }}/">{{ l.batch.lot_number }}</a></td><td>{{ l.batch.expiry_date }}</td><td class="num">{{ l.quantity }}</td><td class="num">{{ l.unit_price|egp }}</td><td class="num">{{ l.line_total|egp }}</td></tr>{% endfor %}
+<tr class="fw-semibold"><td colspan="5">Total (EGP)</td><td class="num">{{ order.total|egp }}</td></tr></tbody></table></div></div>
+<div class="col-lg-4"><div class="card"><div class="card-body small"><dl class="row dl-grid mb-0">
+<dt class="col-5">Deliver to</dt><dd class="col-7">{{ order.delivery_address }}</dd>
+<dt class="col-5">Confirmed</dt><dd class="col-7">{{ order.confirmed_at|date:"d M Y H:i"|default:"–" }}</dd>
+<dt class="col-5">Dispatched</dt><dd class="col-7">{{ order.dispatched_at|date:"d M Y H:i"|default:"–" }} {{ order.delivery_method }}</dd>
+<dt class="col-5">Delivered</dt><dd class="col-7">{{ order.delivered_at|date:"d M Y H:i"|default:"–" }}</dd>
+<dt class="col-5">Invoice</dt><dd class="col-7">{% if invoice %}{{ invoice.number }} · {{ invoice.get_status_display }}{% else %}–{% endif %}</dd>
+{% if order.cancel_reason %}<dt class="col-5">Cancelled</dt><dd class="col-7">{{ order.cancel_reason }}</dd>{% endif %}
+{% if order.delivery_issue %}<dt class="col-5 text-danger">Issue</dt><dd class="col-7" style="white-space:pre-line">{{ order.delivery_issue }}</dd>{% endif %}
+</dl></div></div></div></div>
+{% endblock %}

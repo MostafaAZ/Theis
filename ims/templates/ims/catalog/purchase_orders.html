@@ -1,0 +1,12 @@
+{% extends "ims/base.html" %}{% load kubbar %}
+{% block content %}
+<div class="page-actions"><h1 class="h4">Purchase orders</h1>{% if can_edit %}<a href="/purchase-orders/new/" class="btn btn-primary ms-auto"><i class="bi bi-plus-lg me-1"></i>New purchase order</a>{% endif %}</div>
+{% if pending_plans and can_edit %}<div class="card border-primary mb-3"><div class="card-body d-flex flex-wrap align-items-center gap-2"><i class="bi bi-lightbulb text-primary fs-4"></i><div class="me-auto"><strong>Approved plans without purchase orders.</strong> Create the POs in one click (one per supplier).</div>
+{% for p in pending_plans %}<form method="post" action="/purchase-orders/new/">{% csrf_token %}<button name="from_plan" value="{{ p.pk }}" class="btn btn-sm btn-primary">Create POs from {{ p.number }}</button></form>{% endfor %}</div></div>{% endif %}
+<ul class="nav nav-tabs mb-3">{% for v, l in statuses %}<li class="nav-item"><a class="nav-link {% if status == v %}active{% endif %}" href="?status={{ v }}">{{ l }}</a></li>{% endfor %}<li class="nav-item"><a class="nav-link {% if status == 'all' %}active{% endif %}" href="?status=all">All</a></li></ul>
+<div class="table-wrap"><table class="table table-hover align-middle"><thead><tr><th>PO</th><th>Supplier</th><th>Ordered</th><th>Expected</th><th>Lines</th><th>From plan</th><th>Status</th></tr></thead>
+<tbody>{% for o in orders %}<tr class="pick" onclick="location.href='/purchase-orders/{{ o.pk }}/'"><td><a href="/purchase-orders/{{ o.pk }}/" class="fw-semibold">{{ o.number }}</a></td><td>{{ o.supplier }}</td><td>{{ o.order_date }}</td>
+<td>{{ o.expected_date|default:"–" }}{% if o.status == 'open' and o.expected_date and o.expected_date < today %} <span class="badge text-bg-danger">overdue</span>{% endif %}</td>
+<td class="small">{% for l in o.lines.all %}{{ l.product.name }} × {{ l.quantity }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</td><td>{{ o.plan|default:"–" }}</td><td><span class="badge {{ o.status|status_class }}">{{ o.get_status_display }}</span></td></tr>
+{% empty %}<tr><td colspan="7"><div class="empty-state"><i class="bi bi-cart"></i>No purchase orders here.</div></td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}
