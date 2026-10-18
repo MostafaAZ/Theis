@@ -259,3 +259,36 @@ class Invoice(models.Model):
     @property
     def is_overdue(self):
         return self.status == self.UNPAID and self.due_date < timezone.localdate()
+
+
+class SupportMessage(models.Model):
+    """A question from a buyer or visitor, answered by Kubbar staff in the IMS."""
+
+    TOPICS = [("order", "An order"), ("product", "A product or listing"),
+              ("account", "My account or verification"), ("payment", "Payment or invoice"),
+              ("other", "Something else")]
+    OPEN = "open"
+    ANSWERED = "answered"
+    STATUSES = [(OPEN, "Open"), (ANSWERED, "Answered")]
+
+    buyer = models.ForeignKey(Buyer, null=True, blank=True, on_delete=models.SET_NULL,
+                              related_name="messages")
+    name = models.CharField(max_length=120)
+    email = models.EmailField()
+    company = models.CharField(max_length=160, blank=True)
+    phone = models.CharField(max_length=30, blank=True)
+    topic = models.CharField(max_length=10, choices=TOPICS, default="other")
+    order = models.ForeignKey(PlatformOrder, null=True, blank=True, on_delete=models.SET_NULL)
+    message = models.TextField()
+    created_at = models.DateTimeField(default=timezone.now)
+    status = models.CharField(max_length=10, choices=STATUSES, default=OPEN)
+    reply = models.TextField(blank=True)
+    replied_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL,
+                                   related_name="+")
+    replied_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.get_topic_display()} – {self.name}"

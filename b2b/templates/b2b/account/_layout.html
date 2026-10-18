@@ -1,0 +1,18 @@
+{% extends "b2b/base.html" %}{% load b2b kubbar %}
+{% block title %}{% t "My Account" %}{% endblock %}
+{% block content %}
+<div class="row g-4">
+  <aside class="col-lg-3">
+    <div class="bg-white border rounded-4 p-3 mb-3"><div class="d-flex align-items-center gap-2"><span class="avatar" style="background:var(--b2b-soft);color:var(--b2b)"><i class="bi bi-building"></i></span><div><div class="fw-semibold">{{ buyer.company_name }}</div><span class="badge {{ buyer.status|status_class }}">{% t buyer.get_status_display %}</span></div></div></div>
+    <div class="list-group account-nav">
+      <a href="/account/" class="list-group-item list-group-item-action {% if tab == 'overview' %}active{% endif %}"><i class="bi bi-speedometer2"></i> {% t "Overview" %}</a>
+      <a href="/orders/" class="list-group-item list-group-item-action {% if tab == 'orders' %}active{% endif %}"><i class="bi bi-receipt"></i> {% t "My Orders" %}</a>
+      <a href="/account/invoices/" class="list-group-item list-group-item-action {% if tab == 'invoices' %}active{% endif %}"><i class="bi bi-receipt-cutoff"></i> {% t "Invoices" %}</a>
+      <a href="/account/profile/" class="list-group-item list-group-item-action {% if tab == 'profile' %}active{% endif %}"><i class="bi bi-building"></i> {% t "Company profile" %}</a>
+      <a href="/account/documents/" class="list-group-item list-group-item-action {% if tab == 'documents' %}active{% endif %}"><i class="bi bi-file-earmark-text"></i> {% t "Documents" %}</a>
+      <a href="/account/messages/" class="list-group-item list-group-item-action {% if tab == 'messages' %}active{% endif %}"><i class="bi bi-chat-dots"></i> {% t "Messages" %}</a>
+    </div>
+  </aside>
+  <div class="col-lg-9">{% block account %}{% endblock %}</div>
+</div>
+{% endblock %}

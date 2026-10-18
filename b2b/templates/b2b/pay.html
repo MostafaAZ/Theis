@@ -1,7 +1,8 @@
 {% extends "b2b/base.html" %}{% load b2b kubbar %}
 {% block title %}{% t "Payment" %}{% endblock %}
 {% block content %}
-<h1 class="h4">{% t "Payment" %} · {{ order.reference }}</h1>
+<div class="steps"><span class="step done"><b>✓</b>{% t "Cart" %}</span><span class="step active"><b>2</b>{% t "Payment" %}</span><span class="step"><b>3</b>{% t "Confirmed" %}</span></div>
+<h1 class="h3">{% t "Payment" %} · {{ order.reference }}</h1>
 <p>{% t "Total" %}: <strong>{{ order.total|egp }} EGP</strong> · {% t "Reservation held until" %} {{ order.reservation_expires_at|date:"d M Y H:i" }}</p>
 {% if order.payment_rejection_reason %}<div class="alert alert-warning">{{ order.payment_rejection_reason }}</div>{% endif %}
 <div class="row g-3">

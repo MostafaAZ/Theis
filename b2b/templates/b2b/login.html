@@ -1,9 +1,25 @@
 {% extends "b2b/base.html" %}{% load b2b %}
 {% block title %}{% t "Log In" %}{% endblock %}
 {% block content %}
-<div class="row justify-content-center"><div class="col-md-6 col-lg-4">
-<h1 class="h4 mb-3 text-center">{% t "Log In" %}</h1>
-<div class="card"><div class="card-body"><form method="post">{% csrf_token %}{% include "b2b/_fields.html" with col="col-12" %}<button class="btn btn-b2b w-100 mt-3">{% t "Log In" %}</button></form>
-<div class="d-flex justify-content-between mt-3 small"><a href="/password-reset/">{% t "Forgot password?" %}</a><a href="/register/">{% t "Register" %}</a></div></div></div>
+{% if DEMO_MODE %}
+<div class="text-center mb-4"><span class="badge rounded-pill demo-badge mb-3"><i class="bi bi-easel me-1"></i>Presentation mode</span><h1 class="h3 mb-1">Present the platform as…</h1><p class="text-muted mb-0">One click – no password. Use <strong>Switch buyer</strong> at the top to change.</p></div>
+<div class="row g-3 mb-4">{% for c in demo_buyers %}
+  <div class="col-sm-6 col-lg-3"><a href="/demo/login/{{ c.user.pk }}/" class="card demo-card buyer h-100 text-decoration-none"><div class="card-body">
+    <div class="fw-semibold text-dark">{{ c.user.buyer.company_name }}</div>
+    <div class="small mb-2"><span class="badge {% if c.user.buyer.status == 'verified' %}text-bg-success{% else %}text-bg-warning{% endif %}">{{ c.user.buyer.get_status_display }}</span> <span class="text-muted">{{ c.user.buyer.buyer_type }}</span></div>
+    <div class="small fw-semibold text-dark mb-1">{{ c.headline }}</div>
+    <ul class="small text-muted ps-3 mb-0">{% for t in c.tips %}<li>{{ t }}</li>{% endfor %}</ul>
+  </div><div class="card-footer bg-white border-0 pt-0"><span class="btn btn-b2b btn-sm w-100">Log in as this buyer</span></div></a></div>
+{% endfor %}</div>
+<div class="d-flex flex-wrap gap-2 justify-content-center mb-4"><a href="/" class="btn btn-outline-b2b btn-sm">Browse as a visitor</a><a href="{{ IMS_URL }}/login/" class="btn btn-outline-secondary btn-sm" target="_blank"><i class="bi bi-box-seam me-1"></i>Staff users (IMS)</a></div>
+<details class="text-center"><summary class="small text-muted">Log in normally</summary>
+{% endif %}
+<div class="row justify-content-center py-3"><div class="col-md-7 col-lg-5">
+<div class="card"><div class="card-body p-4 p-md-5">
+  <div class="text-center mb-4"><span class="shop-brand justify-content-center"><span class="mark"><i class="bi bi-shop"></i></span></span><h1 class="h4 mt-3 mb-1">{% t "Log In" %}</h1><p class="text-muted small mb-0">{% t "Verified trade buyers only" %}</p></div>
+  <form method="post">{% csrf_token %}{% include "b2b/_fields.html" with col="col-12" %}<button class="btn btn-b2b w-100 mt-4 py-2">{% t "Log In" %}</button></form>
+  <div class="d-flex justify-content-between mt-3 small"><a href="/password-reset/">{% t "Forgot password?" %}</a><a href="/register/">{% t "Register your company" %}</a></div>
 </div></div>
+</div></div>
+{% if DEMO_MODE %}</details>{% endif %}
 {% endblock %}

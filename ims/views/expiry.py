@@ -122,7 +122,7 @@ def release_decide(request, pk):
         "min_pct": rule("price_band_min_pct"), "max_pct": rule("price_band_max_pct")})
 
 
-@role_required(Role.COO, Role.MANAGEMENT, Role.SALES)
+@role_required()
 def listings(request):
     items = Listing.objects.select_related("batch__product").order_by("status",
                                                                       "batch__expiry_date")

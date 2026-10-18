@@ -1,7 +1,7 @@
 {% extends "ims/base.html" %}{% load kubbar %}
 {% block title %}Payment queue{% endblock %}
 {% block content %}
-<h1 class="h4 mb-3">Payment queue <small class="text-muted fs-6">UC-38</small></h1>
+<h1 class="h4 mb-3">Payment queue</h1>
 <table class="table bg-white mb-4"><thead><tr><th>Order</th><th>Buyer</th><th>Method</th><th>Total (EGP)</th><th>Placed</th><th>Hold expires</th><th></th></tr></thead>
 <tbody>{% for o in queue %}<tr><td>{{ o.reference }}</td><td>{{ o.buyer }}</td><td>{{ o.get_payment_method_display }}</td><td>{{ o.total|egp }}</td><td>{{ o.created_at|date:"d M H:i" }}</td><td>{{ o.reservation_expires_at|date:"d M H:i" }}</td><td><a class="btn btn-sm btn-primary" href="/payments/{{ o.pk }}/">Review</a></td></tr>
 {% empty %}<tr><td colspan="7" class="text-muted">No orders awaiting payment.</td></tr>{% endfor %}</tbody></table>

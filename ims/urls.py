@@ -1,6 +1,7 @@
 from django.urls import path
 
-from .views import admin, analytics, audits, auth, buyers, expiry, planning, stock, writeoffs
+from .views import (admin, analytics, audits, auth, b2b, buyers, catalog, demo, expiry, misc,
+                    planning, stock, writeoffs)
 
 app_name = "ims"
 
@@ -9,10 +10,39 @@ urlpatterns = [
     path("login/", auth.login_view, name="login"),
     path("login/verify/", auth.login_verify, name="login_verify"),
     path("logout/", auth.logout_view, name="logout"),
+    path("demo/login/<int:pk>/", demo.demo_login, name="demo_login"),
+    path("demo/reset/", demo.demo_reset, name="demo_reset"),
     path("", auth.dashboard, name="dashboard"),
     path("notifications/", auth.notifications, name="notifications"),
     path("notifications/<int:pk>/", auth.open_notification, name="open_notification"),
     path("approvals/", audits.approvals, name="approvals"),
+    path("search/", misc.search, name="search"),
+    path("profile/", misc.profile, name="profile"),
+    path("reports/", misc.reports, name="reports"),
+    path("reports/<slug:key>.<str:fmt>", misc.report_download, name="report_download"),
+    # Master data
+    path("products/", catalog.products, name="products"),
+    path("products/new/", catalog.product_edit, name="product_new"),
+    path("products/<int:pk>/", catalog.product_detail, name="product_detail"),
+    path("products/<int:pk>/edit/", catalog.product_edit, name="product_edit"),
+    path("products/<int:pk>/image/", catalog.product_image, name="product_image"),
+    path("customers/", catalog.customers, name="customers"),
+    path("customers/new/", catalog.customer_edit, name="customer_new"),
+    path("customers/<int:pk>/", catalog.customer_detail, name="customer_detail"),
+    path("customers/<int:pk>/edit/", catalog.customer_edit, name="customer_edit"),
+    path("suppliers/", catalog.suppliers, name="suppliers"),
+    path("suppliers/new/", catalog.supplier_edit, name="supplier_new"),
+    path("suppliers/<int:pk>/", catalog.supplier_edit, name="supplier_edit"),
+    path("purchase-orders/", catalog.purchase_orders, name="purchase_orders"),
+    path("purchase-orders/new/", catalog.po_new, name="po_new"),
+    path("purchase-orders/<int:pk>/", catalog.po_detail, name="po_detail"),
+    # B2B from the IMS side
+    path("b2b/post/", b2b.post_list, name="post_b2b"),
+    path("b2b/post/<int:pk>/", b2b.post_batch, name="post_batch"),
+    path("b2b/orders/", b2b.platform_orders, name="platform_orders"),
+    path("b2b/orders/<int:pk>/", b2b.platform_order, name="platform_order"),
+    path("b2b/messages/", b2b.messages_inbox, name="messages_inbox"),
+    path("b2b/messages/<int:pk>/", b2b.message_detail, name="message_detail"),
     # Module 1
     path("inspections/", stock.inspections, name="inspections"),
     path("stock/", stock.stock_search, name="stock_search"),

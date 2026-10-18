@@ -1,0 +1,12 @@
+{% extends "ims/base.html" %}
+{% block content %}
+<h1 class="h4">{{ msg.get_topic_display }} – {{ msg.company|default:msg.name }}</h1>
+<div class="row g-3"><div class="col-lg-7">
+<div class="card mb-3"><div class="card-body"><div class="small text-muted mb-2">{{ msg.created_at|date:"d M Y H:i" }} · {{ msg.name }} · {{ msg.email }}{% if msg.phone %} · {{ msg.phone }}{% endif %}</div><p style="white-space:pre-line" class="mb-0">{{ msg.message }}</p></div></div>
+{% if msg.reply %}<div class="card"><div class="card-header">Reply by {{ msg.replied_by }} · {{ msg.replied_at|date:"d M Y H:i" }}</div><div class="card-body" style="white-space:pre-line">{{ msg.reply }}</div></div>
+{% else %}<form method="post" class="card card-body">{% csrf_token %}<label class="form-label">Your reply (sent by email and shown in the buyer's account)</label><textarea name="reply" rows="6" class="form-control mb-3"></textarea><button class="btn btn-primary align-self-start"><i class="bi bi-send me-1"></i>Send reply</button></form>{% endif %}
+</div><div class="col-lg-5"><div class="card"><div class="card-body small">
+{% if msg.buyer %}<strong>Buyer account</strong><br><a href="/buyers/{{ msg.buyer.pk }}/">{{ msg.buyer.company_name }}</a> · {{ msg.buyer.get_status_display }}{% else %}Sent by a visitor without an account.{% endif %}
+{% if msg.order %}<hr><strong>Order</strong><br><a href="/b2b/orders/{{ msg.order.pk }}/">{{ msg.order.reference }}</a> · {{ msg.order.get_status_display }}{% endif %}
+</div></div></div></div>
+{% endblock %}

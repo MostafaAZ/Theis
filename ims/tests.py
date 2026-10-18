@@ -1,5 +1,6 @@
 """IMS web tests: authentication, RBAC, screens and exports."""
 import re
+from unittest import mock
 
 from django.test import TestCase, override_settings
 
@@ -85,8 +86,8 @@ class ScreenTests(TestCase):
 
         for user in User.objects.filter(account_type=User.INTERNAL):
             self.client.force_login(user)
-            for _section, items in nav_for(user):
-                for _label, url in items:
+            for section in nav_for(user):
+                for url in [item["url"] for item in section["items"]]:
                     r = self.client.get(url)
                     self.assertEqual(r.status_code, 200, f"{user.email} {url}")
                     for link in sorted(set(re.findall(r'href="(/(?:stock/batch|expiry/batch|releases|'
@@ -122,3 +123,137 @@ class ScreenTests(TestCase):
                                                       "clearance_price": str(hi)})
         self.assertRedirects(r, "/releases/")
         self.assertTrue(Listing.objects.filter(release=rel).exists())
+
+
+class NewScreensTests(TestCase):
+    """Dashboards, Post to B2B, purchase orders, search, profile, reports, messages."""
+
+    def setUp(self):
+        self.w = World()
+        from inventory import services as inv
+
+        self.inv = inv
+        self.batch = self.w.batch(days=150, qty=300)
+        inv.evaluate_batch(self.batch)
+
+    def test_dashboard_lists_tasks_for_the_role(self):
+        self.client.force_login(self.w.user(Role.SALES))
+        r = self.client.get("/")
+        self.assertContains(r, "Review near-expiry batches")
+        self.assertContains(r, 'href="/b2b/post/"')
+
+    def test_coo_posts_to_b2b_directly(self):
+        from inventory.models import Listing
+
+        self.client.force_login(self.w.user(Role.COO))
+        r = self.client.get("/b2b/post/")
+        self.assertContains(r, "Post this batch")
+        r = self.client.post(f"/b2b/post/{self.batch.pk}/", {
+            "quantity": 100, "reason": "no_demand", "clearance_price": "68.00"})
+        self.assertRedirects(r, "/listings/")
+        listing = Listing.objects.get()
+        self.assertEqual((listing.listed_qty, str(listing.clearance_price)), (100, "68.00"))
+
+    def test_sales_post_goes_to_coo(self):
+        from inventory.models import Listing, SurplusRelease
+
+        self.client.force_login(self.w.user(Role.SALES))
+        r = self.client.post(f"/b2b/post/{self.batch.pk}/", {"quantity": 50,
+                                                              "reason": "no_demand"})
+        self.assertRedirects(r, "/b2b/post/")
+        self.assertFalse(Listing.objects.exists())
+        self.assertEqual(SurplusRelease.objects.get().status, SurplusRelease.PENDING)
+
+    def test_unregistered_batch_is_not_postable(self):
+        self.w.product.registrations.all().delete()
+        eligible, blocked = self.inv.b2b_candidates()
+        self.assertEqual(eligible, [])
+        self.assertIn("registration", blocked[0][2])
+
+    def test_purchase_order_by_hand(self):
+        from inventory.models import PurchaseOrder
+
+        self.client.force_login(self.w.user(Role.PROCUREMENT))
+        r = self.client.post("/purchase-orders/new/", {
+            "supplier": self.w.supplier.pk, "product_0": self.w.product.pk, "qty_0": "500"})
+        po = PurchaseOrder.objects.get()
+        self.assertRedirects(r, f"/purchase-orders/{po.pk}/")
+        self.assertEqual(po.lines.get().quantity, 500)
+
+    def test_product_create_and_detail(self):
+        self.client.force_login(self.w.user(Role.PROCUREMENT))
+        r = self.client.post("/products/new/", {
+            "sku": "NEW-1", "name": "New Product", "category": self.w.meds.pk, "unit": "bottle",
+            "storage_condition": "ambient", "original_price": "50", "unit_cost": "30",
+            "moq": "100", "lead_time_days": "60", "shelf_life_months": "24", "is_active": "on"})
+        from inventory.models import Product
+
+        p = Product.objects.get(sku="NEW-1")
+        self.assertRedirects(r, f"/products/{p.pk}/")
+        self.assertContains(self.client.get(f"/products/{p.pk}/"), "New Product")
+        img = self.client.get(f"/products/{p.pk}/image/")
+        self.assertEqual(img["Content-Type"], "image/svg+xml")
+
+    def test_global_search_and_profile(self):
+        self.client.force_login(self.w.user(Role.GM))
+        r = self.client.get("/search/?q=Enro")
+        self.assertRedirects(r, f"/products/{self.w.product.pk}/")
+        r = self.client.post("/profile/", {"password": "1", "old_password": PASSWORD,
+                                           "new_password1": "Newpass2026abc",
+                                           "new_password2": "Newpass2026abc"})
+        self.assertRedirects(r, "/profile/")
+        self.assertTrue(User.objects.get(pk=self.w.user(Role.GM).pk).check_password(
+            "Newpass2026abc"))
+
+    def test_reports_download(self):
+        self.client.force_login(self.w.user(Role.INVENTORY))
+        r = self.client.get("/reports/stock.xlsx")
+        self.assertTrue(r.content.startswith(b"PK"))
+        r = self.client.get("/reports/near-expiry.pdf")
+        self.assertTrue(r.content.startswith(b"%PDF"))
+        self.assertEqual(self.client.get("/reports/orders.pdf").status_code, 200)
+        self.client.force_login(self.w.user(Role.QA))
+        self.assertEqual(self.client.get("/reports/sales.pdf").status_code, 404)
+
+    def test_reply_to_buyer_message(self):
+        from commerce.models import SupportMessage
+
+        m = SupportMessage.objects.create(name="A", email="a@b.example", topic="other",
+                                          message="Hi")
+        self.client.force_login(self.w.user(Role.SALES))
+        r = self.client.post(f"/b2b/messages/{m.pk}/", {"reply": "Hello back"})
+        self.assertRedirects(r, "/b2b/messages/")
+        m.refresh_from_db()
+        self.assertEqual((m.status, m.reply), (SupportMessage.ANSWERED, "Hello back"))
+
+
+class PresentationModeTests(TestCase):
+    def setUp(self):
+        self.w = World()
+        self.gm = self.w.user(Role.GM)
+
+    def test_off_by_default(self):
+        self.assertEqual(self.client.get(f"/demo/login/{self.gm.pk}/").status_code, 404)
+        self.assertEqual(self.client.post("/demo/reset/").status_code, 404)
+        self.assertNotContains(self.client.get("/login/"), "Presentation mode")
+
+    @override_settings(DEMO_MODE=True)
+    @mock.patch.dict("core.demo.STAFF", {"gm@test.example": ("GM", ["Approve things"]),
+                                         "coo@test.example": ("COO", ["Release things"])})
+    def test_one_click_login_and_switch(self):
+        r = self.client.get("/login/")
+        self.assertContains(r, "Who do you want to present as?")
+        self.assertContains(r, f'/demo/login/{self.gm.pk}/')
+        r = self.client.get(f"/demo/login/{self.gm.pk}/")
+        self.assertRedirects(r, "/")
+        r = self.client.get("/")
+        self.assertContains(r, "Switch user")
+        self.assertContains(r, "Presenter notes")
+        coo = self.w.user(Role.COO)
+        self.client.get(f"/demo/login/{coo.pk}/")
+        self.assertEqual(int(self.client.session["_auth_user_id"]), coo.pk)
+
+    @override_settings(DEMO_MODE=True)
+    def test_buyers_cannot_be_used_on_ims(self):
+        b = self.w.buyer()
+        self.assertEqual(self.client.get(f"/demo/login/{b.user.pk}/").status_code, 404)

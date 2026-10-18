@@ -53,6 +53,23 @@ the SRS left something open.
 | 40 | `/listings/<id>/` | `reprice_listing`, `change_listing_quantity` |
 | 41–44 | `/admin/users/`, `/admin/rules/`, `/admin/reference/`, `/admin/audit/` | `ims/views/admin.py` |
 
+## Screens added beyond the use cases
+
+These make the system easier to use and close gaps found in user testing.
+
+| Screen | Where | Code |
+|---|---|---|
+| Role dashboard with "Your tasks", KPIs, quick actions, charts | IMS `/` | `ims/dashboard.py` |
+| Post to B2B (one guided flow; COO publishes, Sales requests) | IMS `/b2b/post/` | `inventory.services.post_to_b2b` |
+| Products (list, detail with batches/sales/registrations/listings, create, edit, image) | IMS `/products/` | `ims/views/catalog.py` |
+| Customers, suppliers | IMS `/customers/`, `/suppliers/` | `ims/views/catalog.py` |
+| Purchase orders (create, from approved plan, close) | IMS `/purchase-orders/` | `inventory.services.create_purchase_order`, `purchase_orders_from_plan` |
+| Platform orders overview | IMS `/b2b/orders/` | `ims/views/b2b.py` |
+| Buyer messages inbox and replies | IMS `/b2b/messages/` | `commerce.models.SupportMessage` |
+| Global search, My profile, Reports & exports | IMS `/search/`, `/profile/`, `/reports/` | `ims/views/misc.py` |
+| Page purpose, breadcrumbs and "How it works" help on every screen | IMS | `ims/nav.py` (`PAGES`) |
+| Storefront home, category browsing, product page, account area, contact, FAQ, terms, privacy | Platform | `b2b/shop.py` |
+
 ## Algorithms
 
 - **FEFO (FR-14, UC-09).** Eligible batches are In Stock or Near-Expiry, not

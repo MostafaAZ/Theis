@@ -1,6 +1,7 @@
-"""B2B E-Commerce Platform views (UC-02, UC-29 to UC-37)."""
+"""Platform views for sign-up, log-in, cart, checkout, payment and orders.
+
+Storefront pages (home, catalogue, account area, help) are in ``shop.py``."""
 import io
-from datetime import timedelta
 from functools import wraps
 
 from django.conf import settings
@@ -9,21 +10,18 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth import views as auth_views
 from django.core import signing
 from django.core.exceptions import ValidationError
-from django.db.models import F, Q
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from commerce import services as shop
-from commerce.models import BuyerDocument, PlatformOrder
-from core.models import AuditLog, ProductCategory, User
+from commerce.models import PlatformOrder
+from core.models import AuditLog, User
 from core.rules import rule_int
 from core.services import audit, email_buyer
 from inventory.models import Listing
 
-from .forms import (DOC_FIELDS, CheckoutForm, LoginForm, PreferencesForm, RegisterForm,
-                    ResubmitForm, TransferForm)
+from .forms import DOC_FIELDS, CheckoutForm, LoginForm, RegisterForm, TransferForm
 from .i18n import translate
 
 UNLOCK_SALT = "kubbar-b2b-unlock"
@@ -66,14 +64,6 @@ def set_language(request, code):
     request.session["lang"] = "ar" if code == "ar" else "en"
     nxt = request.GET.get("next", "/")
     return redirect(nxt if nxt.startswith("/") else "/")
-
-
-def home(request):
-    if request.user.is_authenticated and request.user.is_buyer and request.user.buyer.can_order:
-        return redirect("b2b:catalogue")
-    teaser = Listing.objects.filter(status=Listing.ACTIVE, available_qty__gt=0).select_related(
-        "batch__product__category")[:6]
-    return render(request, "b2b/home.html", {"teaser": teaser})
 
 
 # --------------------------------------------------------------------------
@@ -209,113 +199,6 @@ class PasswordResetConfirmView(auth_views.PasswordResetConfirmView):
 
 
 # --------------------------------------------------------------------------
-# Account (status, documents, preferences)
-# --------------------------------------------------------------------------
-@buyer_required()
-def account(request):
-    buyer = request.buyer
-    docs = shop.current_documents(buyer)
-    resubmit_form = ResubmitForm(request.POST or None, request.FILES or None, lang=lang(request))
-    prefs = PreferencesForm(request.POST or None, instance=buyer, lang=lang(request))
-    if request.method == "POST" and "resubmit" in request.POST and resubmit_form.is_valid():
-        d = resubmit_form.cleaned_data
-        try:
-            shop.resubmit_document(buyer, d["doc_type"], d["file"], d["expiry_date"])
-            if d["doc_type"] == BuyerDocument.LICENCE and buyer.ordering_suspended:
-                buyer.refresh_from_db()
-                from core.models import Role
-                from core.services import notify_roles
-
-                notify_roles(Role.REGULATORY, f"{buyer.company_name} uploaded a renewed "
-                                              f"licence.", f"/buyers/{buyer.pk}/")
-            messages.success(request, "Document uploaded.")
-            return redirect("b2b:account")
-        except ValidationError as e:
-            _err(request, e)
-    if request.method == "POST" and "prefs" in request.POST and prefs.is_valid():
-        prefs.save()
-        messages.success(request, "Preferences saved.")
-        return redirect("b2b:account")
-    return render(request, "b2b/account.html", {
-        "buyer": buyer, "docs": [(t, label, docs.get(t)) for t, label in BuyerDocument.TYPES],
-        "resubmit_form": resubmit_form, "prefs": prefs})
-
-
-# --------------------------------------------------------------------------
-# UC-33 catalogue
-# --------------------------------------------------------------------------
-def catalogue(request):
-    user = request.user
-    buyer = user.buyer if user.is_authenticated and user.is_buyer else None
-    if buyer and buyer.can_order:
-        qs = shop.catalogue_for(buyer)
-        categories = buyer.categories.all()
-    else:
-        qs = Listing.objects.filter(status=Listing.ACTIVE, available_qty__gt=0).select_related(
-            "batch__product__category")
-        categories = ProductCategory.objects.filter(is_expiring=True)
-    g = request.GET
-    if g.get("category"):
-        qs = qs.filter(batch__product__category_id=g["category"])
-    if g.get("q"):
-        qs = qs.filter(Q(batch__product__name__icontains=g["q"])
-                       | Q(batch__product__name_ar__icontains=g["q"])
-                       | Q(batch__lot_number__icontains=g["q"]))
-    if g.get("min_days", "").isdigit():
-        qs = qs.filter(batch__expiry_date__gte=timezone.localdate()
-                       + timedelta(days=int(g["min_days"])))
-    if g.get("expiry_before"):
-        qs = qs.filter(batch__expiry_date__lte=g["expiry_before"])
-    if buyer and buyer.can_order and g.get("max_price"):
-        try:
-            qs = qs.filter(clearance_price__lte=g["max_price"])
-        except (ValueError, ValidationError):
-            pass
-    sort = g.get("sort", "expiry")
-    qs = qs.order_by({"price": "clearance_price", "discount": F("clearance_price") /
-                      F("original_price"), "expiry": "batch__expiry_date"}.get(
-        sort, "batch__expiry_date"))
-    listings = list(qs)
-    for item in listings:
-        item.blocked = (buyer and buyer.can_order and item.batch.is_cold_chain
-                        and not buyer.cold_chain_eligible)
-    return render(request, "b2b/catalogue.html", {
-        "listings": listings, "categories": categories, "buyer": buyer,
-        "show_prices": bool(buyer and buyer.can_order), "g": g})
-
-
-def listing_detail(request, pk):
-    listing = get_object_or_404(Listing.objects.select_related("batch__product__category"),
-                                pk=pk)
-    user = request.user
-    buyer = user.buyer if user.is_authenticated and user.is_buyer else None
-    show_prices = bool(buyer and buyer.can_order)
-    reason = shop.listing_unavailable_reason(buyer, listing) if show_prices else ""
-    if show_prices and listing.status != Listing.ACTIVE and not reason:
-        reason = "This listing is no longer available."
-    if request.method == "POST" and show_prices and not reason:
-        try:
-            qty = int(request.POST.get("quantity", 0))
-        except ValueError:
-            qty = 0
-        cart = request.session.get("cart", {})
-        current = cart.get(str(pk), 0)
-        qty = max(0, qty)
-        if current + qty > listing.available_qty:
-            qty = max(0, listing.available_qty - current)
-            messages.warning(request, f"Quantity limited to the {listing.available_qty} "
-                                      f"available.")
-        if qty:
-            cart[str(pk)] = current + qty
-            request.session["cart"] = cart
-            messages.success(request, f"Added {qty} × {listing.batch.product.name} to your "
-                                      f"cart.")
-        return redirect("b2b:cart")
-    return render(request, "b2b/listing.html", {"listing": listing, "show_prices": show_prices,
-                                                "reason": reason, "buyer": buyer})
-
-
-# --------------------------------------------------------------------------
 # UC-34 / UC-35 cart and checkout
 # --------------------------------------------------------------------------
 def _cart_lines(request, buyer):
@@ -427,8 +310,9 @@ def pay(request, pk):
 
 @buyer_required()
 def orders(request):
-    items = request.buyer.orders.all()
-    return render(request, "b2b/orders.html", {"items": items})
+    items = request.buyer.orders.prefetch_related("lines__batch__product")
+    return render(request, "b2b/orders.html", {"items": items, "buyer": request.buyer,
+                                               "tab": "orders"})
 
 
 @buyer_required()
@@ -457,9 +341,15 @@ def order_detail(request, pk):
         if ts:
             history.append((label, ts))
     invoice = getattr(order, "invoice", None)
+    flow = ["placed", "awaiting_payment", "confirmed", "dispatched", "delivered"]
+    labels = dict(PlatformOrder.STATUSES)
+    current = flow.index(order.status) if order.status in flow else -1
+    track = [{"label": labels[s], "done": i <= current, "current": i == current}
+             for i, s in enumerate(flow)]
     return render(request, "b2b/order.html", {
         "order": order, "lines": order.lines.select_related("batch__product"),
-        "history": history, "invoice": invoice})
+        "history": history, "invoice": invoice, "track": track, "buyer": request.buyer,
+        "tab": "orders"})
 
 
 @buyer_required()

@@ -136,6 +136,8 @@ class Command(BaseCommand):
             self.clearance()
             self.buyers_and_orders()
             self.audits()
+        with transaction.atomic():
+            self.extras()
         inv.run_expiry_scan(triggered_by="seed")
         self.stdout.write(self.style.SUCCESS(
             f"Demo data loaded. Internal users and buyers share the password '{PASSWORD}'."))
@@ -332,7 +334,12 @@ class Command(BaseCommand):
         inv.record_offer(sales, amx, self.customers[7], 300, "pending")
         inv.flag_surplus(sales, amx, 800, "no_demand", "Projected unsold at expiry")
         ad3e = Batch.objects.get(product__sku="NUT-AD3E-1L", status=BatchStatus.NEAR_EXPIRY)
-        inv.flag_surplus(self.u["sales2"], ad3e, 1200, "seasonal", "Summer demand passed")
+        rel3 = inv.flag_surplus(self.u["sales2"], ad3e, 1200, "seasonal", "Summer demand passed")
+        inv.approve_release(coo, rel3, 1200, inv.price_band(ad3e.product.original_price)[1])
+        # The COO can also post straight to B2B.
+        for sku, qty in (("VAC-IB-1000", 600), ("FAD-MYC-25", 250)):
+            b = Batch.objects.get(product__sku=sku, status=BatchStatus.NEAR_EXPIRY)
+            inv.post_to_b2b(coo, b, qty, "no_demand", "Posted from the near-expiry review")
 
     def _register(self, email, company, btype, cr):
         files = {t: SimpleUploadedFile(f"{t}.pdf", TINY_PDF, content_type="application/pdf")
@@ -397,3 +404,89 @@ class Command(BaseCommand):
                            scheduled_date=timezone.localdate() + timedelta(days=3),
                            assigned_to=wo)
 
+
+    def extras(self):
+        """Give every role something waiting on its dashboard."""
+        from commerce.models import Invoice, SupportMessage
+        from planning import services as plan_svc
+        from planning.models import PurchasePlanLine
+
+        today = timezone.localdate()
+        blurbs = {
+            "Vaccines": "Live attenuated poultry vaccine. Store at 2–8°C; do not freeze. "
+                        "Registered with EDA.",
+            "Veterinary Medicaments": "Broad-spectrum veterinary medicine for poultry and "
+                                      "livestock. Registered with EDA.",
+            "Feed Additives": "Feed additive for compound feed and premixes. Registered with "
+                              "GOVS.",
+            "Nutritional Products": "Nutritional supplement for drinking water. Registered with "
+                                    "GOVS.",
+            "Capital Equipment": "Poultry house equipment.",
+        }
+        for p in Product.objects.select_related("category"):
+            p.description = blurbs.get(p.category.name, "")
+            p.save(update_fields=["description"])
+
+        # Purchase planning: one approved plan with POs, one waiting for the GM.
+        proc, gm = self.u["procurement"], self.u["gm"]
+        products = list(Product.objects.filter(category__is_expiring=True))
+        fc = plan_svc.generate_forecast(proc, 6, products)
+        approved = plan_svc.build_plan(proc, fc, f"{today:%Y}-Q{(today.month - 1) // 3 + 1}")
+        plan_svc.submit_plan(proc, approved)
+        plan_svc.decide_plan(gm, approved, {line.pk: (PurchasePlanLine.APPROVED, "")
+                                            for line in approved.lines.all()}, "Approved")
+        inv.purchase_orders_from_plan(proc, approved)
+        pending = plan_svc.build_plan(proc, fc, f"{today:%Y}-Q{(today.month - 1) // 3 + 2}")
+        plan_svc.submit_plan(proc, pending)
+        late = inv.create_purchase_order(proc, self.suppliers[3],
+                                         [(Product.objects.get(sku="FAD-PHY-20"), 200)],
+                                         expected_date=today - timedelta(days=6),
+                                         number="PO-2026-0690")
+        PurchaseOrder.objects.filter(pk=late.pk).update(order_date=today - timedelta(days=110))
+
+        # A vaccine count in progress for the Warehouse Officer.
+        inv.schedule_count(self.u["inventory"], count_type="cycle",
+                           warehouse=Warehouse.objects.get(name="Cairo Main Warehouse"),
+                           scope="category", category=ProductCategory.objects.get(
+                               name="Vaccines"), scheduled_date=today,
+                           assigned_to=self.u["warehouse"], exclude_open_dispatch=True)
+
+        # A credit order with an overdue invoice for Finance.
+        from commerce.models import Buyer
+        from inventory.models import Listing
+
+        sinai = Buyer.objects.get(commercial_register_no="CR-70002")
+        ivm = Listing.objects.get(batch__product__sku="MED-IVM-50")
+        order, _ = shop.place_order(sinai, [(ivm.pk, 150)], "Farm road 4, El Arish")
+        shop.choose_invoice(order)
+        invoice = shop.confirm_payment(self.u["finance"], order)
+        Invoice.objects.filter(pk=invoice.pk).update(
+            issue_date=today - timedelta(days=40), due_date=today - timedelta(days=10))
+
+        # A write-off waiting for the GM and QA.
+        expired = Batch.objects.get(lot_number="ELEC24X118")
+        inv.request_write_off(self.u["inventory"], expired, expired.qty_on_hand, "expired",
+                              "destruction")
+
+        # Buyer messages.
+        nile = Buyer.objects.get(commercial_register_no="CR-70001")
+        SupportMessage.objects.create(
+            buyer=nile, name=nile.contact_person, email=nile.user.email,
+            company=nile.company_name, topic="order", order=nile.orders.first(),
+            message="Hello, can you deliver our vaccine order before Thursday? Our cold room "
+                    "is ready.")
+        SupportMessage.objects.create(
+            name="Hassan Farouk", email="hassan@deltavet.example", company="Delta Vet Pharmacy",
+            phone="+20 100 222 3344", topic="account",
+            message="We are a licensed pharmacy in Tanta. Can we register if our licence is "
+                    "being renewed?")
+        answered = SupportMessage.objects.create(
+            buyer=nile, name=nile.contact_person, email=nile.user.email,
+            company=nile.company_name, topic="product",
+            message="Will more Ivermectin be listed this month?")
+        answered.reply = "Yes – we expect another batch within two weeks. Turn on new-listing " \
+                         "emails in your profile to be told first."
+        answered.status = SupportMessage.ANSWERED
+        answered.replied_by = self.u["sales"]
+        answered.replied_at = timezone.now()
+        answered.save()

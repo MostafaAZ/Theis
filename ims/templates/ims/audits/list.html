@@ -1,7 +1,7 @@
 {% extends "ims/base.html" %}{% load kubbar %}
 {% block title %}Warehouse audits{% endblock %}
 {% block content %}
-<div class="d-flex mb-3"><h1 class="h4">Warehouse audits <small class="text-muted fs-6">UC-10 to UC-13</small></h1>
+<div class="d-flex mb-3"><h1 class="h4">Warehouse audits</h1>
 {% if 'inventory' in user.roles %}<a href="/audits/new/" class="btn btn-primary ms-auto">New Count</a>{% endif %}</div>
 <div class="table-responsive"><table class="table bg-white">
 <thead><tr><th>Count</th><th>Type</th><th>Warehouse</th><th>Scope</th><th>Date</th><th>Assigned to</th><th>Status</th><th>Accuracy</th><th></th></tr></thead>

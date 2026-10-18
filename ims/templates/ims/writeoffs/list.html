@@ -1,9 +1,9 @@
 {% extends "ims/base.html" %}{% load kubbar %}
 {% block title %}Write-offs{% endblock %}
 {% block content %}
-<div class="d-flex mb-3"><h1 class="h4">Disposal and write-off <small class="text-muted fs-6">UC-21, UC-22</small></h1>{% if 'inventory' in user.roles %}<a href="/write-offs/new/" class="btn btn-primary ms-auto">Request write-off</a>{% endif %}</div>
+<div class="d-flex mb-3"><h1 class="h4">Disposal and write-off</h1>{% if 'inventory' in user.roles %}<a href="/write-offs/new/" class="btn btn-primary ms-auto">Request write-off</a>{% endif %}</div>
 {% if expired %}<div class="alert alert-dark"><strong>{{ expired|length }} expired batch(es)</strong> still on hand and blocked from sale:
-{% for b in expired %}<a class="badge text-bg-light border text-decoration-none" href="/write-offs/new/?batch={{ b.pk }}">{{ b.product.name }} · {{ b.lot_number }} ({{ b.qty_on_hand }})</a> {% endfor %}</div>{% endif %}
+{% for b in expired %}<a class="badge text-bg-light border text-decoration-none" href="{% if 'inventory' in user.roles %}/write-offs/new/?batch={{ b.pk }}{% else %}/stock/batch/{{ b.pk }}/{% endif %}">{{ b.product.name }} · {{ b.lot_number }} ({{ b.qty_on_hand }})</a> {% endfor %}</div>{% endif %}
 <div class="table-responsive"><table class="table bg-white">
 <thead><tr><th>Request</th><th>Batch</th><th>Qty</th><th>Reason</th><th>Method</th><th>GM</th><th>QA</th><th>Value (EGP)</th><th>Status</th><th></th></tr></thead>
 <tbody>{% for w in items %}<tr><td>{{ w }}</td><td>{{ w.batch.product.name }} · {{ w.batch.lot_number }}</td><td>{{ w.quantity }}</td><td>{{ w.get_reason_display }}</td><td>{{ w.get_disposal_method_display }}</td>

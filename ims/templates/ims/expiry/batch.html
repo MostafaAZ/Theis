@@ -1,11 +1,11 @@
 {% extends "ims/base.html" %}{% load kubbar %}
 {% block title %}Review {{ batch.lot_number }}{% endblock %}
 {% block content %}
-<h1 class="h4">{{ batch.product.name }} · lot {{ batch.lot_number }}</h1>
+<div class="page-actions"><h1 class="h4">{{ batch.product.name }} · lot {{ batch.lot_number }}</h1>{% if 'sales' in user.roles or 'coo' in user.roles %}{% if batch.status in 'near_expiry surplus released' %}<a href="/b2b/post/{{ batch.pk }}/" class="btn btn-primary ms-auto"><i class="bi bi-shop me-1"></i>Post to B2B</a>{% endif %}{% endif %}</div>
 <p><span class="badge {{ batch.status|status_class }}">{{ batch.get_status_display }}</span> <span class="badge {{ batch.days_to_expiry|expiry_class }}">{{ batch.days_to_expiry }} days to expiry ({{ batch.expiry_date }})</span> · on hand {{ batch.qty_on_hand }} {{ batch.product.unit }} · free {{ free }} · cost value {{ batch.cost_value|egp }} EGP · <a href="/stock/batch/{{ batch.pk }}/">batch record</a></p>
 <div class="row g-3">
 <div class="col-lg-6">
-  <div class="card mb-3"><div class="card-header">Demand picture (FR-28)</div><div class="card-body">
+  <div class="card mb-3"><div class="card-header">Demand picture</div><div class="card-body">
     <p class="mb-1">Average monthly sales, last 12 months: <strong>{{ avg }}</strong></p>
     <p class="mb-3">Projected quantity unsold at expiry: <strong class="{% if unsold %}text-danger{% endif %}">{{ unsold }}</strong></p>
     <h3 class="h6">Who bought this product in the last 12 months</h3>
@@ -25,7 +25,7 @@
   <form method="post">{% csrf_token %}{% include "ims/_fields.html" with form=surplus_form col="col-md-4" %}<button name="surplus" value="1" class="btn btn-warning mt-3">Flag as Surplus and route to COO</button></form></div></div>
   <form method="post">{% csrf_token %}<button name="watch" value="1" class="btn btn-outline-secondary">Keep Under Watch (projected unsold is zero)</button></form>
 {% elif batch.status == 'expired' %}
-  <div class="alert alert-dark">This batch has expired and is blocked from sale. <a href="/write-offs/new/?batch={{ batch.pk }}">Request write-off</a>.</div>
+  <div class="alert alert-dark">This batch has expired and is blocked from sale.{% if 'inventory' in user.roles %} <a href="/write-offs/new/?batch={{ batch.pk }}">Request write-off</a>.{% else %} The Inventory Controller requests the write-off.{% endif %}</div>
 {% else %}
   <div class="alert alert-light border">Offers and surplus flags are recorded by the responsible Sales Representative.</div>
 {% endif %}
