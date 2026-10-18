@@ -2,7 +2,14 @@ from django.conf import settings
 
 
 def app_context(request):
-    ctx = {"APP_NAME": getattr(settings, "APP_NAME", "ims")}
+    ctx = {"APP_NAME": getattr(settings, "APP_NAME", "ims"),
+           "DEMO_MODE": getattr(settings, "DEMO_MODE", False),
+           "IMS_URL": settings.IMS_BASE_URL, "B2B_URL": settings.B2B_BASE_URL}
+    if ctx["DEMO_MODE"]:
+        from core.demo import buyer_cards, staff_cards
+
+        ctx["demo_staff"] = staff_cards()
+        ctx["demo_buyers"] = buyer_cards()
     user = getattr(request, "user", None)
     if user is not None and user.is_authenticated and user.is_internal \
             and "ims" in settings.INSTALLED_APPS:

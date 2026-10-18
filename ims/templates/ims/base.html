@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="{% static 'kubbar/app.css' %}">
 </head>
 <body class="ims">
+{% if DEMO_MODE %}<div class="demo-bar"><i class="bi bi-easel me-1"></i>Presentation mode · one-click logins · <a href="/login/">switch user</a></div>{% endif %}
 {% if user.is_authenticated %}
 <div class="app-shell">
   <aside class="sidebar offcanvas-lg offcanvas-start" id="sidebar" tabindex="-1">
@@ -47,6 +48,15 @@
         <input name="q" value="{{ request.GET.q|default:'' }}" placeholder="Search products, lots, orders, buyers, POs…" aria-label="Search">
       </form>
       <div class="topbar-right">
+        {% if DEMO_MODE %}<div class="dropdown">
+          <button class="btn btn-sm demo-switch" data-bs-toggle="dropdown"><i class="bi bi-people me-1"></i><span class="d-none d-sm-inline">Switch user</span></button>
+          <div class="dropdown-menu dropdown-menu-end shadow demo-menu">
+            <h6 class="dropdown-header">Staff – IMS</h6>
+            {% for c in demo_staff %}<a class="dropdown-item {% if c.user.pk == user.pk %}active{% endif %}" href="/demo/login/{{ c.user.pk }}/"><span class="fw-semibold">{{ c.user.role_labels|join:", " }}</span> <span class="small text-muted">· {{ c.user }}</span></a>{% endfor %}
+            <div class="dropdown-divider"></div><h6 class="dropdown-header">Buyers – platform (new tab)</h6>
+            {% for c in demo_buyers %}<a class="dropdown-item" target="_blank" href="{{ B2B_URL }}/demo/login/{{ c.user.pk }}/">{{ c.user.buyer.company_name }} <span class="small text-muted">· {{ c.user.buyer.get_status_display }}</span></a>{% endfor %}
+            <div class="dropdown-divider"></div><a class="dropdown-item" href="/login/"><i class="bi bi-grid me-1"></i>All users with presenter notes</a>
+          </div></div>{% endif %}
         <button class="btn btn-icon" type="button" data-bs-toggle="offcanvas" data-bs-target="#help" title="Help for this page"><i class="bi bi-question-circle"></i></button>
         <div class="dropdown">
           <button class="btn btn-icon position-relative" data-bs-toggle="dropdown" aria-label="Notifications"><i class="bi bi-bell"></i>{% if unread_notifications %}<span class="dot-badge">{{ unread_notifications }}</span>{% endif %}</button>
@@ -92,6 +102,7 @@
   <div class="offcanvas-body">
     {% if page.purpose %}<p class="lead fs-6">{{ page.purpose }}</p>{% endif %}
     {% if page.steps %}<h6 class="text-uppercase small text-muted mt-3">How it works</h6><ol class="help-steps">{% for s in page.steps %}<li>{{ s }}</li>{% endfor %}</ol>{% endif %}
+    {% if DEMO_MODE %}{% for c in demo_staff %}{% if c.user.pk == user.pk %}<div class="demo-notes mt-3"><h6 class="text-uppercase small mb-2"><i class="bi bi-easel me-1"></i>Presenter notes – {{ c.headline }}</h6><ul class="small mb-0 ps-3">{% for t in c.tips %}<li>{{ t }}</li>{% endfor %}</ul></div>{% endif %}{% endfor %}{% endif %}
     <h6 class="text-uppercase small text-muted mt-4">Your role</h6>
     <p class="small">{{ user.role_labels|join:", " }}. The menu on the left only shows what your role can do. Numbers next to menu items are things waiting for you.</p>
     <a href="/" class="btn btn-sm btn-outline-primary">Back to my tasks</a>

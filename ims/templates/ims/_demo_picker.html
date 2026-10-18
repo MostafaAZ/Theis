@@ -1,0 +1,32 @@
+<div class="demo-picker">
+  <div class="text-center mb-4">
+    <span class="badge rounded-pill demo-badge mb-3"><i class="bi bi-easel me-1"></i>Presentation mode</span>
+    <h1 class="h3 mb-1">Who do you want to present as?</h1>
+    <p class="text-muted mb-0">One click logs you in – no password or code. Use <strong>Switch user</strong> in the top bar to change role at any time.</p>
+  </div>
+  <div class="section-title">Kubbar staff – Inventory Management System</div>
+  <div class="row g-3">
+  {% for c in demo_staff %}
+    <div class="col-sm-6 col-lg-4 col-xl-3"><a href="/demo/login/{{ c.user.pk }}/" class="card demo-card h-100 text-decoration-none"><div class="card-body">
+      <div class="d-flex align-items-center gap-2 mb-2"><span class="avatar">{{ c.user.first_name|slice:":1" }}{{ c.user.last_name|slice:":1" }}</span><div><div class="fw-semibold text-dark lh-sm">{{ c.user.role_labels|join:", " }}</div><div class="small text-muted">{{ c.user }}</div></div></div>
+      <div class="small fw-semibold text-dark mb-1">{{ c.headline }}</div>
+      <ul class="small text-muted ps-3 mb-0">{% for t in c.tips %}<li>{{ t }}</li>{% endfor %}</ul>
+    </div><div class="card-footer bg-white border-0 pt-0"><span class="btn btn-primary btn-sm w-100">Log in as {{ c.user.first_name }}</span></div></a></div>
+  {% endfor %}
+  </div>
+  <div class="section-title">Trade buyers – B2B platform (opens in a new tab)</div>
+  <div class="row g-3">
+  {% for c in demo_buyers %}
+    <div class="col-sm-6 col-lg-3"><a href="{{ B2B_URL }}/demo/login/{{ c.user.pk }}/" target="_blank" class="card demo-card buyer h-100 text-decoration-none"><div class="card-body">
+      <div class="fw-semibold text-dark">{{ c.user.buyer.company_name }}</div>
+      <div class="small mb-1"><span class="badge {% if c.user.buyer.status == 'verified' %}text-bg-success{% else %}text-bg-warning{% endif %}">{{ c.user.buyer.get_status_display }}</span></div>
+      <div class="small fw-semibold text-dark mb-1">{{ c.headline }}</div>
+      <ul class="small text-muted ps-3 mb-0">{% for t in c.tips %}<li>{{ t }}</li>{% endfor %}</ul>
+    </div><div class="card-footer bg-white border-0 pt-0"><span class="btn btn-outline-success btn-sm w-100">Open platform as buyer <i class="bi bi-box-arrow-up-right"></i></span></div></a></div>
+  {% endfor %}
+  </div>
+  <div class="d-flex flex-wrap gap-2 justify-content-center mt-4">
+    <a href="{{ B2B_URL }}/" target="_blank" class="btn btn-outline-secondary btn-sm"><i class="bi bi-shop me-1"></i>Open the platform as a visitor</a>
+    <form method="post" action="/demo/reset/" onsubmit="return confirm('Reset all demo data to the starting point? This takes about 15 seconds.')">{% csrf_token %}<button class="btn btn-outline-danger btn-sm"><i class="bi bi-arrow-counterclockwise me-1"></i>Reset demo data</button></form>
+  </div>
+</div>

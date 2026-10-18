@@ -25,8 +25,9 @@ set "VPY=.venv\Scripts\python.exe"
 echo Installing requirements (first run takes a minute)...
 "%VPY%" -m pip install -q -r requirements.txt || goto :fail
 
+if not defined DATABASE_NAME set "DATABASE_NAME=db.sqlite3"
 set "NEWDB="
-if not exist db.sqlite3 set "NEWDB=1"
+if not exist "%DATABASE_NAME%" set "NEWDB=1"
 echo Preparing the database...
 "%VPY%" manage.py migrate -v 0 || goto :fail
 if defined NEWDB (
@@ -38,8 +39,14 @@ echo Starting the IMS on http://localhost:8000 and the platform on http://localh
 start "Kubbar IMS (close to stop)" cmd /k ""%VPY%" manage.py runserver 8000"
 start "Kubbar B2B platform (close to stop)" cmd /k ""%VPY%" manage.py runserver 8001 --settings=kubbar.settings.b2b"
 timeout /t 5 /nobreak >nul
-start "" http://localhost:8000
-start "" http://localhost:8001
+if "%KUBBAR_DEMO_MODE%"=="1" (
+    start "" http://localhost:8000/login/
+    start "" http://localhost:8001/login/
+    echo PRESENTATION MODE: one-click logins, separate demo database.
+) else (
+    start "" http://localhost:8000
+    start "" http://localhost:8001
+)
 echo.
 echo Both apps are running in their own windows. Close those windows to stop them.
 echo Password for every demo account: Kubbar2026demo

@@ -38,8 +38,9 @@ echo "Installing requirements (first run takes a minute)..."
 "$VPY" -m pip install -q --upgrade pip
 "$VPY" -m pip install -q -r requirements.txt
 
+DB="${DATABASE_NAME:-db.sqlite3}"
 NEWDB=""
-[ -f db.sqlite3 ] || NEWDB=1
+[ -f "$DB" ] || NEWDB=1
 echo "Preparing the database..."
 "$VPY" manage.py migrate -v 0
 if [ -n "$NEWDB" ]; then
@@ -52,11 +53,14 @@ B2B_PID=$!
 trap 'kill $B2B_PID 2>/dev/null' EXIT
 
 (sleep 4
- for url in http://localhost:8000 http://localhost:8001; do
+ if [ "${KUBBAR_DEMO_MODE:-}" = "1" ]; then urls="http://localhost:8000/login/ http://localhost:8001/login/";
+ else urls="http://localhost:8000 http://localhost:8001"; fi
+ for url in $urls; do
    if command -v open >/dev/null; then open "$url"; elif command -v xdg-open >/dev/null; then xdg-open "$url"; fi
  done) &
 
 echo
+[ "${KUBBAR_DEMO_MODE:-}" = "1" ] && echo "PRESENTATION MODE: one-click logins, separate demo database ($DB)."
 echo "IMS: http://localhost:8000   Platform: http://localhost:8001"
 echo "Password for every demo account: Kubbar2026demo"
 echo "Press Ctrl+C to stop both apps."

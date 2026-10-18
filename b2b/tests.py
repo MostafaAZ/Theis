@@ -134,3 +134,21 @@ class StorefrontTests(TestCase):
         self.assertEqual(b.messages.count(), 1)
         self.assertTrue(self.w.user(Role.FINANCE).notifications.filter(
             message__contains="New buyer message").exists())
+
+
+@override_settings(ROOT_URLCONF="kubbar.urls_b2b", APP_NAME="b2b", LOGIN_URL="b2b:login")
+class PresentationModeB2BTests(TestCase):
+    def setUp(self):
+        self.w = World()
+
+    def test_off_by_default(self):
+        b = self.w.buyer()
+        self.assertEqual(self.client.get(f"/demo/login/{b.user.pk}/").status_code, 404)
+
+    def test_one_click_buyer_login(self):
+        b = self.w.buyer()
+        with self.settings(DEMO_MODE=True):
+            r = self.client.get(f"/demo/login/{b.user.pk}/")
+            self.assertRedirects(r, "/catalogue/")
+            gm = self.w.user(Role.GM)
+            self.assertEqual(self.client.get(f"/demo/login/{gm.pk}/").status_code, 404)

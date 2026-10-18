@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import shop, views
+from . import demo, shop, views
 
 app_name = "b2b"
 
@@ -11,6 +11,7 @@ urlpatterns = [
     path("register/confirm/<uuid:token>/", views.confirm_email, name="confirm_email"),
     path("login/", views.login_view, name="login"),
     path("logout/", views.logout_view, name="logout"),
+    path("demo/login/<int:pk>/", demo.demo_login, name="demo_login"),
     path("unlock/<str:token>/", views.unlock, name="unlock"),
     path("password-reset/", views.PasswordResetView.as_view(), name="password_reset"),
     path("password-reset/sent/", views.auth_views.PasswordResetDoneView.as_view(

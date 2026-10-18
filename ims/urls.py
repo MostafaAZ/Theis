@@ -1,7 +1,7 @@
 from django.urls import path
 
-from .views import (admin, analytics, audits, auth, b2b, buyers, catalog, expiry, misc, planning,
-                    stock, writeoffs)
+from .views import (admin, analytics, audits, auth, b2b, buyers, catalog, demo, expiry, misc,
+                    planning, stock, writeoffs)
 
 app_name = "ims"
 
@@ -10,6 +10,8 @@ urlpatterns = [
     path("login/", auth.login_view, name="login"),
     path("login/verify/", auth.login_verify, name="login_verify"),
     path("logout/", auth.logout_view, name="logout"),
+    path("demo/login/<int:pk>/", demo.demo_login, name="demo_login"),
+    path("demo/reset/", demo.demo_reset, name="demo_reset"),
     path("", auth.dashboard, name="dashboard"),
     path("notifications/", auth.notifications, name="notifications"),
     path("notifications/<int:pk>/", auth.open_notification, name="open_notification"),

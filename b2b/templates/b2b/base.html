@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="{% static 'kubbar/b2b.css' %}">
 </head>
 <body class="b2b">
+{% if DEMO_MODE %}<div class="demo-bar"><i class="bi bi-easel me-1"></i>Presentation mode · <div class="dropdown d-inline"><a href="#" data-bs-toggle="dropdown" class="text-white">Switch buyer <i class="bi bi-chevron-down"></i></a><div class="dropdown-menu shadow demo-menu text-start">{% for c in demo_buyers %}<a class="dropdown-item {% if c.user.pk == user.pk %}active{% endif %}" href="/demo/login/{{ c.user.pk }}/">{{ c.user.buyer.company_name }} <span class="small text-muted">· {{ c.user.buyer.get_status_display }}</span></a>{% endfor %}<div class="dropdown-divider"></div><a class="dropdown-item" href="/login/">All buyers with presenter notes</a><a class="dropdown-item" href="{{ IMS_URL }}/login/" target="_blank">Staff users (IMS)</a></div></div></div>{% endif %}
 <div class="utility-bar"><div class="container d-flex py-1 gap-3 align-items-center">
   <span class="d-none d-sm-inline"><i class="bi bi-patch-check me-1"></i>{% t "Trade buyers only · Egypt" %}</span>
   <span class="d-none d-md-inline"><i class="bi bi-telephone me-1"></i>+20 2 3333 0000</span>

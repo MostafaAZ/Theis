@@ -62,6 +62,25 @@ python manage.py runserver 8001 --settings=kubbar.settings.b2b   # B2B platform
 Everything is served locally (Bootstrap, icons and Chart.js are vendored in
 `core/static/vendor`), so the demo works offline. Emails print to the console.
 
+### Presentation mode
+
+For a live demo, start **`start-presentation.command`** (macOS) or
+**`start-presentation.bat`** (Windows) instead of the normal launcher. It opens the same
+system with:
+
+- a login page that shows **every user as a card**: click one to log in, with no
+  password or code. Staff open the IMS; buyers open the platform in a new tab;
+- a **Switch user** button in the top bar to jump to any other role mid-demo;
+- **presenter notes** on each card and in the **?** help panel ("what to show as
+  this user");
+- its **own demo database** (`db_presentation.sqlite3`), so rehearsing never
+  changes the normal one, and a **Reset demo data** button on the login page to
+  start fresh before the presentation.
+
+Close the normal launcher first – both use ports 8000 and 8001. Presentation mode
+only switches on through these launchers (and never with `DJANGO_DEBUG=0`), so the
+normal system always keeps its password and two-factor login.
+
 ### Demo accounts
 
 Every account uses the password **`Kubbar2026demo`**.
@@ -147,7 +166,7 @@ It can also be run from the IMS (*Expiry scans* → *Run scan now*).
 python manage.py test --settings=kubbar.settings.test
 ```
 
-82 tests cover the business rules (FEFO, price band, atomic reservation,
+87 tests cover the business rules (FEFO, price band, atomic reservation,
 tolerance and approval thresholds, dual-approval write-offs, forecasting and MOQ
 rounding, imports, encryption, lockout, two-factor login, role-based access,
 separation of the two applications) and render every screen for every role.

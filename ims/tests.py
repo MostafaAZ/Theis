@@ -1,5 +1,6 @@
 """IMS web tests: authentication, RBAC, screens and exports."""
 import re
+from unittest import mock
 
 from django.test import TestCase, override_settings
 
@@ -224,3 +225,35 @@ class NewScreensTests(TestCase):
         self.assertRedirects(r, "/b2b/messages/")
         m.refresh_from_db()
         self.assertEqual((m.status, m.reply), (SupportMessage.ANSWERED, "Hello back"))
+
+
+class PresentationModeTests(TestCase):
+    def setUp(self):
+        self.w = World()
+        self.gm = self.w.user(Role.GM)
+
+    def test_off_by_default(self):
+        self.assertEqual(self.client.get(f"/demo/login/{self.gm.pk}/").status_code, 404)
+        self.assertEqual(self.client.post("/demo/reset/").status_code, 404)
+        self.assertNotContains(self.client.get("/login/"), "Presentation mode")
+
+    @override_settings(DEMO_MODE=True)
+    @mock.patch.dict("core.demo.STAFF", {"gm@test.example": ("GM", ["Approve things"]),
+                                         "coo@test.example": ("COO", ["Release things"])})
+    def test_one_click_login_and_switch(self):
+        r = self.client.get("/login/")
+        self.assertContains(r, "Who do you want to present as?")
+        self.assertContains(r, f'/demo/login/{self.gm.pk}/')
+        r = self.client.get(f"/demo/login/{self.gm.pk}/")
+        self.assertRedirects(r, "/")
+        r = self.client.get("/")
+        self.assertContains(r, "Switch user")
+        self.assertContains(r, "Presenter notes")
+        coo = self.w.user(Role.COO)
+        self.client.get(f"/demo/login/{coo.pk}/")
+        self.assertEqual(int(self.client.session["_auth_user_id"]), coo.pk)
+
+    @override_settings(DEMO_MODE=True)
+    def test_buyers_cannot_be_used_on_ims(self):
+        b = self.w.buyer()
+        self.assertEqual(self.client.get(f"/demo/login/{b.user.pk}/").status_code, 404)
