@@ -8,6 +8,14 @@ where py >nul 2>nul && set "PY=py -3"
 if not defined PY where python >nul 2>nul && set "PY=python"
 if not defined PY goto :nopython
 
+%PY% -c "import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)" || goto :oldpython
+
+if exist ".venv\Scripts\python.exe" (
+    ".venv\Scripts\python.exe" -c "import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)" || (
+        echo Removing a virtual environment made with an older Python...
+        rmdir /s /q .venv
+    )
+)
 if not exist ".venv\Scripts\python.exe" (
     echo Creating the virtual environment...
     %PY% -m venv .venv || goto :fail
@@ -38,6 +46,8 @@ echo Password for every demo account: Kubbar2026demo
 pause
 exit /b 0
 
+:oldpython
+echo This computer's Python is older than 3.11.
 :nopython
 echo Python 3.11 or newer is required. Install it from https://www.python.org/downloads/
 echo (tick "Add python.exe to PATH" during installation), then run this file again.

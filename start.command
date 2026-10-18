@@ -4,13 +4,30 @@
 set -e
 cd "$(dirname "$0")"
 
-PY=$(command -v python3 || command -v python || true)
+# Find Python 3.11 or newer (macOS ships an older python3 that is too old).
+ok() { "$1" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)' 2>/dev/null; }
+PY=""
+for c in python3.13 python3.12 python3.11 \
+         /Library/Frameworks/Python.framework/Versions/3.13/bin/python3 \
+         /Library/Frameworks/Python.framework/Versions/3.12/bin/python3 \
+         /Library/Frameworks/Python.framework/Versions/3.11/bin/python3 \
+         /opt/homebrew/bin/python3 /usr/local/bin/python3 python3 python; do
+  if command -v "$c" >/dev/null 2>&1 && ok "$(command -v "$c")"; then PY=$(command -v "$c"); break; fi
+done
 if [ -z "$PY" ]; then
-  echo "Python 3.11 or newer is required: https://www.python.org/downloads/"
+  echo
+  echo "Python 3.11 or newer is needed, but this computer only has an older version."
+  echo "Install it from https://www.python.org/downloads/ and run this file again."
   read -r -p "Press Enter to close." _
   exit 1
 fi
+echo "Using $("$PY" --version) at $PY"
 
+# A virtual environment made earlier with an older Python must be rebuilt.
+if [ -x .venv/bin/python ] && ! ok .venv/bin/python; then
+  echo "Removing a virtual environment made with an older Python..."
+  rm -rf .venv
+fi
 if [ ! -x .venv/bin/python ]; then
   echo "Creating the virtual environment..."
   "$PY" -m venv .venv
@@ -18,6 +35,7 @@ fi
 VPY=.venv/bin/python
 
 echo "Installing requirements (first run takes a minute)..."
+"$VPY" -m pip install -q --upgrade pip
 "$VPY" -m pip install -q -r requirements.txt
 
 NEWDB=""
