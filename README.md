@@ -37,7 +37,13 @@ double-click **`start.bat`** on Windows or **`start.command`** on macOS
 data; then both apps open in your browser. Close the app windows (Windows) or
 press Ctrl+C (macOS/Linux) to stop.
 
-On macOS, if the file won't open the first time, right-click it → *Open* → *Open*.
+On macOS the first double-click shows *"start.command" Not Opened* because the
+script isn't signed by Apple. Click **Done**, then either:
+
+- open **System Settings → Privacy & Security**, click **Open Anyway** next to the
+  message about `start.command`, and double-click it again; or
+- open **Terminal**, type `bash ` (with a space), drag `start.command` into the
+  window and press Enter.
 
 **Manually:**
 
