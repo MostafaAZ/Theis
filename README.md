@@ -7,7 +7,7 @@ International.
 | Document | |
 |---|---|
 | [`docs/srs/SRS.md`](docs/srs/SRS.md) | Software Requirements Specification (Markdown rendering; figures in `docs/srs/figures/`) |
-| [`docs/srs/MostafaSRSDraft2.docx`](docs/srs/MostafaSRSDraft2.docx) | Word document, with Module 11 (order exceptions, returns, credit notes) |
+| [`docs/srs/MostafaSRSDraft2.docx`](docs/srs/MostafaSRSDraft2.docx) | Word document, with Module 11 (order exceptions, returns, credit notes) and the executive briefing with AI analysis (FR-103 to FR-107, UC-54, UC-55) |
 | [`docs/srs/MostafaSRSDraft1.docx`](docs/srs/MostafaSRSDraft1.docx) | Original Word document |
 | [`docs/IMPLEMENTATION.md`](docs/IMPLEMENTATION.md) | How the prototype maps to the SRS: modules, use cases, screens, design decisions |
 

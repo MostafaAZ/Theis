@@ -237,7 +237,13 @@ is placed. The General Manager approves the purchase plan.
 **Module 6: Sales and Inventory Analytics.** The system links inventory
 to sales by product, region, and customer, and reports value at risk,
 stock ageing, sell-through, days of cover, forecast accuracy, and
-recovered value. Every report can be exported.
+recovered value. Every report can be exported. For the CEO, the Group
+CFO, the COO, and the General Manager, an executive briefing turns these
+figures into a story: each chart states its finding in its title and
+carries a written analysis of what it means for the reader and what to
+do next. On request, an AI model drafts a deeper analysis of the same
+figures. The analysis advises. The decision stays with the role that
+holds it.
 
 **Module 7: System Administration.** The System Administrator manages
 user accounts and roles for both applications, configures business rules
@@ -342,19 +348,19 @@ Affairs Officer. Existing Customers continue to buy through the field
 sales team, because the platform is directed at buyers the field team
 does not reach rather than at accounts it already holds.
 
-| User Role                        | Application      | Responsibilities                                                                                                                                                                                                         | Key Competencies                                           |
-|----------------------------------|------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------|
-| Sales Representative             | IMS              | Reviews near-expiry batches for their products and regions. Offers them to existing customers first. Flags batches the customer base cannot absorb as surplus. Reviews sales analytics by product, region, and customer. | Customer knowledge, product knowledge, sales analysis      |
-| Warehouse Officer                | IMS              | Transfers stock between locations. Picks and dispatches platform orders against FEFO allocation. Records physical counts during warehouse audits. Receives returned goods.                                               | Stock handling, cold-chain handling, counting accuracy     |
-| Inventory Controller             | IMS              | Books inspected batches into stock. Schedules warehouse audits and reconciles count variances. Reviews near-expiry stock. Requests write-off of expired or rejected batches.                                             | Inventory control, reconciliation, data accuracy           |
-| QA Officer                       | IMS              | Records lot number, manufacture date, expiry date, and inspection outcome for every received batch. Co-approves write-off and disposal of expired and rejected stock. Inspects returned stock before it is restocked.    | Quality inspection, batch traceability, regulated disposal |
-| Procurement Officer              | IMS              | Imports sales and stock data. Generates the demand forecast. Builds the purchase plan against supplier MOQs and submits it for approval. Reviews forecast accuracy.                                                      | Demand planning, supplier terms, data analysis             |
-| Regulatory Affairs Officer       | IMS              | Maintains product registration status and expiry by market. Verifies buyer documents and sets the product categories each buyer may purchase.                                                                            | EDA and GOVS registration, licence verification            |
-| Finance Officer                  | IMS              | Confirms bank transfer payments. Approves invoice payment terms and credit limits for buyers. Issues platform invoices. Decides return requests and issues credit notes and refunds. Exports financial reports.          | Receivables, credit control, invoicing                     |
-| General Manager                  | IMS              | Approves the purchase plan. Approves stock adjustments above threshold. Co-approves write-off and disposal. Reviews analytics for the Egyptian operation.                                                                | Operational oversight, approval authority                  |
-| Management (CEO, Group CFO, COO) | IMS              | The COO approves batch release, sets the clearance price within the 65% to 70% band, and withdraws or reprices listings. Management reviews KPIs, recovered value, and the audit trail.                                  | Commercial authority, pricing control, performance review  |
-| System Administrator             | IMS and Platform | Creates, edits, and deactivates internal user accounts and roles. Configures business rules. Maintains reference data. Reviews the audit trail.                                                                          | Access control, configuration, system support              |
-| E-Commerce Buyer                 | Platform         | Registers a company account and uploads verification documents. Browses clearance listings, places orders, submits payment, tracks delivery, and requests returns.                                                       | Trade purchasing, licensed to trade veterinary products    |
+| User Role                        | Application      | Responsibilities                                                                                                                                                                                                                                                 | Key Competencies                                           |
+|----------------------------------|------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------|
+| Sales Representative             | IMS              | Reviews near-expiry batches for their products and regions. Offers them to existing customers first. Flags batches the customer base cannot absorb as surplus. Reviews sales analytics by product, region, and customer.                                         | Customer knowledge, product knowledge, sales analysis      |
+| Warehouse Officer                | IMS              | Transfers stock between locations. Picks and dispatches platform orders against FEFO allocation. Records physical counts during warehouse audits. Receives returned goods.                                                                                       | Stock handling, cold-chain handling, counting accuracy     |
+| Inventory Controller             | IMS              | Books inspected batches into stock. Schedules warehouse audits and reconciles count variances. Reviews near-expiry stock. Requests write-off of expired or rejected batches.                                                                                     | Inventory control, reconciliation, data accuracy           |
+| QA Officer                       | IMS              | Records lot number, manufacture date, expiry date, and inspection outcome for every received batch. Co-approves write-off and disposal of expired and rejected stock. Inspects returned stock before it is restocked.                                            | Quality inspection, batch traceability, regulated disposal |
+| Procurement Officer              | IMS              | Imports sales and stock data. Generates the demand forecast. Builds the purchase plan against supplier MOQs and submits it for approval. Reviews forecast accuracy.                                                                                              | Demand planning, supplier terms, data analysis             |
+| Regulatory Affairs Officer       | IMS              | Maintains product registration status and expiry by market. Verifies buyer documents and sets the product categories each buyer may purchase.                                                                                                                    | EDA and GOVS registration, licence verification            |
+| Finance Officer                  | IMS              | Confirms bank transfer payments. Approves invoice payment terms and credit limits for buyers. Issues platform invoices. Decides return requests and issues credit notes and refunds. Exports financial reports.                                                  | Receivables, credit control, invoicing                     |
+| General Manager                  | IMS              | Approves the purchase plan. Approves stock adjustments above threshold. Co-approves write-off and disposal. Reviews analytics for the Egyptian operation.                                                                                                        | Operational oversight, approval authority                  |
+| Management (CEO, Group CFO, COO) | IMS              | The COO approves batch release, sets the clearance price within the 65% to 70% band, and withdraws or reprices listings. Management reviews the executive briefing, KPIs, recovered value, and the audit trail, and may request an AI analysis of any dashboard. | Commercial authority, pricing control, performance review  |
+| System Administrator             | IMS and Platform | Creates, edits, and deactivates internal user accounts and roles. Configures business rules. Maintains reference data. Reviews the audit trail.                                                                                                                  | Access control, configuration, system support              |
+| E-Commerce Buyer                 | Platform         | Registers a company account and uploads verification documents. Browses clearance listings, places orders, submits payment, tracks delivery, and requests returns.                                                                                               | Trade purchasing, licensed to trade veterinary products    |
 
 *Exhibit \#2: User Profiles*
 
@@ -452,7 +458,12 @@ Section 4.
   customer, forecast accuracy, recovered value, write-off cost, audit
   accuracy, and buyer activity.
 
-- Export of reports in PDF and Excel format.
+- Export of reports in PDF and Excel format, including the charts and
+  their analysis.
+
+- An executive briefing for the CEO, Group CFO, COO, and General
+  Manager, with charts whose titles state the finding, a written
+  analysis for each reader, and an optional AI analysis.
 
 **System Administration (Module 7)**
 
@@ -537,6 +548,11 @@ from drifting into functions that Odoo already performs.
   split shipments, and a buyer cannot add lines to an order after
   checkout. Refunds are paid by bank transfer, never to a card.
 
+- **Automated Decisions.** The AI analysis explains the figures and
+  suggests actions, but it approves, prices, releases, and orders
+  nothing. Every decision in Exhibit \#2 stays with the role that holds
+  it.
+
 ## 5.3 Release Phasing
 
 The proposed solution is delivered in two releases. The prototype proves
@@ -618,7 +634,7 @@ release connects it to Odoo.
 # 6. Functional Requirements
 
 The functional requirements below are organized by module and trace to
-the fifty-three use cases in Section 9. Each requirement states what the
+the fifty-five use cases in Section 9. Each requirement states what the
 system shall do, not how it is built. The requirements that carry the
 most weight are the ones the Root Cause Analysis points to directly:
 batch-level expiry data (FR-07 to FR-12), the six-month alert and
@@ -736,19 +752,30 @@ the decisions recorded in the proposal and in this specification.
 
 ## 6.8 Sales and Inventory Analytics
 
-| ID    | Requirement                                                                                                                                                                        | Use Case |
-|-------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|
-| FR-55 | The system shall display value at risk in EGP, by category, product, and warehouse.                                                                                                | UC-27    |
-| FR-56 | The system shall display stock ageing by remaining shelf life in four bands (more than 12 months, 6 to 12 months, 30 days to 6 months, under 30 days) with quantity and EGP value. | UC-27    |
-| FR-57 | The system shall display sales by product, region, customer, and month, including sell-through rate and each region's share of a product's sales.                                  | UC-27    |
-| FR-58 | The system shall display days of cover and inventory turnover per product.                                                                                                         | UC-27    |
-| FR-59 | The system shall display forecast versus actual sales and MAPE by product and region.                                                                                              | UC-27    |
-| FR-60 | The system shall display recovered value: quantity and value released, sold through the platform, recovery rate against original value, and average days from listing to sale.     | UC-27    |
-| FR-61 | The system shall display write-off value, disposal cost, and the number of batches expired per month.                                                                              | UC-27    |
-| FR-62 | The system shall display audit accuracy (share of counted batches within tolerance) and adjustment value per audit.                                                                | UC-27    |
-| FR-63 | The system shall display platform activity: verified buyers, new buyers per month, orders, average order value, and sales by buyer type.                                           | UC-27    |
-| FR-64 | The system shall allow authorized users to filter analytics by date range, category, product, region, and warehouse.                                                               | UC-27    |
-| FR-65 | The system shall allow authorized users to export any report or dashboard in PDF or Excel format, stamped with filters, user, and time.                                            | UC-28    |
+| ID     | Requirement                                                                                                                                                                                                                                                                                                                                                                              | Use Case     |
+|--------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------|
+| FR-55  | The system shall display value at risk in EGP, by category, product, and warehouse.                                                                                                                                                                                                                                                                                                      | UC-27        |
+| FR-56  | The system shall display stock ageing by remaining shelf life in four bands (more than 12 months, 6 to 12 months, 30 days to 6 months, under 30 days) with quantity and EGP value.                                                                                                                                                                                                       | UC-27        |
+| FR-57  | The system shall display sales by product, region, customer, and month, including sell-through rate and each region's share of a product's sales.                                                                                                                                                                                                                                        | UC-27        |
+| FR-58  | The system shall display days of cover and inventory turnover per product.                                                                                                                                                                                                                                                                                                               | UC-27        |
+| FR-59  | The system shall display forecast versus actual sales and MAPE by product and region.                                                                                                                                                                                                                                                                                                    | UC-27        |
+| FR-60  | The system shall display recovered value: quantity and value released, sold through the platform, recovery rate against original value, and average days from listing to sale.                                                                                                                                                                                                           | UC-27        |
+| FR-61  | The system shall display write-off value, disposal cost, and the number of batches expired per month.                                                                                                                                                                                                                                                                                    | UC-27        |
+| FR-62  | The system shall display audit accuracy (share of counted batches within tolerance) and adjustment value per audit.                                                                                                                                                                                                                                                                      | UC-27        |
+| FR-63  | The system shall display platform activity: verified buyers, new buyers per month, orders, average order value, and sales by buyer type.                                                                                                                                                                                                                                                 | UC-27        |
+| FR-64  | The system shall allow authorized users to filter analytics by date range, category, product, region, and warehouse.                                                                                                                                                                                                                                                                     | UC-27        |
+| FR-65  | The system shall allow authorized users to export any report or dashboard in PDF or Excel format, stamped with filters, user, and time.                                                                                                                                                                                                                                                  | UC-28        |
+| FR-103 | The system shall display an executive briefing for the CEO, Group CFO, COO, and General Manager: where near-expiry stock value ends up, the expiry calendar for the next 12 months, value at risk by category, batches at each step of the release route, MOQ surplus in the latest purchase plan, recovered versus written-off value by month, the sales trend, and receivables by age. | UC-54        |
+| FR-104 | The system shall title every chart with the finding it shows, computed from the data, and shall offer the numbers behind every chart as a table.                                                                                                                                                                                                                                         | UC-27, UC-54 |
+| FR-105 | The system shall write an analysis for every chart and dashboard (what it shows, what it means for the reader, and the next step) for the perspective the user selects: CEO, Group CFO, COO, or General Manager.                                                                                                                                                                         | UC-27, UC-54 |
+| FR-106 | The system shall allow management and the Finance Officer to request an AI analysis of a dashboard, label it as AI analysis, store it for six hours, and keep the automated analysis when the AI service is unavailable.                                                                                                                                                                 | UC-55        |
+| FR-107 | The system shall include the charts and their analysis in the PDF and Excel export of every dashboard.                                                                                                                                                                                                                                                                                   | UC-28, UC-54 |
+
+FR-103 to FR-107 change how the figures are read rather than which
+figures exist. A dashboard that reports value at risk tells management
+that a problem exists. A briefing that states "more value was destroyed
+than recovered" tells it what kind of problem it is and who acts next,
+which is the step the existing reports leave to the reader.
 
 ## 6.9 Buyer Registration and Verification
 
@@ -887,14 +914,15 @@ requirements carry the most weight here.
 
 ## 7.6 Security
 
-| ID     | Requirement                                                                                                                                                                             |
-|--------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| NFR-22 | All traffic shall use HTTPS (TLS 1.2 or higher). Passwords shall be stored hashed and salted.                                                                                           |
-| NFR-23 | Passwords shall be at least 10 characters, mixing letters and numbers. Internal users shall use two-factor authentication.                                                              |
-| NFR-24 | Internal sessions shall time out after 15 minutes of inactivity, and buyer sessions after 30 minutes.                                                                                   |
-| NFR-25 | Buyer identity and company documents shall be encrypted at rest, visible only to the Regulatory Affairs Officer and the System Administrator, and every view shall be logged.           |
-| NFR-26 | Buyer data processing shall comply with the PDPL: consent recorded at registration, a stated purpose, and deletion of documents for rejected applications after 90 days.                |
-| NFR-27 | Approvals, price changes, verification decisions, adjustments, and write-offs shall be logged with user, time, old value, and new value, and the log shall not be editable by any role. |
+| ID     | Requirement                                                                                                                                                                                                                                                                                  |
+|--------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| NFR-22 | All traffic shall use HTTPS (TLS 1.2 or higher). Passwords shall be stored hashed and salted.                                                                                                                                                                                                |
+| NFR-23 | Passwords shall be at least 10 characters, mixing letters and numbers. Internal users shall use two-factor authentication.                                                                                                                                                                   |
+| NFR-24 | Internal sessions shall time out after 15 minutes of inactivity, and buyer sessions after 30 minutes.                                                                                                                                                                                        |
+| NFR-25 | Buyer identity and company documents shall be encrypted at rest, visible only to the Regulatory Affairs Officer and the System Administrator, and every view shall be logged.                                                                                                                |
+| NFR-26 | Buyer data processing shall comply with the PDPL: consent recorded at registration, a stated purpose, and deletion of documents for rejected applications after 90 days.                                                                                                                     |
+| NFR-27 | Approvals, price changes, verification decisions, adjustments, and write-offs shall be logged with user, time, old value, and new value, and the log shall not be editable by any role.                                                                                                      |
+| NFR-28 | AI analysis shall send only aggregated dashboard figures (totals, chart series, and short table extracts) to the external AI service, never buyer documents or personal data. The service key shall be stored outside the source code, and every request shall be logged in the audit trail. |
 
 # 8. Use Case Diagram
 
@@ -947,13 +975,16 @@ fourth zone inside the E-Commerce Platform boundary, Order Exceptions
 and Returns, with three relationships. UC-46 (Cancel Order Lines) and
 UC-51 (Inspect Returned Stock) each include UC-52 (Issue Credit Note and
 Record Refund) when value is returned to a buyer, and UC-53 (Print
-Packing Slip) extends UC-08 (Dispatch Order). The zone does not change
-the main path. It adds the route back along it, so that a batch sold
-through the platform can still be traced if it returns.
+Packing Slip) extends UC-08 (Dispatch Order). UC-54 (View Executive
+Briefing) and UC-55 (Request AI Analysis) were added to the Sales and
+Inventory Analytics zone on the same basis: UC-28 (Export Report) and
+UC-55 both extend UC-54. The new zone does not change the main path. It
+adds the route back along it, so that a batch sold through the platform
+can still be traced if it returns.
 
 ## 9. Use Cases
 
-The fifty-three use cases below define how every user interacts with the
+The fifty-five use cases below define how every user interacts with the
 proposed solution. Every role in Exhibit \#2 owns at least one use case,
 and every functional requirement in Section 6 traces to at least one use
 case. Each specification follows the same structure, with no more than
@@ -1017,6 +1048,8 @@ dropdowns the user works with.
 | UC-51 | Inspect Returned Stock                    | QA Officer                                                                              | IMS              |
 | UC-52 | Issue Credit Note and Record Refund       | Finance Officer                                                                         | IMS              |
 | UC-53 | Print Packing Slip                        | Warehouse Officer, E-Commerce Buyer                                                     | IMS and Platform |
+| UC-54 | View Executive Briefing                   | Management (CEO, Group CFO, COO), General Manager                                       | IMS              |
+| UC-55 | Request AI Analysis                       | Management, General Manager, Finance Officer                                            | IMS              |
 
 *Exhibit \#6: Use Case Summary*
 
@@ -1946,15 +1979,15 @@ dropdowns the user works with.
 | Pre-Conditions  | The user is logged in.                                                                  |
 | Post-Conditions | The selected dashboard is displayed with the user's filters.                            |
 | Relationships   | «extend» UC-28 (Export Report).                                                         |
-| Related FRs     | FR-55 to FR-64, FR-40                                                                   |
+| Related FRs     | FR-55 to FR-64, FR-40, FR-102, FR-104, FR-105                                           |
 
 **Main Flow**
 
 1.  The user opens Analytics.
 
-2.  The user selects a Dashboard: Inventory Health, Sales Performance,
-    Forecast Accuracy, Recovery and Write-Off, Audit Accuracy, or
-    Platform Activity.
+2.  The user selects a Dashboard: Executive Briefing (UC-54), Inventory
+    Health, Sales Performance, Forecast Accuracy, Recovery and
+    Write-Off, Audit Accuracy, Platform Activity, or Order Exceptions.
 
 3.  The user sets filters: Date Range, Category, Product, Region, and
     Warehouse.
@@ -2889,6 +2922,84 @@ dropdowns the user works with.
 - A1. Cold-chain items in the order: the slip carries the 2 to 8°C
   storage instruction.
 
+#### UC-54 View Executive Briefing
+
+| Field           | Detail                                                                       |
+|-----------------|------------------------------------------------------------------------------|
+| Primary Actor   | Management (CEO, Group CFO, COO), General Manager                            |
+| Trigger         | The executive logs in, or prepares for a management review.                  |
+| Pre-Conditions  | The user is logged in with a management role.                                |
+| Post-Conditions | The briefing is displayed with its analysis written for the selected reader. |
+| Relationships   | Extended by UC-28 (Export Report) and UC-55 (Request AI Analysis).           |
+| Related FRs     | FR-103, FR-104, FR-105, FR-107                                               |
+
+**Main Flow**
+
+1.  The user opens the Dashboard, which shows the briefing summary,
+    three key findings, and three recommended actions, and selects Open
+    the Full Briefing.
+
+2.  The system opens Analytics on the Executive Briefing tab and
+    displays the KPIs: value at risk, recovered value, written-off
+    value, recovered share, MOQ surplus in the latest plan, and overdue
+    receivables.
+
+3.  The system displays the charts in the order the reader needs them:
+    where near-expiry value ends up, the expiry calendar, value at risk
+    by category, the release route, MOQ surplus, recovered versus
+    written off, the sales trend, and receivables by age.
+
+4.  For each chart, the system shows a headline that states the finding,
+    the numbers behind it, and an analysis: what the chart shows, what
+    it means for the reader, and the next step.
+
+5.  The user selects a Perspective (CEO, Group CFO, COO, General
+    Manager), and the system rewrites the analysis and reorders the
+    charts for that reader.
+
+6.  The user may set filters (Date Range, Category, Product, Region,
+    Warehouse) or export the briefing (UC-28).
+
+**Alternative Flows**
+
+- A1. Not enough data for a chart: the system leaves the chart out
+  rather than showing an empty one.
+
+- A2. User without a management role: the system opens the analytics
+  dashboards available to that role (UC-27).
+
+#### UC-55 Request AI Analysis
+
+| Field           | Detail                                                                                  |
+|-----------------|-----------------------------------------------------------------------------------------|
+| Primary Actor   | Management (CEO, Group CFO, COO), General Manager, Finance Officer                      |
+| Trigger         | The user wants a deeper reading of a dashboard than the automated analysis gives.       |
+| Pre-Conditions  | The user is viewing a dashboard. An AI service key is configured.                       |
+| Post-Conditions | The dashboard shows the AI analysis, labelled as such, and the request is logged.       |
+| Relationships   | Extends UC-54 (View Executive Briefing) and UC-27 (View Sales and Inventory Analytics). |
+| Related FRs     | FR-106, NFR-28                                                                          |
+
+**Main Flow**
+
+1.  The user selects Analyse with AI on the dashboard.
+
+2.  The system sends the dashboard's aggregated figures, the filters,
+    and the selected perspective to the AI service.
+
+3.  The AI service returns a summary, key findings, risks, recommended
+    actions, and an analysis for each chart.
+
+4.  The system replaces the automated analysis with the AI analysis,
+    labels it "AI analysis", and logs the request in the audit trail.
+
+**Alternative Flows**
+
+- A1. Same figures and perspective analysed in the last six hours: the
+  system shows the stored analysis without a new request.
+
+- A2. AI service unavailable, key missing, or request declined: the
+  system keeps the automated analysis and shows the reason.
+
 # 10. Activity Diagrams
 
 The four activity diagrams below follow a batch through its full life:
@@ -3134,11 +3245,14 @@ adds the outlet the DFD As-Is lacked. It is open only to verified trade
 buyers, limited to registered products with remaining shelf life, and
 protected against selling the same batch twice. When an order goes
 wrong, it is corrected against the original order and invoice, and
-nothing returned is sold again until QA has inspected it.
+nothing returned is sold again until QA has inspected it. Management
+sees the result as a briefing that states what the figures mean and who
+acts next, with an AI analysis available on request but no decision
+delegated to it.
 
-The specification is deliberately bounded. It covers fifty-three use
-cases for eleven user roles, one hundred and two functional
-requirements, and twenty-seven non-functional requirements, and it stops
+The specification is deliberately bounded. It covers fifty-five use
+cases for eleven user roles, one hundred and seven functional
+requirements, and twenty-eight non-functional requirements, and it stops
 short of accounting, field sales, card payments, and machine learning.
 Authority stays where the organization already places it: the General
 Manager approves purchasing and disposal, the COO controls release and

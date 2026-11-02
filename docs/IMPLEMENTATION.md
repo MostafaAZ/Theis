@@ -59,6 +59,8 @@ the SRS left something open.
 | 49–51 | `/b2b/returns/`, `/b2b/returns/<id>/` (decide, receive, inspect) | `decide_return`, `receive_return`, `inspect_return` |
 | 52 | `/b2b/orders/<id>/` (Issue credit note), `/b2b/credit-notes/` (Refund paid) | `issue_credit_note`, `record_refund`, `commerce/documents.py` |
 | 53 | `/b2b/orders/<id>/packing-slip/`, platform `/orders/<id>/packing-slip/` | `packing_slip_pdf` |
+| 54 | `/` executive briefing, `/analytics/?d=executive` (FR-103 to FR-105, FR-107) | `analytics/story.py`, `ims/dashboard.briefing_for` |
+| 55 | `/analytics/ai/` Analyse with AI (FR-106, NFR-28) | `analytics/ai.py` |
 | FR-102 | `/analytics/?d=exceptions` (Order Exceptions dashboard) | `analytics.services.order_exceptions` |
 
 ## Screens added beyond the use cases

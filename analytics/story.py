@@ -1,4 +1,5 @@
-"""Storytelling charts and automated analysis for management (FR-55 to FR-64).
+"""Storytelling charts and automated analysis for management (FR-55 to FR-64,
+FR-103 to FR-105, UC-54).
 
 Every chart is a plain dict so the same data drives the screen, the PDF
 export and the AI analysis:

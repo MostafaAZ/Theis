@@ -1,4 +1,5 @@
-"""AI analysis of a dashboard by Claude, written for one management perspective.
+"""AI analysis of a dashboard by Claude, written for one management perspective
+(FR-106, NFR-28, UC-55).
 
 The built-in analysis in ``analytics.story`` is always shown first. When an
 Anthropic API key is configured, management can ask Claude for a deeper
