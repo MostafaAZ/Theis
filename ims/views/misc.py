@@ -160,12 +160,15 @@ def _pos(_f):
 def _analytics(key):
     def fn(f):
         data = build(key, f)
-        return data["kpis"], data["tables"]
+        return data["kpis"], data["tables"], data["analysis"], data["charts"]
     return fn
 
 
 # key: (title, description, icon, roles or None, builder)
 REPORTS = {
+    "executive": ("Executive briefing", "The storytelling charts with analysis for the CEO, "
+                  "CFO, COO and GM: recovery, write-offs, expiry calendar, MOQ surplus, "
+                  "receivables.", "bi-stars", ANALYTICS, _analytics("executive")),
     "stock": ("Stock on hand", "Every batch with quantity, expiry, value and location.",
               "bi-box-seam", None, _stock),
     "near-expiry": ("Near-expiry stock", "Batches within 6 months of expiry and the quantity "
@@ -212,9 +215,11 @@ def report_download(request, key, fmt):
     if not _allowed(request.user, roles):
         raise Http404
     f = Filters(request.GET, request.user)
-    kpis, tables = fn(f)
+    kpis, tables, *story = fn(f)
+    analysis, charts = story if story else (None, None)
     maker = exports.to_pdf if fmt == "pdf" else exports.to_excel
-    content = maker(f"VETREX – {title}", f.as_text(), request.user, kpis, tables)
+    content = maker(f"VETREX – {title}", f.as_text(), request.user, kpis, tables,
+                    analysis=analysis, charts=charts)
     audit(request.user, AuditLog.DATA_SYNC, f"Downloaded report {title} ({fmt})",
           f"REPORT-{key}")
     resp = HttpResponse(content, content_type="application/pdf" if fmt == "pdf" else

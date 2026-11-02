@@ -14,6 +14,15 @@
 {% endfor %}
 </div>
 
+{% if briefing %}
+<div class="card briefing mb-4"><div class="card-body">
+  <div class="d-flex flex-wrap align-items-center gap-2 mb-2"><span class="analysis-src"><i class="bi bi-stars"></i>Executive briefing · written for the {{ perspective_label }}</span>
+  <a href="/analytics/?d=executive" class="ms-auto btn btn-sm btn-primary"><i class="bi bi-bar-chart-line me-1"></i>Open the full briefing</a></div>
+  <p class="summary mb-2">{{ analysis.summary }}</p>
+  <div class="row g-3"><div class="col-lg-6"><h3>Key findings</h3><ul>{% for x in analysis.findings|slice:":3" %}<li>{{ x }}</li>{% endfor %}</ul></div>
+  <div class="col-lg-6"><h3>Recommended actions</h3><ul>{% for x in analysis.actions|slice:":3" %}<li>{{ x }}</li>{% endfor %}</ul></div></div>
+</div></div>
+{% endif %}
 <div class="row g-3">
   <div class="col-xl-7">
     <div class="card h-100"><div class="card-header d-flex align-items-center"><i class="bi bi-list-check me-2 text-primary"></i>Your tasks<span class="ms-auto badge text-bg-primary">{{ tasks|length }}</span></div>
@@ -43,20 +52,11 @@
 </div>
 
 <div class="row g-3 mt-1">
-{% for c in charts %}
-  <div class="col-lg-6"><div class="card h-100"><div class="card-header">{{ c.title }}</div><div class="card-body"><canvas id="chart-{{ c.id }}" height="{% if c.type == 'doughnut' %}160{% else %}120{% endif %}"></canvas></div></div></div>
-{% endfor %}
+{% for c in charts %}<div class="col-xl-6">{% include "ims/_story_chart.html" %}</div>{% endfor %}
 </div>
 {% endblock %}
 {% block scripts %}
 <script src="{% static 'vendor/chartjs/chart.umd.js' %}"></script>
-<script>
-const palette = ["#2563eb","#f59e0b","#10b981","#ef4444","#8b5cf6","#06b6d4"];
-{{ charts_json|safe }}.forEach(c => {
-  const ds = {label: c.title, data: c.data, borderWidth: c.type === "line" ? 2 : 0, tension: .3, fill: c.type === "line",
-    backgroundColor: c.colors || (c.type === "line" ? "rgba(37,99,235,.12)" : palette), borderColor: c.type === "line" ? "#2563eb" : "#fff", borderRadius: 6};
-  new Chart(document.getElementById("chart-" + c.id), {type: c.type, data: {labels: c.labels, datasets: [ds]},
-    options: {plugins: {legend: {display: c.type === "doughnut", position: "right"}}, scales: c.type === "doughnut" ? {} : {y: {beginAtZero: true, grid: {color: "#eef1f5"}}, x: {grid: {display: false}}}}});
-});
-</script>
+<script src="{% static 'kubbar/charts.js' %}"></script>
+<script>VetrexCharts.renderAll({{ charts_json|safe }});</script>
 {% endblock %}

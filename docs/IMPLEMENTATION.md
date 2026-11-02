@@ -40,7 +40,7 @@ the SRS left something open.
 | 23 | `/imports/` | `planning.services.stage_import`, `confirm_import` |
 | 24 | `/forecasts/` | `generate_forecast`, `planning/forecasting.py` |
 | 25–26 | `/plans/<id>/` | `build_plan`, `plan_line_figures`, `decide_plan` |
-| 27–28 | `/analytics/` (seven dashboards, PDF/Excel export) | `analytics/services.py`, `analytics/exports.py` |
+| 27–28 | `/analytics/` (Executive Briefing + seven dashboards, storytelling charts with analysis per perspective, PDF/Excel export with charts); `/analytics/ai/` AI analysis by Claude | `analytics/services.py`, `analytics/story.py`, `analytics/ai.py`, `analytics/exports.py` |
 | 29–30 | Platform `/register/`, `/account/` | `commerce.services.register_buyer`, `save_document` |
 | 31 | `/buyers/<id>/` | `review_document`, `verify_buyer` |
 | 32 | Platform `/login/`, `/password-reset/`, `/unlock/<token>/` | `b2b/views.py` |

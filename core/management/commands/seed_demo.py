@@ -45,7 +45,8 @@ USERS = [
     ("finance@kubbar.example", "Tarek", "Nabil", [Role.FINANCE], "Finance"),
     ("gm@kubbar.example", "Ahmed", "Rashad", [Role.GM], "Management"),
     ("coo@kubbar.example", "Laila", "Mansour", [Role.COO], "Management"),
-    ("ceo@kubbar.example", "Hany", "Zaki", [Role.MANAGEMENT], "Management"),
+    ("ceo@kubbar.example", "Hany", "Zaki", [Role.MANAGEMENT], "Chief Executive Officer"),
+    ("cfo@kubbar.example", "Nadia", "Fawzy", [Role.MANAGEMENT], "Group CFO"),
     ("admin@kubbar.example", "System", "Administrator", [Role.ADMIN], "IT"),
 ]
 
@@ -140,9 +141,52 @@ class Command(BaseCommand):
             self.extras()
         with transaction.atomic():
             self.after_sales()
+        with transaction.atomic():
+            self.history_for_analytics()
         inv.run_expiry_scan(triggered_by="seed")
         self.stdout.write(self.style.SUCCESS(
             f"Demo data loaded. Internal users and buyers share the password '{PASSWORD}'."))
+
+    # ------------------------------------------------------------------
+    def history_for_analytics(self):
+        """A year of past write-offs and earlier platform sales, so the management
+        charts show trends rather than a single month."""
+        from commerce.models import PlatformOrder
+        from inventory.models import WriteOff
+
+        now = timezone.now()
+        P = {p.sku: p for p in self.products_}
+        past = [("MED-ENR-1L", "ENR23X044", 300, 320), ("VAC-ND-1000", "NDV23X117", 260, 1800),
+                ("NUT-AD3E-1L", "AD3E23X209", 200, 950), ("FAD-MYC-25", "MYC23X031", 140, 120),
+                ("MED-OTC-100", "OTC24X012", 75, 400)]
+        for sku, lot, days_ago, qty in past:
+            p = P[sku]
+            expiry = timezone.localdate() - timedelta(days=days_ago + 10)
+            b = Batch.objects.create(
+                product=p, lot_number=lot, manufacture_date=expiry - timedelta(
+                    days=int(p.shelf_life_months * 30.4)), expiry_date=expiry,
+                storage_condition=p.storage_condition, market=self.egypt,
+                quantity_received=qty, quantity_approved=qty, inspected_by=self.u["qa"],
+                inspection_date=expiry - timedelta(days=500), received_by=self.u["inventory"],
+                received_at=now - timedelta(days=600), status=BatchStatus.DEPLETED)
+            posted = now - timedelta(days=days_ago)
+            WriteOff.objects.create(
+                batch=b, quantity=qty, reason="expired", disposal_method="destruction",
+                requested_by=self.u["inventory"], requested_at=posted - timedelta(days=3),
+                status=WriteOff.DISPOSED, gm_approved_by=self.u["gm"], gm_approved_at=posted,
+                qa_approved_by=self.u["qa"], qa_approved_at=posted, posted_at=posted,
+                write_off_value=p.unit_cost * qty, disposal_cost=Decimal("1500.00") + qty,
+                disposal_date=(posted + timedelta(days=7)).date(),
+                certificate_ref=f"EEAA-DC-{lot[-3:]}")
+        # Spread the earlier platform sales over the last few months.
+        for i, order in enumerate(PlatformOrder.objects.filter(
+                status__in=[PlatformOrder.DELIVERED, PlatformOrder.DISPATCHED]).order_by("pk")):
+            created = now - timedelta(days=40 + 30 * i)
+            PlatformOrder.objects.filter(pk=order.pk).update(created_at=created)
+            for line in order.lines.select_related("listing"):
+                if line.listing.published_at > created:
+                    type(line.listing).objects.filter(pk=line.listing_id).update(
+                        published_at=created - timedelta(days=9))
 
     # ------------------------------------------------------------------
     def reference(self):

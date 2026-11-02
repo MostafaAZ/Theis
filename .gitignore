@@ -5,3 +5,6 @@ __pycache__/
 media/
 staticfiles/
 .env
+
+# Anthropic API key for AI analysis (never commit it)
+anthropic_api_key.txt

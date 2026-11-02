@@ -64,6 +64,30 @@ python manage.py runserver 8001 --settings=kubbar.settings.b2b   # B2B platform
 Everything is served locally (Bootstrap, icons and Chart.js are vendored in
 `core/static/vendor`), so the demo works offline. Emails print to the console.
 
+### Management analytics and AI analysis
+
+The CEO, CFO, COO and GM land on an **Executive briefing**, and *Reports →
+Analytics* opens the **Executive Briefing** tab. Each chart's title states what
+the chart shows (for example *"More value was destroyed than recovered"*). Each
+chart has a *Show the numbers* table and an analysis box: what the chart shows,
+what it means for the reader, and the next step. The **CEO / Group CFO / COO /
+General Manager** buttons rewrite the analysis for that person. PDF exports
+(and *Reports → Executive briefing*) include the charts and the analysis.
+
+The analysis is **automated** by default: rules computed from the numbers,
+which work offline. To get **AI analysis by Claude**, add an Anthropic API
+key, then click **Analyse with AI** on any dashboard:
+
+1. Create a key at <https://console.anthropic.com/> (API keys).
+2. Save it as a file named `anthropic_api_key.txt` in the project folder,
+   next to `manage.py` (the file is ignored by git), **or** set the
+   `ANTHROPIC_API_KEY` environment variable before starting the app.
+3. Restart the launcher.
+
+Claude only receives the dashboard's totals, chart series and short table
+extracts. Each answer is cached for six hours, and every request is recorded
+in the audit trail.
+
 ### Presentation mode
 
 For a live demo, start **`start-presentation.command`** (macOS) or
@@ -104,6 +128,7 @@ on screen and printed in the server console.
 | `gm@kubbar.example` | General Manager |
 | `coo@kubbar.example` | Management (COO) |
 | `ceo@kubbar.example` | Management (CEO) |
+| `cfo@kubbar.example` | Management (Group CFO) |
 | `admin@kubbar.example` | System Administrator |
 
 **B2B platform** (`http://localhost:8001`)

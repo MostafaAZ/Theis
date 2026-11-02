@@ -191,3 +191,27 @@ a.kpi:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(16,24,40,
 .demo-notes { background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 10px; padding: .8rem 1rem; color: #4c1d95; }
 .app-shell { min-height: calc(100vh - 1px); }
 .demo-menu .dropdown-item.active .text-muted { color: #e9d5ff !important; }
+
+/* ---- Storytelling charts and analysis ---------------------------------- */
+.story-card { border: 1px solid var(--line); box-shadow: var(--shadow); }
+.story-card .card-body { display: flex; flex-direction: column; gap: .35rem; }
+.story-headline { font-weight: 650; font-size: 1.02rem; line-height: 1.35; color: var(--ink); }
+.story-sub { font-size: .82rem; color: var(--ink-3); margin-bottom: .4rem; }
+.chart-box { position: relative; width: 100%; }
+.story-analysis { margin-top: .6rem; padding: .75rem .9rem; border-radius: 10px; background: #f6f8fb; border: 1px solid var(--line); font-size: .88rem; color: var(--ink-2); }
+.story-analysis p { margin: 0 0 .35rem; }
+.story-analysis p:last-child { margin-bottom: 0; }
+.story-analysis strong { color: var(--ink); font-weight: 600; }
+.analysis-src { display: inline-flex; align-items: center; gap: .35rem; font-size: .74rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-3); margin-bottom: .35rem; }
+.analysis-src.ai { color: #6250d6; }
+.story-data summary { font-size: .8rem; color: var(--brand); cursor: pointer; margin-top: .25rem; }
+.story-data table { font-size: .82rem; margin-top: .4rem; }
+.story-data td, .story-data th { font-variant-numeric: tabular-nums; }
+.briefing { border: 1px solid var(--line); box-shadow: var(--shadow); border-left: 4px solid #6250d6; }
+.briefing .summary { font-size: 1.02rem; line-height: 1.55; color: var(--ink); }
+.briefing h3 { font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-3); margin: .9rem 0 .4rem; font-weight: 650; }
+.briefing ul { padding-left: 1.1rem; margin: 0; }
+.briefing li { margin-bottom: .35rem; color: var(--ink-2); }
+.briefing .risk li::marker { color: var(--bad); }
+.perspective-switch .btn { font-size: .82rem; }
+.ai-loading { opacity: .55; pointer-events: none; }

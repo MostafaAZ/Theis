@@ -112,13 +112,19 @@ def logout_view(request):
 def dashboard(request):
     import json
 
+    from analytics.story import PERSPECTIVES
+
     from .. import dashboard as dash
 
     user = request.user
     hour = timezone.localtime().hour
     greeting = "Good morning" if hour < 12 else "Good afternoon" if hour < 18 else "Good evening"
-    charts = dash.charts_for(user)
+    briefing = dash.briefing_for(user)
+    charts = briefing["charts"] if briefing else dash.charts_for(user)
     return render(request, "ims/dashboard.html", {
+        "briefing": briefing, "analysis": briefing["analysis"] if briefing else None,
+        "perspective_label": (dict(PERSPECTIVES)[briefing["perspective"]] if briefing
+                              else ""),
         "greeting": greeting, "tasks": dash.tasks_for(user), "kpis": dash.kpis_for(user),
         "quick": dash.quick_for(user), "charts": charts, "charts_json": json.dumps(charts),
         "alerts": user.notifications.filter(is_read=False)[:6]})

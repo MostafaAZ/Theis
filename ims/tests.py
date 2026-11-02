@@ -325,3 +325,91 @@ class AfterSalesScreenTests(TestCase):
         rr.refresh_from_db()
         self.assertEqual(rr.status, "completed")
         self.assertEqual(rr.credit_notes.count(), 1)
+
+
+class AnalyticsStoryTests(TestCase):
+    """Storytelling charts, analysis per perspective and AI analysis (Module 6)."""
+
+    @classmethod
+    def setUpTestData(cls):
+        from django.core.management import call_command
+
+        with override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend"):
+            call_command("seed_demo", verbosity=0)
+
+    def login(self, email):
+        self.client.force_login(User.objects.get(email=email))
+
+    def test_every_dashboard_and_perspective_renders(self):
+        from analytics.services import DASHBOARDS
+        from analytics.story import PERSPECTIVES
+
+        self.login("cfo@kubbar.example")
+        r = self.client.get("/analytics/")
+        self.assertContains(r, "Executive Briefing")
+        self.assertEqual(r.context["data"]["perspective"], "cfo")
+        for key, _label in DASHBOARDS:
+            for view, _ in PERSPECTIVES:
+                r = self.client.get(f"/analytics/?d={key}&view={view}")
+                self.assertEqual(r.status_code, 200, (key, view))
+                self.assertEqual(r.context["data"]["analysis"]["perspective"], view)
+                for c in r.context["data"]["charts"]:
+                    self.assertTrue(c["headline"] and c["view"]["insight"], (key, c["id"]))
+
+    def test_perspective_changes_the_story(self):
+        from analytics.services import Filters, build
+
+        user = User.objects.get(email="ceo@kubbar.example")
+        coo = build("executive", Filters({}, user), "coo")
+        gm = build("executive", Filters({}, user), "gm")
+        self.assertEqual(coo["charts"][0]["id"], "funnel")
+        self.assertEqual(gm["charts"][0]["id"], "moq")
+        self.assertNotEqual(coo["analysis"]["actions"], gm["analysis"]["actions"])
+        self.assertEqual(coo["analysis"]["perspective"], "coo")
+
+    def test_executive_report_pdf_has_charts_and_analysis(self):
+        self.login("gm@kubbar.example")
+        r = self.client.get("/reports/executive.pdf")
+        self.assertEqual(r["Content-Type"], "application/pdf")
+        r = self.client.get("/analytics/?d=executive&export=xlsx")
+        self.assertTrue(r.content.startswith(b"PK"))
+
+    def test_home_briefing_for_executives_only(self):
+        self.login("coo@kubbar.example")
+        self.assertContains(self.client.get("/"), "Executive briefing")
+        self.login("warehouse@kubbar.example")
+        r = self.client.get("/")
+        self.assertNotContains(r, "Executive briefing")
+        self.assertTrue(r.context["charts"])
+
+    def test_ai_analysis_without_key_explains_setup(self):
+        self.login("ceo@kubbar.example")
+        with mock.patch("analytics.ai.api_key", return_value=""):
+            r = self.client.post("/analytics/ai/", {"d": "executive", "view": "ceo"})
+        self.assertEqual(r.status_code, 503)
+        self.assertIn("API key", r.json()["error"])
+        self.login("sales@kubbar.example")
+        self.assertEqual(self.client.post("/analytics/ai/", {"d": "sales"}).status_code, 403)
+
+    def test_ai_analysis_maps_claude_answer_to_charts(self):
+        from django.core.cache import cache
+
+        cache.clear()
+        answer = {"summary": "Recovery lags write-offs.", "findings": ["F1"], "risks": ["R1"],
+                  "actions": ["A1"], "charts": [
+                      {"id": "outcomes", "insight": "I", "implication": "M", "action": "X"},
+                      {"id": "made_up", "insight": "?", "implication": "?", "action": "?"}]}
+        self.login("cfo@kubbar.example")
+        with mock.patch("analytics.ai.api_key", return_value="sk-test"), \
+                mock.patch("analytics.ai._call", return_value=answer) as call:
+            r = self.client.post("/analytics/ai/", {"d": "executive", "view": "cfo"})
+            self.assertEqual(r.status_code, 200)
+            data = r.json()
+            self.assertEqual(data["source"], "ai")
+            self.assertEqual(set(data["charts"]), {"outcomes"})
+            prompt = call.call_args[0][0]
+            self.assertIn("Group CFO", prompt)
+            self.assertIn('"outcomes"', prompt)
+            # A second request with the same data is served from the cache.
+            self.client.post("/analytics/ai/", {"d": "executive", "view": "cfo"})
+            self.assertEqual(call.call_count, 1)

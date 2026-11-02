@@ -10,7 +10,7 @@ def _stamp(title, filters_text, user):
             f"{timezone.localtime():%d %b %Y %H:%M} (Cairo)"]
 
 
-def to_excel(title, filters_text, user, kpis, tables):
+def to_excel(title, filters_text, user, kpis, tables, analysis=None, charts=None):
     from openpyxl import Workbook
     from openpyxl.styles import Font, PatternFill
 
@@ -26,6 +26,9 @@ def to_excel(title, filters_text, user, kpis, tables):
         row += 1
     ws.column_dimensions["A"].width = 40
     ws.column_dimensions["B"].width = 22
+    if analysis:
+        row += 1
+        row = _excel_analysis(ws, row, analysis, charts or [])
     header_fill = PatternFill("solid", fgColor="DDE7F0")
     for n, t in enumerate(tables, start=1):
         sheet = wb.create_sheet(f"{n}. {t['title']}"[:31].replace("/", "-"))
@@ -44,7 +47,7 @@ def to_excel(title, filters_text, user, kpis, tables):
     return buf.getvalue()
 
 
-def to_pdf(title, filters_text, user, kpis, tables):
+def to_pdf(title, filters_text, user, kpis, tables, analysis=None, charts=None):
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import A4, landscape
     from reportlab.lib.styles import getSampleStyleSheet
@@ -67,6 +70,10 @@ def to_pdf(title, filters_text, user, kpis, tables):
         kt.setStyle(TableStyle([("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
                                 ("GRID", (0, 0), (-1, -1), 0.3, colors.grey)]))
         story += [kt, Spacer(1, 6 * mm)]
+    if analysis:
+        story += _pdf_analysis(analysis, styles)
+    for c in charts or []:
+        story += _pdf_chart(c, styles)
     cell = styles["BodyText"]
     cell.fontSize = 8
     cell.leading = 10
@@ -84,3 +91,133 @@ def to_pdf(title, filters_text, user, kpis, tables):
         story += [tb, Spacer(1, 5 * mm)]
     doc.build(story)
     return buf.getvalue()
+
+
+def _source(analysis):
+    return ("AI analysis by Claude" if analysis.get("source") == "ai" else
+            "Automated analysis")
+
+
+def _excel_analysis(ws, row, analysis, charts):
+    from openpyxl.styles import Alignment, Font
+
+    def line(text, bold=False):
+        nonlocal row
+        cell = ws.cell(row=row, column=1, value=text)
+        cell.font = Font(bold=bold)
+        cell.alignment = Alignment(wrap_text=True, vertical="top")
+        ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=6)
+        ws.row_dimensions[row].height = 15 * max(1, len(text) // 110 + 1)
+        row += 1
+
+    line(f"{_source(analysis)} ({analysis.get('perspective', '').upper()})", bold=True)
+    line(analysis["summary"])
+    for head, key in (("Key findings", "findings"), ("Risks", "risks"),
+                      ("Recommended actions", "actions")):
+        if analysis.get(key):
+            line(head, bold=True)
+            for x in analysis[key]:
+                line(f"• {x}")
+    for c in charts:
+        line(c["headline"], bold=True)
+        line(c["view"]["insight"])
+    return row
+
+
+def _pdf_analysis(analysis, styles):
+    from reportlab.lib.units import mm
+    from reportlab.platypus import Paragraph, Spacer
+
+    out = [Paragraph(f"{_source(analysis)}", styles["Heading2"]),
+           Paragraph(_esc(analysis["summary"]), styles["BodyText"])]
+    for head, key in (("Key findings", "findings"), ("Risks", "risks"),
+                      ("Recommended actions", "actions")):
+        if analysis.get(key):
+            out.append(Paragraph(head, styles["Heading4"]))
+            out += [Paragraph("• " + _esc(x), styles["BodyText"]) for x in analysis[key]]
+    out.append(Spacer(1, 5 * mm))
+    return out
+
+
+def _esc(text):
+    return (str(text).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
+
+
+def _pdf_chart(c, styles):
+    """A chart drawn with ReportLab graphics, its headline and its analysis."""
+    from reportlab.graphics.charts.barcharts import HorizontalBarChart, VerticalBarChart
+    from reportlab.graphics.charts.legends import Legend
+    from reportlab.graphics.charts.linecharts import HorizontalLineChart
+    from reportlab.graphics.shapes import Drawing
+    from reportlab.lib import colors
+    from reportlab.lib.units import mm
+    from reportlab.platypus import KeepTogether, Paragraph, Spacer
+
+    def compact(v):
+        v = float(v)
+        return (f"{v / 1e6:.1f}M" if abs(v) >= 1e6 else f"{v / 1e3:.0f}K" if abs(v) >= 1e4
+                else f"{v:,.0f}")
+
+    series = c["series"]
+    horizontal = c["type"] == "hbar"
+    order = list(range(len(c["labels"])))
+    if horizontal:  # ReportLab draws the first category at the bottom
+        order.reverse()
+    data = [[float(s["data"][i]) for i in order] for s in series]
+    n = len(c["labels"])
+    width = 250 * mm
+    height = (max(45, 9 * n) * mm) if horizontal else 70 * mm
+    d = Drawing(width, height)
+    labels = [lab if len(lab) <= 30 else lab[:29] + "…"
+              for lab in (c["labels"][i] for i in order)]
+    if c["type"] == "line":
+        ch = HorizontalLineChart()
+        ch.lines.strokeWidth = 1.6
+        for i, s in enumerate(series):
+            ch.lines[i].strokeColor = colors.HexColor(s.get("color", "#2a78d6"))
+    else:
+        ch = HorizontalBarChart() if horizontal else VerticalBarChart()
+        ch.barSpacing = 1
+        ch.groupSpacing = 6
+        for i, s in enumerate(series):
+            ch.bars[i].strokeColor = None
+            ch.bars[i].fillColor = colors.HexColor(s.get("color", "#2a78d6"))
+            cols = s.get("colors") or []
+            for j, k in enumerate(order if cols else []):
+                ch.bars[(i, j)].fillColor = colors.HexColor(cols[k])
+    ch.data = data
+    ch.x, ch.y = (60 * mm if horizontal else 18 * mm), 10 * mm
+    ch.width = width - ch.x - 10 * mm
+    ch.height = height - 18 * mm
+    cat = ch.categoryAxis
+    val = ch.valueAxis
+    cat.categoryNames = labels
+    cat.labels.fontSize = 7
+    cat.strokeColor = colors.HexColor("#c3c2b7")
+    if not horizontal:
+        step = max(1, n // 12)
+        cat.categoryNames = [lab if i % step == 0 else "" for i, lab in enumerate(labels)]
+    val.valueMin = 0
+    val.labels.fontSize = 7
+    val.labelTextFormat = compact
+    val.strokeColor = None
+    val.visibleGrid = True
+    val.gridStrokeColor = colors.HexColor("#e1e0d9")
+    d.add(ch)
+    if len(series) > 1:
+        lg = Legend()
+        lg.x, lg.y = width - 70 * mm, height - 2 * mm
+        lg.fontSize = 7
+        lg.alignment = "right"
+        lg.colorNamePairs = [(colors.HexColor(s.get("color", "#2a78d6")), s["name"])
+                             for s in series]
+        d.add(lg)
+    body = styles["BodyText"]
+    parts = [Paragraph(_esc(c["headline"]), styles["Heading3"]),
+             Paragraph(_esc(c["subtitle"]), styles["Italic"]), d,
+             Paragraph(_esc(c["view"]["insight"]), body)]
+    if c["view"].get("implication"):
+        parts.append(Paragraph("<b>What it means:</b> " + _esc(c["view"]["implication"]), body))
+    if c["view"].get("action"):
+        parts.append(Paragraph("<b>Next step:</b> " + _esc(c["view"]["action"]), body))
+    return [KeepTogether(parts), Spacer(1, 6 * mm)]

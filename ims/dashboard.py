@@ -3,7 +3,7 @@ that matter to them."""
 from datetime import timedelta
 from decimal import Decimal
 
-from django.db.models import Count, F, Sum
+from django.db.models import F, Sum
 from django.utils import timezone
 
 from commerce.models import Buyer, Invoice, OrderLine, PlatformOrder
@@ -12,7 +12,7 @@ from core.rules import rule_int
 from inventory.models import (Batch, BatchStatus, ExpiryAlert, Listing, ProductRegistration,
                               PurchaseOrder, StockCount, StockCountLine, SurplusRelease,
                               WriteOff)
-from planning.models import PurchasePlan, SalesRecord
+from planning.models import PurchasePlan
 
 R = Role
 
@@ -193,7 +193,7 @@ def _var():
 def _recovered():
     lines = OrderLine.objects.filter(order__status__in=[
         PlatformOrder.CONFIRMED, PlatformOrder.DISPATCHED, PlatformOrder.DELIVERED])
-    return sum((x.unit_price * x.quantity for x in lines), Decimal(0))
+    return sum((x.unit_price * x.active_qty for x in lines), Decimal(0))
 
 
 def money_short(v):
@@ -259,34 +259,29 @@ def quick_for(user):
     return [q for q in QUICK if q[4] is None or user.has_role(*q[4])][:6]
 
 
+EXECUTIVES = (R.MANAGEMENT, R.COO, R.GM)
+
+
 def charts_for(user):
-    today = timezone.localdate()
-    bands = [("> 12 months", 365, None), ("6–12 months", 181, 364), ("1–6 months", 30, 180),
-             ("< 30 days", 0, 29), ("Expired", None, -1)]
-    values = []
-    batches = list(Batch.objects.filter(qty_on_hand__gt=0).exclude(
-        status=BatchStatus.INSPECTED).select_related("product"))
-    for _n, lo, hi in bands:
-        v = Decimal(0)
-        for b in batches:
-            d = (b.expiry_date - today).days
-            if (lo is None or d >= lo) and (hi is None or d <= hi):
-                v += b.product.unit_cost * b.qty_on_hand
-        values.append(round(float(v)))
-    charts = [{"id": "ageing", "type": "bar", "title": "Stock by remaining shelf life (EGP at cost)",
-               "labels": [b[0] for b in bands], "data": values,
-               "colors": ["#16a34a", "#65a30d", "#f59e0b", "#ef4444", "#374151"]}]
+    """Storytelling charts for the home page (same renderer as Analytics)."""
+    from analytics import story
+    from analytics.services import Filters
+
+    f = Filters({}, user)
+    builders = [story.expiry_calendar]
     if user.has_role(R.SALES, R.GM, R.MANAGEMENT, R.COO, R.PROCUREMENT, R.FINANCE):
-        rows = list(SalesRecord.objects.values("period").annotate(v=Sum("total"))
-                    .order_by("-period")[:12])[::-1]
-        charts.append({"id": "sales", "type": "line", "title": "Sales, last 12 months (EGP)",
-                       "labels": [f"{r['period']:%b %y}" for r in rows],
-                       "data": [float(r["v"]) for r in rows]})
+        builders.append(story.sales_trend)
     else:
-        rows = (Batch.objects.filter(status__in=[BatchStatus.NEAR_EXPIRY, BatchStatus.SURPLUS,
-                                                 BatchStatus.RELEASED], qty_on_hand__gt=0)
-                .values("product__category__name").annotate(n=Count("id")))
-        charts.append({"id": "cat", "type": "doughnut", "title": "Near-expiry batches by category",
-                       "labels": [r["product__category__name"] for r in rows],
-                       "data": [r["n"] for r in rows]})
-    return charts
+        builders.append(story.var_by_category)
+    return story.prepare(story.build_charts(builders, f), story.default_perspective(user))
+
+
+def briefing_for(user):
+    """Executive briefing on the home page for the CEO, CFO, COO and GM."""
+    if not user.has_role(*EXECUTIVES):
+        return None
+    from analytics.services import Filters, build
+
+    data = build("executive", Filters({}, user))
+    data["charts"] = data["charts"][:4]
+    return data

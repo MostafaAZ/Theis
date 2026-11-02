@@ -215,7 +215,8 @@ PAGES = {
     "customer_detail": ("Customers", "Customer", "Purchases and offers for this customer.",
                         []),
     "customer_edit": ("Customers", "Customer", "Customer details.", []),
-    "analytics": ("Reports", "Analytics", "Six dashboards with filters and export.", []),
+    "analytics": ("Reports", "Analytics", "Dashboards with storytelling charts, analysis "
+                  "for each management role, and export.", []),
     "reports": ("Reports", "Reports & exports", "Ready-made reports to download.", []),
     "users": ("Administration", "Users and roles", "Internal accounts and buyer accounts.", []),
     "user_new": ("Administration", "New user", "Create an internal account.", []),

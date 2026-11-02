@@ -94,6 +94,7 @@ urlpatterns = [
     path("plans/<int:pk>/", planning.plan_detail, name="plan_detail"),
     # Module 6
     path("analytics/", analytics.dashboards, name="analytics"),
+    path("analytics/ai/", analytics.ai_analysis, name="analytics_ai"),
     # Platform-facing IMS screens
     path("buyers/", buyers.buyers, name="buyers"),
     path("buyers/<int:pk>/", buyers.buyer_detail, name="buyer_detail"),

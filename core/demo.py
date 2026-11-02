@@ -14,10 +14,12 @@ STAFF = {
         "Sees only his own categories and regions",
         "Analytics → Sales Performance for his scope"]),
     "coo@kubbar.example": ("Releases surplus to B2B and sets the price", [
+        "Analytics → Executive Briefing: the release-route funnel and expiry calendar",
         "Release requests → approve; a price outside 65–70% is refused",
         "Post to B2B → publish a batch directly",
         "B2B listings → reprice or withdraw"]),
     "gm@kubbar.example": ("Approves plans, adjustments and write-offs", [
+        "Analytics → Executive Briefing: MOQ surplus before approval",
         "Approvals → purchase plan with its MOQ surplus",
         "Approvals → write-off (QA gives the second approval)",
         "Analytics → value at risk and recovery"]),
@@ -49,9 +51,15 @@ STAFF = {
         "Returns → approve the AD3E return with a credit note",
         "Credit notes → record the refund for a refund due",
         "Orders → put on hold, release, or cancel part of a line"]),
-    "ceo@kubbar.example": ("Management overview", [
-        "Dashboard KPIs and charts",
-        "Analytics dashboards and Reports → PDF / Excel"]),
+    "ceo@kubbar.example": ("CEO: the whole story in one briefing", [
+        "Dashboard → Executive briefing with the top findings",
+        "Analytics → Executive Briefing: storytelling charts + analysis",
+        "Switch the analysis to CEO / CFO / COO / GM; Analyse with AI (Claude)",
+        "Export PDF: charts and analysis in one report"]),
+    "cfo@kubbar.example": ("Group CFO: losses, cash and receivables", [
+        "Analytics → Executive Briefing, written for the CFO",
+        "Receivables ageing, write-offs vs recovery, MOQ surplus cash",
+        "Analyse with AI for a deeper financial reading"]),
     "admin@kubbar.example": ("Users, rules and the audit trail", [
         "Users and roles", "Business rules (65–70%, 180 days, 10,000 EGP…)",
         "Audit trail – every approval and price change"]),
