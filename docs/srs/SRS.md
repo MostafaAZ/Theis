@@ -2,6 +2,8 @@
 
 <img src="figures/image2.png" style="width:5.28in;height:2.19379in" />
 
+**VETREX**
+
 Software Requirements
 
 Draft
@@ -129,9 +131,9 @@ company therefore pays three times for the same inventory error: once in
 lost profit, once in holding cost, and once in regulated disposal. The
 proposed solution intercepts stock between unsold and expired.
 
-It does so through two web applications that share one database. The
-Inventory Management System (IMS) is the internal application. It holds
-every batch with its lot number, expiry date, location, and market
+It does so through VETREX, two web applications that share one database.
+The Inventory Management System (IMS) is the internal application. It
+holds every batch with its lot number, expiry date, location, and market
 registration, audits that record against the physical warehouse,
 forecasts demand from sales history before the company commits to a
 purchase, and raises an alert once a batch enters its six-month action
@@ -172,15 +174,17 @@ value. Every requirement in this document traces back to that objective.
 
 # 2. Solution Overview
 
-The proposed solution is two cloud-hosted web applications built on one
-shared database. The DFD As-Is showed that Kubbar's transactional record
-is complete but that nothing reads the expiry data in a way that could
-act on it, and that no entity exists to receive surplus stock. The IMS
-introduces the first missing element: the process that reads expiry
-data. The E-Commerce Platform introduces the second: the buyer. Because
-both applications read and write the same records, a batch offered
-online is the same batch the warehouse holds, so stock that has already
-been sold or has already expired cannot be offered.
+The proposed solution, named VETREX, is two cloud-hosted web
+applications built on one shared database. The name covers both
+applications, because they are one system with two doors rather than two
+tools that exchange data. The DFD As-Is showed that Kubbar's
+transactional record is complete but that nothing reads the expiry data
+in a way that could act on it, and that no entity exists to receive
+surplus stock. The IMS introduces the first missing element: the process
+that reads expiry data. The E-Commerce Platform introduces the second:
+the buyer. Because both applications read and write the same records, a
+batch offered online is the same batch the warehouse holds, so stock
+that has already been sold or has already expired cannot be offered.
 
 The IMS is internal and is accessed only by Kubbar staff. The E-Commerce
 Platform is public-facing, but only verified trade buyers can see prices
@@ -311,7 +315,7 @@ behavior.
 | FEFO            | First-Expired-First-Out, the rule that allocates the batch with the earliest expiry date first                                                  |
 | FR              | Functional Requirement                                                                                                                          |
 | GOVS            | General Organization for Veterinary Services, which registers feed additives and nutritional products in Egypt with the Ministry of Agriculture |
-| IMS             | Inventory Management System, the internal application of the proposed solution                                                                  |
+| IMS             | Inventory Management System, the internal application of VETREX                                                                                 |
 | KPI             | Key Performance Indicator                                                                                                                       |
 | MAPE            | Mean Absolute Percentage Error, the measure of forecast accuracy                                                                                |
 | MOQ             | Minimum Order Quantity set by the supplier                                                                                                      |
@@ -326,6 +330,7 @@ behavior.
 | UAT             | User Acceptance Testing                                                                                                                         |
 | UC              | Use Case                                                                                                                                        |
 | Value at Risk   | The cost value, in EGP, of near-expiry stock not yet sold or released                                                                           |
+| VETREX          | The proposed solution: the IMS and the B2B E-Commerce Platform, built on one shared database                                                    |
 
 *Exhibit \#1: Abbreviations and Definitions*
 
@@ -3231,7 +3236,7 @@ existing systems record accurately but cannot act on. The company
 already knows, batch by batch, what it holds and when that stock
 expires. What it lacks is a process that reads that date while the stock
 still has value, and a buyer who can take what the existing customers do
-not need. The proposed solution supplies both.
+not need. VETREX supplies both.
 
 The IMS turns the record into action at three points. It builds the
 purchase plan from actual sales and shows the MOQ surplus before the
