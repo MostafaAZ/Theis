@@ -1045,10 +1045,17 @@ def withdraw_listing_by_user(user, listing, reason="Withdrawn by Management"):
 def request_write_off(user, batch, quantity, reason, disposal_method):
     """UC-21 / FR-36, FR-37."""
     batch = Batch.objects.select_for_update().get(pk=batch.pk)
-    blockable = batch.qty_on_hand - batch.qty_reserved - batch.blocked_for_write_off
+    blockable = batch.qty_available
+    if blockable <= 0:
+        raise ValidationError(
+            f"Nothing left to write off on lot {batch.lot_number}: all {batch.qty_on_hand} units "
+            f"are already in a write-off request ({batch.blocked_for_write_off}) or reserved "
+            f"for orders ({batch.qty_reserved}).")
     if quantity <= 0 or quantity > blockable:
-        raise ValidationError(f"Quantity must be between 1 and {blockable} (unreserved, not "
-                              f"already blocked).")
+        raise ValidationError(
+            f"You can write off between 1 and {blockable} units of lot {batch.lot_number} "
+            f"({batch.qty_on_hand} on hand, {batch.qty_reserved} reserved for orders, "
+            f"{batch.blocked_for_write_off} already in a write-off request).")
     wo = WriteOff.objects.create(batch=batch, quantity=quantity, reason=reason,
                                  disposal_method=disposal_method, requested_by=user)
     batch.blocked_for_write_off += quantity

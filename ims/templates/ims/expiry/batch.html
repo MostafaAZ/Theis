@@ -25,7 +25,7 @@
   <form method="post">{% csrf_token %}{% include "ims/_fields.html" with form=surplus_form col="col-md-4" %}<button name="surplus" value="1" class="btn btn-warning mt-3">Flag as Surplus and route to COO</button></form></div></div>
   <form method="post">{% csrf_token %}<button name="watch" value="1" class="btn btn-outline-secondary">Keep Under Watch (projected unsold is zero)</button></form>
 {% elif batch.status == 'expired' %}
-  <div class="alert alert-dark">This batch has expired and is blocked from sale.{% if 'inventory' in user.roles %} <a href="/write-offs/new/?batch={{ batch.pk }}">Request write-off</a>.{% else %} The Inventory Controller requests the write-off.{% endif %}</div>
+  <div class="alert alert-dark">This batch has expired and is blocked from sale.{% if not batch.qty_available %} A write-off request already covers it; see <a href="/write-offs/">Write-offs</a>.{% elif 'inventory' in user.roles %} <a href="/write-offs/new/?batch={{ batch.pk }}">Request write-off</a>.{% else %} The Inventory Controller requests the write-off.{% endif %}</div>
 {% else %}
   <div class="alert alert-light border">Offers and surplus flags are recorded by the responsible Sales Representative.</div>
 {% endif %}
