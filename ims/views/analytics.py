@@ -40,7 +40,7 @@ def dashboards(request):
     fmt = request.GET.get("export")
     if fmt in ("pdf", "xlsx"):
         try:
-            title = f"VETREX – {data['title']}"
+            title = f"Kubbar International – {data['title']}"
             maker = exports.to_pdf if fmt == "pdf" else exports.to_excel
             content = maker(title, filters.as_text(), request.user, data["kpis"],
                             data["tables"], analysis=data["analysis"], charts=data["charts"])
@@ -52,7 +52,7 @@ def dashboards(request):
             audit(request.user, AuditLog.DATA_SYNC, f"Exported {data['title']} ({fmt})",
                   f"REPORT-{key}", new=filters.as_text())
             resp = HttpResponse(content, content_type=ctype)
-            resp["Content-Disposition"] = f'attachment; filename="vetrex-{key}.{fmt}"'
+            resp["Content-Disposition"] = f'attachment; filename="kubbar-{key}.{fmt}"'
             return resp
     query = request.GET.copy()
     query.pop("export", None)

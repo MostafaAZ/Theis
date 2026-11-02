@@ -1,4 +1,4 @@
-/* VETREX storytelling charts: one renderer for every dashboard (Chart.js 4).
+/* Kubbar storytelling charts: one renderer for every dashboard (Chart.js 4).
    Thin marks, recessive grid, legend only for two or more series, values
    formatted in the chart's unit, a tooltip on every mark. */
 (function () {

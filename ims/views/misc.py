@@ -218,12 +218,12 @@ def report_download(request, key, fmt):
     kpis, tables, *story = fn(f)
     analysis, charts = story if story else (None, None)
     maker = exports.to_pdf if fmt == "pdf" else exports.to_excel
-    content = maker(f"VETREX – {title}", f.as_text(), request.user, kpis, tables,
+    content = maker(f"Kubbar International – {title}", f.as_text(), request.user, kpis, tables,
                     analysis=analysis, charts=charts)
     audit(request.user, AuditLog.DATA_SYNC, f"Downloaded report {title} ({fmt})",
           f"REPORT-{key}")
     resp = HttpResponse(content, content_type="application/pdf" if fmt == "pdf" else
                         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-    resp["Content-Disposition"] = f'attachment; filename="vetrex-{key}.{fmt}"'
+    resp["Content-Disposition"] = f'attachment; filename="kubbar-{key}.{fmt}"'
     return resp
 

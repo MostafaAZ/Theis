@@ -139,7 +139,7 @@ def register_buyer(*, email, password, company_name, buyer_type, market, commerc
         else:
             notify_roles(Role.SALES, msg, f"/buyers/{buyer.pk}/")
     email_buyer(user, "Confirm your email address",
-                "Welcome to VETREX, the B2B clearance platform of Kubbar International.\n\nConfirm your email address: "
+                "Welcome to the Kubbar International B2B clearance platform.\n\nConfirm your email address: "
                 + b2b_url(f"/register/confirm/{buyer.email_token}/"))
     return buyer
 

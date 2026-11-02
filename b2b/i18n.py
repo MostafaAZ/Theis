@@ -5,7 +5,7 @@ listed fall back to English. The language is kept in the session and Arabic
 switches the layout to right-to-left.
 """
 AR = {
-    "VETREX B2B Clearance": "فيتركس – منصة التصفية للتجار",
+    "Kubbar B2B Clearance": "كبار – منصة التصفية للتجار",
     "Catalogue": "الكتالوج",
     "Cart": "السلة",
     "My Orders": "طلباتي",
@@ -153,7 +153,7 @@ AR.update({
     "Shop by category": "تسوق حسب الفئة",
     "Best deals expiring soon": "أفضل العروض قبل انتهاء الصلاحية",
     "View all": "عرض الكل",
-    "Why buy from VETREX": "لماذا تشتري من فيتركس",
+    "Why buy from Kubbar": "لماذا تشتري من كبار",
     "Registered products": "منتجات مسجلة",
     "Every listing is registered with EDA or GOVS for the Egyptian market.":
         "كل عرض مسجل لدى هيئة الدواء أو الهيئة العامة للخدمات البيطرية.",

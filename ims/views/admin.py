@@ -53,7 +53,7 @@ def user_edit(request, pk=None):
         elif created:
             temp = secrets.token_urlsafe(9) + "7a"
             obj.set_password(temp)
-            send_mail("Your VETREX account",
+            send_mail("Your Kubbar IMS account",
                       f"An IMS account has been created for you.\nEmail: {obj.email}\n"
                       f"Temporary password: {temp}\nYou will be asked for a one-time code at "
                       f"login.", None, [obj.email], fail_silently=True)
@@ -205,7 +205,7 @@ def audit_trail(request):
                                                   "Record", "Old value", "New value"],
               "rows": rows}]
         fn = exports.to_pdf if fmt == "pdf" else exports.to_excel
-        content = fn("VETREX – Audit Trail", request.GET.urlencode() or "none", request.user,
+        content = fn("Kubbar International – Audit Trail", request.GET.urlencode() or "none", request.user,
                      [], t)
         ctype = "application/pdf" if fmt == "pdf" else \
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"

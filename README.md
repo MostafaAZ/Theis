@@ -1,8 +1,7 @@
 # Theis — Kubbar International Graduation Project
 
-MOIS 4999 Graduation Project (Fall 2026): **VETREX**, an Inventory Management
-System and a B2B E-Commerce Platform for near-expiry veterinary stock at Kubbar
-International.
+MOIS 4999 Graduation Project (Fall 2026): an Inventory Management System and a
+B2B E-Commerce Platform for near-expiry veterinary stock at Kubbar International.
 
 | Document | |
 |---|---|

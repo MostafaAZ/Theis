@@ -32,7 +32,7 @@ def _send_code(request, user):
     code = f"{secrets.randbelow(1_000_000):06d}"
     LoginCode.objects.filter(user=user, used=False).update(used=True)
     LoginCode.objects.create(user=user, code=code)
-    send_mail("VETREX login code", f"Your one-time login code is {code}. It is valid for "
+    send_mail("Kubbar IMS login code", f"Your one-time login code is {code}. It is valid for "
                                       f"10 minutes.", None, [user.email], fail_silently=True)
     if settings.SHOW_DEV_OTP:
         messages.info(request, f"Development mode: your one-time code is {code}.")

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}{% t "VETREX B2B Clearance" %}{% endblock %} · VETREX</title>
+  <title>{% block title %}{% t "Kubbar B2B Clearance" %}{% endblock %} · Kubbar</title>
   {% if DIR == "rtl" %}<link rel="stylesheet" href="{% static 'vendor/bootstrap/bootstrap.rtl.min.css' %}">{% else %}<link rel="stylesheet" href="{% static 'vendor/bootstrap/bootstrap.min.css' %}">{% endif %}
   <link rel="stylesheet" href="{% static 'vendor/bootstrap-icons/bootstrap-icons.min.css' %}">
   <link rel="stylesheet" href="{% static 'kubbar/app.css' %}">
@@ -19,7 +19,7 @@
   <a href="/lang/{% if LANG == 'ar' %}en{% else %}ar{% endif %}/?next={{ request.get_full_path|urlencode }}"><i class="bi bi-translate me-1"></i>{% if LANG == 'ar' %}English{% else %}العربية{% endif %}</a>
 </div></div>
 <header class="shop-header"><div class="container d-flex align-items-center gap-3 py-2 flex-wrap flex-md-nowrap">
-  <a href="/" class="shop-brand"><span class="mark"><i class="bi bi-shop"></i></span><span>VETREX<small>B2B Clearance</small></span></a>
+  <a href="/" class="shop-brand"><span class="mark"><i class="bi bi-shop"></i></span><span>KUBBAR<small>B2B Clearance</small></span></a>
   <form class="shop-search order-3 order-md-2 w-100" action="/catalogue/"><input name="q" value="{{ request.GET.q|default:'' }}" placeholder="{% t 'Search products or lot numbers' %}" aria-label="Search"><button aria-label="Search"><i class="bi bi-search"></i></button></form>
   <nav class="d-flex align-items-center gap-1 order-2 order-md-3 ms-auto">
     {% if shop_buyer %}
@@ -55,13 +55,13 @@
   {% block content %}{% endblock %}
 </main>
 <footer class="shop-footer"><div class="container"><div class="row g-4">
-  <div class="col-md-4"><div class="shop-brand text-white mb-2"><span class="mark"><i class="bi bi-shop"></i></span><span class="text-white">VETREX<small class="text-white-50">B2B Clearance</small></span></div>
+  <div class="col-md-4"><div class="shop-brand text-white mb-2"><span class="mark"><i class="bi bi-shop"></i></span><span class="text-white">KUBBAR<small class="text-white-50">B2B Clearance</small></span></div>
     <p class="mb-1">{% t "Clearance stock for licensed trade buyers" %}.</p><p class="mb-0"><i class="bi bi-envelope me-1"></i>b2b@kubbar.example · <i class="bi bi-telephone me-1"></i>+20 2 3333 0000</p></div>
   <div class="col-6 col-md-2"><h6>{% t "Shop" %}</h6><a href="/catalogue/">{% t "Catalogue" %}</a>{% for c in shop_categories %}<a href="/catalogue/?category={{ c.pk }}">{% t c.name %}</a>{% endfor %}</div>
   <div class="col-6 col-md-2"><h6>{% t "Account" %}</h6>{% if shop_buyer %}<a href="/account/">{% t "My Account" %}</a><a href="/orders/">{% t "My Orders" %}</a><a href="/account/invoices/">{% t "Invoices" %}</a>{% else %}<a href="/register/">{% t "Register" %}</a><a href="/login/">{% t "Log In" %}</a>{% endif %}</div>
   <div class="col-6 col-md-2"><h6>{% t "Help" %}</h6><a href="/how-it-works/">{% t "How it works" %}</a><a href="/faq/">{% t "Frequently asked questions" %}</a><a href="/contact/">{% t "Contact us" %}</a></div>
   <div class="col-6 col-md-2"><h6>{% t "Legal" %}</h6><a href="/terms/">{% t "Terms of Service" %}</a><a href="/privacy/">{% t "Privacy & data protection" %}</a></div>
-</div><div class="legal d-flex flex-wrap gap-2"><span>© {% now "Y" %} VETREX by Kubbar International</span><span class="ms-auto">EGP · {% t "Verified trade buyers only" %}</span></div></div></footer>
+</div><div class="legal d-flex flex-wrap gap-2"><span>© {% now "Y" %} Kubbar International</span><span class="ms-auto">EGP · {% t "Verified trade buyers only" %}</span></div></div></footer>
 <script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"></script>
 <script>
 document.querySelectorAll("[data-step]").forEach(b => b.addEventListener("click", () => { const i = document.getElementById(b.dataset.target); const v = (parseInt(i.value) || 0) + parseInt(b.dataset.step); i.value = Math.max(parseInt(i.min) || 1, Math.min(parseInt(i.max) || 99999, v)); }));

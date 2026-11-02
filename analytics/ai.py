@@ -31,13 +31,13 @@ KEY_FILE = Path(settings.BASE_DIR) / "anthropic_api_key.txt"
 
 SYSTEM = """You are a senior business analyst advising the top management of Kubbar \
 International, a veterinary products distributor operating in Egypt (pilot market) and \
-eight other markets. You analyse data from VETREX, the company's inventory management \
+eight other markets. You analyse data from the company's inventory management \
 system and B2B clearance platform.
 
 Business context:
 - The core problem: the purchase forecast is rounded up to supplier minimum order \
 quantities (MOQ), which creates surplus stock that expires unsold and is destroyed.
-- VETREX flags every batch six months before expiry. The release route is: offer to \
+- The system flags every batch six months before expiry. The release route is: offer to \
 existing customers first, then a Sales Representative flags it as surplus, the COO \
 approves release at 65% to 70% of the original price, and the batch is listed on the B2B \
 platform for verified trade buyers. Write-off is the last route and needs approval by \
@@ -130,7 +130,7 @@ def analyse(data, filters_text, perspective):
               f"cares most about {PERSPECTIVE_FOCUS[perspective]}.\n\n"
               f"Return: a summary of the whole dashboard; three to five findings in order "
               f"of importance to the {label}; one to three risks; two to four concrete "
-              f"actions the {label} can take or ask for in VETREX; and, for every chart id "
+              f"actions the {label} can take or ask for in the system; and, for every chart id "
               f"in the data, an insight (what the chart shows), an implication (what it "
               f"means for the {label}) and an action.\n\n"
               f"Dashboard data (JSON):\n{json.dumps(body, ensure_ascii=False)}")
