@@ -1,7 +1,6 @@
 """Shared models: users and roles, reference data, business rules, audit trail
 and notifications. Both applications read these from the shared database."""
 from datetime import timedelta
-from decimal import Decimal
 
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.core.exceptions import PermissionDenied
@@ -265,8 +264,13 @@ class BusinessRule(models.Model):
 
     @property
     def display_value(self):
-        v = self.value.normalize() if self.value == self.value.to_integral() else self.value
-        return f"{v:,} {self.unit}".strip() if isinstance(v, Decimal) else str(v)
+        # Plain digits with thousands separators (10,000 not 1E+4).
+        v = self.value
+        if v == v.to_integral():
+            text = f"{int(v):,}"
+        else:
+            text = f"{v.normalize():,f}"
+        return f"{text} {self.unit}".strip()
 
 
 class AuditLog(models.Model):

@@ -93,7 +93,8 @@ def rules(request):
 def rule_edit(request, pk):
     """UC-42 / FR-52."""
     r = get_object_or_404(BusinessRule, pk=pk)
-    form = RuleForm(request.POST or None, initial={"new_value": r.value})
+    current = int(r.value) if r.value == r.value.to_integral() else r.value.normalize()
+    form = RuleForm(request.POST or None, initial={"new_value": current})
     if request.method == "POST" and form.is_valid():
         v = form.cleaned_data["new_value"]
         problem = None
