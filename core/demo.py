@@ -28,11 +28,13 @@ STAFF = {
     "warehouse@kubbar.example": ("Picks, dispatches and counts", [
         "Dispatch queue → type the allocated lot → dispatch",
         "My counts → blind count sheet (system quantity hidden)",
-        "Field dispatch → earliest-expiry-first allocation"]),
+        "Field dispatch → earliest-expiry-first allocation",
+        "Returns → record the goods received for an approved return"]),
     "qa@kubbar.example": ("Inspects deliveries and co-approves disposal", [
         "Batch inspection → record lot and expiry for a PO",
         "Approvals → second approval on a write-off",
-        "Write-offs → record disposal and certificate"]),
+        "Write-offs → record disposal and certificate",
+        "Returns → inspect returned vaccine: restock or write off"]),
     "procurement@kubbar.example": ("Forecasts demand and plans purchases", [
         "Data import → sample_data/sales_history_sample.csv",
         "Demand forecast → generate → build a purchase plan",
@@ -43,7 +45,10 @@ STAFF = {
     "finance@kubbar.example": ("Payments, invoices and credit", [
         "Payment queue → confirm a transfer receipt; invoice issued",
         "Buyer credit → payment terms and limits",
-        "Overdue invoice blocks pay-on-invoice"]),
+        "Order exceptions → every order that needs action, in one list",
+        "Returns → approve the AD3E return with a credit note",
+        "Credit notes → record the refund for a refund due",
+        "Orders → put on hold, release, or cancel part of a line"]),
     "ceo@kubbar.example": ("Management overview", [
         "Dashboard KPIs and charts",
         "Analytics dashboards and Reports → PDF / Excel"]),
@@ -55,7 +60,8 @@ STAFF = {
 BUYERS = {
     "buyer@vetclinic.example": ("Verified clinic, cold-chain eligible", [
         "Catalogue with prices → add to cart → checkout",
-        "Pay by transfer receipt; track the order; download the invoice"]),
+        "Pay by transfer receipt; track the order; download the invoice",
+        "Delivered order → Request return; see it under Returns & credits"]),
     "buyer@sinaifarms.example": ("Verified farm with 30-day credit", [
         "Has an overdue invoice → Pay on Invoice is blocked",
         "Cannot buy vaccines (not cold-chain eligible)"]),

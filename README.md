@@ -6,6 +6,7 @@ B2B E-Commerce Platform for near-expiry veterinary stock at Kubbar International
 | Document | |
 |---|---|
 | [`docs/srs/SRS.md`](docs/srs/SRS.md) | Software Requirements Specification (Markdown rendering; figures in `docs/srs/figures/`) |
+| [`docs/srs/MostafaSRSDraft2.docx`](docs/srs/MostafaSRSDraft2.docx) | Word document, with Module 11 (order exceptions, returns, credit notes) |
 | [`docs/srs/MostafaSRSDraft1.docx`](docs/srs/MostafaSRSDraft1.docx) | Original Word document |
 | [`docs/IMPLEMENTATION.md`](docs/IMPLEMENTATION.md) | How the prototype maps to the SRS: modules, use cases, screens, design decisions |
 
@@ -148,6 +149,13 @@ on screen and printed in the server console.
 9. **Regulatory Affairs** → *B2B sales → Buyers* → verify a pending buyer.
 10. **Any staff role** → *Reports → Reports & exports* for PDF / Excel downloads;
     *B2B sales → Buyer messages* to answer questions sent from the platform.
+11. **After-sales** (*B2B orders* menu): **buyer@vetclinic** opens a delivered
+    order → *Request return*. **Finance** → *Returns* → approve with a credit
+    note; **Warehouse** records the goods received; **QA** inspects and restocks
+    or writes off; a credit note is issued against the invoice. *Order
+    exceptions* lists every held order, lapsing reservation, overdue payment,
+    return and refund in one place. Any order page has *Put on hold*,
+    *Cancel selected quantities* (Finance) and a lot-level *Packing slip*.
 
 ### Daily jobs
 

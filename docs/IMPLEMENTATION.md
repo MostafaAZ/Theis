@@ -40,7 +40,7 @@ the SRS left something open.
 | 23 | `/imports/` | `planning.services.stage_import`, `confirm_import` |
 | 24 | `/forecasts/` | `generate_forecast`, `planning/forecasting.py` |
 | 25–26 | `/plans/<id>/` | `build_plan`, `plan_line_figures`, `decide_plan` |
-| 27–28 | `/analytics/` (six dashboards, PDF/Excel export) | `analytics/services.py`, `analytics/exports.py` |
+| 27–28 | `/analytics/` (seven dashboards, PDF/Excel export) | `analytics/services.py`, `analytics/exports.py` |
 | 29–30 | Platform `/register/`, `/account/` | `commerce.services.register_buyer`, `save_document` |
 | 31 | `/buyers/<id>/` | `review_document`, `verify_buyer` |
 | 32 | Platform `/login/`, `/password-reset/`, `/unlock/<token>/` | `b2b/views.py` |
@@ -52,6 +52,14 @@ the SRS left something open.
 | 39 | `/credit/` | `set_payment_terms` |
 | 40 | `/listings/<id>/` | `reprice_listing`, `change_listing_quantity` |
 | 41–44 | `/admin/users/`, `/admin/rules/`, `/admin/reference/`, `/admin/audit/` | `ims/views/admin.py` |
+| 45 | `/b2b/orders/<id>/` (Put on hold / Release hold); hold from `/dispatch/<order>/` | `commerce.orders.hold_order`, `release_hold` |
+| 46 | `/b2b/orders/<id>/` (Cancel selected quantities) | `cancel_lines` |
+| 47 | `/b2b/exceptions/` | `commerce.orders.exceptions` |
+| 48 | Platform `/orders/<id>/return/`, `/account/returns/` | `request_return` |
+| 49–51 | `/b2b/returns/`, `/b2b/returns/<id>/` (decide, receive, inspect) | `decide_return`, `receive_return`, `inspect_return` |
+| 52 | `/b2b/orders/<id>/` (Issue credit note), `/b2b/credit-notes/` (Refund paid) | `issue_credit_note`, `record_refund`, `commerce/documents.py` |
+| 53 | `/b2b/orders/<id>/packing-slip/`, platform `/orders/<id>/packing-slip/` | `packing_slip_pdf` |
+| FR-102 | `/analytics/?d=exceptions` (Order Exceptions dashboard) | `analytics.services.order_exceptions` |
 
 ## Screens added beyond the use cases
 

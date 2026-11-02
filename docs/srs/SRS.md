@@ -1,8 +1,6 @@
-<img src="figures/image1.png"
-style="width:6.5in;height:2.84722in" />
+<img src="figures/image1.png" style="width:6.5in;height:2.84722in" />
 
-<img src="figures/image2.png"
-style="width:5.28in;height:2.19379in" />
+<img src="figures/image2.png" style="width:5.28in;height:2.19379in" />
 
 Software Requirements
 
@@ -22,112 +20,101 @@ Date: Fall 2026
 
 # Table of Contents
 
-[1. Solution Objective [3](#section)](#section)
+[1. Solution Objective](#section)
 
-[2. Solution Overview [4](#solution-overview)](#solution-overview)
+[2. Solution Overview](#solution-overview)
 
-[3. Abbreviations and Definitions
-[6](#abbreviations-and-definitions)](#abbreviations-and-definitions)
+[3. Abbreviations and Definitions](#abbreviations-and-definitions)
 
-[4. User Profiles [8](#user-profiles)](#user-profiles)
+[4. User Profiles](#user-profiles)
 
-[5. Solution Scope [12](#solution-scope)](#solution-scope)
+[5. Solution Scope](#solution-scope)
 
-[5.1 In Scope [12](#in-scope)](#in-scope)
+[5.1 In Scope](#in-scope)
 
-[5.2 Out of Scope [14](#out-of-scope)](#out-of-scope)
+[5.2 Out of Scope](#out-of-scope)
 
-[5.3 Release Phasing [15](#release-phasing)](#release-phasing)
+[5.3 Release Phasing](#release-phasing)
 
-[5.4 Assumptions [15](#assumptions)](#assumptions)
+[5.4 Assumptions](#assumptions)
 
-[5.5 Dependencies [16](#dependencies)](#dependencies)
+[5.5 Dependencies](#dependencies)
 
-[5.6 Constraints [16](#constraints)](#constraints)
+[5.6 Constraints](#constraints)
 
-[6. Functional Requirements
-[16](#functional-requirements)](#functional-requirements)
+[6. Functional Requirements](#functional-requirements)
 
-[6.1 Authentication and Access Control
-[17](#authentication-and-access-control)](#authentication-and-access-control)
+[6.1 Authentication and Access
+Control](#authentication-and-access-control)
 
-[6.2 Inventory and Batch Control
-[18](#inventory-and-batch-control)](#inventory-and-batch-control)
+[6.2 Inventory and Batch Control](#inventory-and-batch-control)
 
-[6.3 Warehouse Audit [20](#warehouse-audit)](#warehouse-audit)
+[6.3 Warehouse Audit](#warehouse-audit)
 
-[6.4 Expiry Monitoring and Surplus Release
-[21](#expiry-monitoring-and-surplus-release)](#expiry-monitoring-and-surplus-release)
+[6.4 Expiry Monitoring and Surplus
+Release](#expiry-monitoring-and-surplus-release)
 
-[6.5 Disposal and Write-Off
-[23](#disposal-and-write-off)](#disposal-and-write-off)
+[6.5 Disposal and Write-Off](#disposal-and-write-off)
 
-[6.6 Demand Forecasting and Purchase Planning
-[24](#demand-forecasting-and-purchase-planning)](#demand-forecasting-and-purchase-planning)
+[6.6 Demand Forecasting and Purchase
+Planning](#demand-forecasting-and-purchase-planning)
 
-[6.7 Business Rules and System Administration
-[26](#business-rules-and-system-administration)](#business-rules-and-system-administration)
+[6.7 Business Rules and System
+Administration](#business-rules-and-system-administration)
 
-[6.8 Sales and Inventory Analytics
-[28](#sales-and-inventory-analytics)](#sales-and-inventory-analytics)
+[6.8 Sales and Inventory Analytics](#sales-and-inventory-analytics)
 
-[6.9 Buyer Registration and Verification
-[30](#buyer-registration-and-verification)](#buyer-registration-and-verification)
+[6.9 Buyer Registration and
+Verification](#buyer-registration-and-verification)
 
-[6.10 Catalogue and Ordering
-[32](#catalogue-and-ordering)](#catalogue-and-ordering)
+[6.10 Catalogue and Ordering](#catalogue-and-ordering)
 
-[6.11 Payment and Fulfilment
-[33](#payment-and-fulfilment)](#payment-and-fulfilment)
+[6.11 Payment and Fulfilment](#payment-and-fulfilment)
 
-[6.12 Odoo Integration (Full Release)
-[34](#odoo-integration-full-release)](#odoo-integration-full-release)
+[6.12 Odoo Integration (Full Release)](#odoo-integration-full-release)
 
-[7. Non-Functional Requirements
-[34](#non-functional-requirements)](#non-functional-requirements)
+[6.13 Order Exceptions and Returns](#order-exceptions-and-returns)
 
-[7.1 Functionality [35](#functionality)](#functionality)
+[7. Non-Functional Requirements](#non-functional-requirements)
 
-[7.2 Usability [35](#usability)](#usability)
+[7.1 Functionality](#functionality)
 
-[7.3 Reliability [36](#reliability)](#reliability)
+[7.2 Usability](#usability)
 
-[7.4 Performance [36](#performance)](#performance)
+[7.3 Reliability](#reliability)
 
-[7.5 Supportability [37](#supportability)](#supportability)
+[7.4 Performance](#performance)
 
-[7.6 Security [37](#security)](#security)
+[7.5 Supportability](#supportability)
 
-[8. Use Case Diagram [38](#use-case-diagram)](#use-case-diagram)
+[7.6 Security](#security)
 
-[9. Use Cases [40](#use-cases)](#use-cases)
+[8. Use Case Diagram](#use-case-diagram)
 
-[9.1 Use Case Summary [40](#use-case-summary)](#use-case-summary)
+[9. Use Cases](#use-cases)
 
-[9.2 Textual Use Case Specifications
-[44](#textual-use-case-specifications)](#textual-use-case-specifications)
+[9.1 Use Case Summary](#use-case-summary)
 
-[10. Activity Diagrams [80](#activity-diagrams)](#activity-diagrams)
+[9.2 Textual Use Case Specifications](#textual-use-case-specifications)
 
-[10.1 Demand Forecasting and Purchase Planning
-[81](#demand-forecasting-and-purchase-planning-1)](#demand-forecasting-and-purchase-planning-1)
+[10. Activity Diagrams](#activity-diagrams)
 
-[10.2 Warehouse Audit [81](#warehouse-audit-1)](#warehouse-audit-1)
+[10.1 Demand Forecasting and Purchase
+Planning](#demand-forecasting-and-purchase-planning-1)
 
-[10.3 Near-Expiry Products
-[82](#near-expiry-products)](#near-expiry-products)
+[10.2 Warehouse Audit](#warehouse-audit-1)
 
-[10.4 E-Commerce Purchase
-[83](#e-commerce-purchase)](#e-commerce-purchase)
+[10.3 Near-Expiry Products](#near-expiry-products)
 
-[11. Data Models [84](#data-models)](#data-models)
+[10.4 E-Commerce Purchase](#e-commerce-purchase)
 
-[11.1 Data Flow Diagram [84](#data-flow-diagram)](#data-flow-diagram)
+[11. Data Models](#data-models)
 
-[11.2 Entity Relationship Diagram
-[85](#entity-relationship-diagram)](#entity-relationship-diagram)
+[11.1 Data Flow Diagram](#data-flow-diagram)
 
-[12. Conclusion [90](#conclusion)](#conclusion)
+[11.2 Entity Relationship Diagram](#entity-relationship-diagram)
+
+[12. Conclusion](#conclusion)
 
 # 
 
@@ -257,7 +244,7 @@ user accounts and roles for both applications, configures business rules
 such as the near-expiry window and the clearance price band, maintains
 reference data, and reviews the audit trail.
 
-The E-Commerce Platform is organized into three modules:
+The E-Commerce Platform is organized into four modules:
 
 **Module 8: Buyer Registration and Verification.** A trade buyer
 registers a company account and uploads the owner's national ID,
@@ -277,13 +264,23 @@ or on invoice. The Finance Officer confirms the payment or the invoice
 terms, the Warehouse Officer dispatches the order, and the buyer tracks
 it to delivery.
 
+**Module 11: Order Exceptions and Returns.** Not every order runs
+cleanly from checkout to delivery. The Finance Officer, the Warehouse
+Officer, or the COO can hold an order while a problem is resolved, and
+the Finance Officer can cancel part of an order before dispatch. A buyer
+can request a return within seven days of delivery. The Finance Officer
+decides it, the Warehouse Officer receives the goods, and the QA Officer
+decides whether they return to stock or go to write-off. Every value
+given back to the buyer is issued as a credit note against the original
+invoice, so the correction never becomes a second, unrelated sale.
+
 At the data level, the shared database holds batch records (lot number,
 manufacture and expiry dates, quantity, location, release status),
 product registrations by market, sales history by product, region, and
 customer, forecasts and purchase plans, audit counts and adjustments,
-listings, buyers and their verification documents, platform orders and
-payments, write-offs and disposals, and a complete audit trail of who
-did what and when.
+listings, buyers and their verification documents, platform orders,
+payments, returns, and credit notes, write-offs and disposals, and a
+complete audit trail of who did what and when.
 
 # 3. Abbreviations and Definitions
 
@@ -348,16 +345,16 @@ does not reach rather than at accounts it already holds.
 | User Role                        | Application      | Responsibilities                                                                                                                                                                                                         | Key Competencies                                           |
 |----------------------------------|------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------|
 | Sales Representative             | IMS              | Reviews near-expiry batches for their products and regions. Offers them to existing customers first. Flags batches the customer base cannot absorb as surplus. Reviews sales analytics by product, region, and customer. | Customer knowledge, product knowledge, sales analysis      |
-| Warehouse Officer                | IMS              | Transfers stock between locations. Picks and dispatches platform orders against FEFO allocation. Records physical counts during warehouse audits.                                                                        | Stock handling, cold-chain handling, counting accuracy     |
+| Warehouse Officer                | IMS              | Transfers stock between locations. Picks and dispatches platform orders against FEFO allocation. Records physical counts during warehouse audits. Receives returned goods.                                               | Stock handling, cold-chain handling, counting accuracy     |
 | Inventory Controller             | IMS              | Books inspected batches into stock. Schedules warehouse audits and reconciles count variances. Reviews near-expiry stock. Requests write-off of expired or rejected batches.                                             | Inventory control, reconciliation, data accuracy           |
-| QA Officer                       | IMS              | Records lot number, manufacture date, expiry date, and inspection outcome for every received batch. Co-approves write-off and disposal of expired and rejected stock.                                                    | Quality inspection, batch traceability, regulated disposal |
+| QA Officer                       | IMS              | Records lot number, manufacture date, expiry date, and inspection outcome for every received batch. Co-approves write-off and disposal of expired and rejected stock. Inspects returned stock before it is restocked.    | Quality inspection, batch traceability, regulated disposal |
 | Procurement Officer              | IMS              | Imports sales and stock data. Generates the demand forecast. Builds the purchase plan against supplier MOQs and submits it for approval. Reviews forecast accuracy.                                                      | Demand planning, supplier terms, data analysis             |
 | Regulatory Affairs Officer       | IMS              | Maintains product registration status and expiry by market. Verifies buyer documents and sets the product categories each buyer may purchase.                                                                            | EDA and GOVS registration, licence verification            |
-| Finance Officer                  | IMS              | Confirms bank transfer payments. Approves invoice payment terms and credit limits for buyers. Issues platform invoices. Exports financial reports.                                                                       | Receivables, credit control, invoicing                     |
+| Finance Officer                  | IMS              | Confirms bank transfer payments. Approves invoice payment terms and credit limits for buyers. Issues platform invoices. Decides return requests and issues credit notes and refunds. Exports financial reports.          | Receivables, credit control, invoicing                     |
 | General Manager                  | IMS              | Approves the purchase plan. Approves stock adjustments above threshold. Co-approves write-off and disposal. Reviews analytics for the Egyptian operation.                                                                | Operational oversight, approval authority                  |
 | Management (CEO, Group CFO, COO) | IMS              | The COO approves batch release, sets the clearance price within the 65% to 70% band, and withdraws or reprices listings. Management reviews KPIs, recovered value, and the audit trail.                                  | Commercial authority, pricing control, performance review  |
 | System Administrator             | IMS and Platform | Creates, edits, and deactivates internal user accounts and roles. Configures business rules. Maintains reference data. Reviews the audit trail.                                                                          | Access control, configuration, system support              |
-| E-Commerce Buyer                 | Platform         | Registers a company account and uploads verification documents. Browses clearance listings, places orders, submits payment, and tracks delivery.                                                                         | Trade purchasing, licensed to trade veterinary products    |
+| E-Commerce Buyer                 | Platform         | Registers a company account and uploads verification documents. Browses clearance listings, places orders, submits payment, tracks delivery, and requests returns.                                                       | Trade purchasing, licensed to trade veterinary products    |
 
 *Exhibit \#2: User Profiles*
 
@@ -485,6 +482,19 @@ Section 4.
 
 - Payment confirmation, invoice issue, dispatch, and order tracking.
 
+**Order Exceptions and Returns (Module 11)**
+
+- Order holds placed by the Finance Officer, Warehouse Officer, or COO,
+  and partial cancellation of order lines before dispatch.
+
+- An order exception queue that lists every order needing staff action.
+
+- Return requests within the return window, with receipt by the
+  warehouse and inspection by QA before any unit is restocked.
+
+- Credit notes against the original invoice, set off or refunded by bank
+  transfer, and lot-level packing slips.
+
 ## 5.2 Out of Scope
 
 Explicit exclusions protect the 12-week schedule and keep the system
@@ -522,6 +532,11 @@ from drifting into functions that Odoo already performs.
 - **Hardware.** Barcode scanners, RFID, and temperature sensors are
   excluded from the current phase.
 
+- **Backorders and Order Editing.** A listing is a fixed quantity from
+  one batch, so the platform does not take backorders, preorders, or
+  split shipments, and a buyer cannot add lines to an order after
+  checkout. Refunds are paid by bank transfer, never to a card.
+
 ## 5.3 Release Phasing
 
 The proposed solution is delivered in two releases. The prototype proves
@@ -531,7 +546,7 @@ release connects it to Odoo.
 | Capability                          | Prototype                              | Full Release                                    |
 |-------------------------------------|----------------------------------------|-------------------------------------------------|
 | IMS Modules 1 to 7                  | Yes                                    | Yes                                             |
-| E-Commerce Platform Modules 8 to 10 | Yes                                    | Yes                                             |
+| E-Commerce Platform Modules 8 to 11 | Yes                                    | Yes                                             |
 | Data source                         | Excel and CSV import from Odoo exports | Scheduled API synchronization with Odoo         |
 | Sales written back to Odoo          | No                                     | Yes                                             |
 | Markets active                      | Egypt                                  | Egypt, then the other eight markets in sequence |
@@ -603,7 +618,7 @@ release connects it to Odoo.
 # 6. Functional Requirements
 
 The functional requirements below are organized by module and trace to
-the forty-four use cases in Section 9. Each requirement states what the
+the fifty-three use cases in Section 9. Each requirement states what the
 system shall do, not how it is built. The requirements that carry the
 most weight are the ones the Root Cause Analysis points to directly:
 batch-level expiry data (FR-07 to FR-12), the six-month alert and
@@ -695,17 +710,19 @@ The business rules below are configurable by the System Administrator,
 and any change requires Management approval. Their default values follow
 the decisions recorded in the proposal and in this specification.
 
-| Rule                                 | Default Value                     |
-|--------------------------------------|-----------------------------------|
-| Near-expiry window                   | 180 days (6 months)               |
-| Clearance price band                 | 65% to 70% of original sale price |
-| Minimum sellable shelf life          | 30 days                           |
-| Minimum receiving shelf life warning | 12 months                         |
-| Unactioned near-expiry escalation    | 14 days                           |
-| Count variance tolerance             | 2% of batch quantity              |
-| Adjustment approval threshold        | 10,000 EGP at cost                |
-| Platform order reservation hold      | 48 hours for bank transfer orders |
-| Active market                        | Egypt                             |
+| Rule                                 | Default Value                        |
+|--------------------------------------|--------------------------------------|
+| Near-expiry window                   | 180 days (6 months)                  |
+| Clearance price band                 | 65% to 70% of original sale price    |
+| Minimum sellable shelf life          | 30 days                              |
+| Minimum receiving shelf life warning | 12 months                            |
+| Unactioned near-expiry escalation    | 14 days                              |
+| Count variance tolerance             | 2% of batch quantity                 |
+| Adjustment approval threshold        | 10,000 EGP at cost                   |
+| Platform order reservation hold      | 48 hours for bank transfer orders    |
+| Reservation expiry warning           | 12 hours before a reservation lapses |
+| Return request window                | 7 days after delivery                |
+| Active market                        | Egypt                                |
 
 *Exhibit \#4: Business Rules and Default Values*
 
@@ -780,6 +797,39 @@ meets the same data needs through FR-41.
 | FR-88 | The system shall write confirmed platform sales and invoices back to Odoo so that Odoo remains the accounting record.                        | UC-38    |
 | FR-89 | The system shall log every synchronization with record counts and errors, and alert the System Administrator when a run fails.               | UC-44    |
 
+## 6.13 Order Exceptions and Returns
+
+The requirements below cover what happens when an order does not run
+cleanly from checkout to delivery. They matter for the same reason as
+the reservation rule in FR-78. A clearance channel that cannot correct a
+damaged lot, a short delivery, or a cold-chain break loses the trust of
+the buyers it depends on. Every correction is therefore made against the
+original order and invoice rather than as a new transaction, and no
+returned unit reaches sellable stock until the QA Officer has inspected
+it.
+
+| ID     | Requirement                                                                                                                                                                                                                         | Use Case     |
+|--------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------|
+| FR-90  | The system shall allow the Finance Officer, Warehouse Officer, and COO to place an order on hold with a reason, block its payment confirmation and dispatch while it is held, keep its stock reserved, and notify the buyer.        | UC-45        |
+| FR-91  | The system shall allow the same roles to release a hold with a comment, and shall restart the reservation period of a bank transfer order on release.                                                                               | UC-45        |
+| FR-92  | The system shall allow the Finance Officer to cancel all or part of an order line before dispatch, with a reason, and return the cancelled quantity to the listing.                                                                 | UC-46        |
+| FR-93  | The system shall recalculate the order total after a cancellation, cancel the order when no quantity remains, and issue a credit note when the order has already been invoiced.                                                     | UC-46, UC-52 |
+| FR-94  | The system shall display an order exception queue that lists held orders, reservations about to lapse, overdue payments, delivery problems, returns awaiting action, and refunds due, each linked to the screen that resolves it.   | UC-47        |
+| FR-95  | The system shall allow a buyer to request a return of delivered lines within the return window in Exhibit \#4, with a quantity and reason for each line and an optional photo.                                                      | UC-48        |
+| FR-96  | The system shall allow the Finance Officer to approve or reject a return request, with a comment, and notify the buyer of the decision.                                                                                             | UC-49        |
+| FR-97  | The system shall allow the Finance Officer to resolve an approved return with a credit note or with a free replacement order from the same listing while stock remains.                                                             | UC-49        |
+| FR-98  | The system shall allow the Warehouse Officer to record the quantity physically received for each returned line.                                                                                                                     | UC-50        |
+| FR-99  | The system shall require the QA Officer to inspect every received return and either restock each line to a location that matches its storage condition or send it to write-off under FR-36.                                         | UC-51        |
+| FR-100 | The system shall issue numbered credit notes against the original invoice, set the amount off against an unpaid invoice, record a refund due against a paid one, and allow the Finance Officer to record the bank refund reference. | UC-52        |
+| FR-101 | The system shall generate a packing slip for every dispatched order that lists the product, lot number, expiry date, storage condition, and quantity of each line shipped.                                                          | UC-53        |
+| FR-102 | The system shall report cancellations by reason, returns by reason, the return rate, credit note value, holds by reason, and the average time from order to dispatch.                                                               | UC-27        |
+
+The sequence of control is the same one Module 4 applies to write-offs.
+The person who handles the goods records what happened, a second role
+decides what it means, and the financial effect follows that decision
+rather than preceding it. A return therefore cannot become free stock or
+an unrecorded refund.
+
 # 7. Non-Functional Requirements
 
 The non-functional requirements are set for Kubbar's scale and risk
@@ -849,21 +899,20 @@ requirements carry the most weight here.
 # 8. Use Case Diagram
 
 Exhibit \#5 presents the use case diagram for the proposed solution. It
-shows forty-three of the forty-four use cases across two system
-boundaries. The IMS boundary holds eight zones, arranged as horizontal
-bands: Shared Access, Demand Forecasting and Purchase Planning, Sales
-and Inventory Analytics, Expiry Monitoring and Surplus Release,
-Inventory and Batch Control, Warehouse Audit, Disposal and Write-Off,
-and System Administration. The E-Commerce Platform boundary holds three:
-Buyer Registration and Verification, Catalogue and Ordering, and Payment
-and Fulfilment. The eleven roles from Exhibit \#2 sit outside the
-boundaries. Two further actors complete the diagram. The System
-Scheduler runs the daily expiry scan, and Internal User stands for any
-of the ten internal roles, which keeps UC-01, UC-03, and UC-06 from
-carrying ten association lines each.
+shows forty-three of the forty-four use cases of Modules 1 to 10 across
+two system boundaries. The IMS boundary holds eight zones, arranged as
+horizontal bands: Shared Access, Demand Forecasting and Purchase
+Planning, Sales and Inventory Analytics, Expiry Monitoring and Surplus
+Release, Inventory and Batch Control, Warehouse Audit, Disposal and
+Write-Off, and System Administration. The E-Commerce Platform boundary
+holds three: Buyer Registration and Verification, Catalogue and
+Ordering, and Payment and Fulfilment. The eleven roles from Exhibit \#2
+sit outside the boundaries. Two further actors complete the diagram. The
+System Scheduler runs the daily expiry scan, and Internal User stands
+for any of the ten internal roles, which keeps UC-01, UC-03, and UC-06
+from carrying ten association lines each.
 
-<img src="figures/image3.png"
-style="width:6.5in;height:8.35903in" />
+<img src="figures/image3.png" style="width:6.5in;height:8.35903in" />
 
 *Exhibit \#5: Use Case Diagram - IMS and B2B E-Commerce Platform*
 
@@ -892,9 +941,19 @@ published to the platform (UC-18), and ordered by a verified buyer
 (UC-34). Disposal (UC-21 and UC-22) is still present, but it becomes the
 last route rather than the only one.
 
+The nine use cases of Module 11 (UC-45 to UC-53) were specified after
+Exhibit \#5 was drawn, and Section 9 covers them in full. They form a
+fourth zone inside the E-Commerce Platform boundary, Order Exceptions
+and Returns, with three relationships. UC-46 (Cancel Order Lines) and
+UC-51 (Inspect Returned Stock) each include UC-52 (Issue Credit Note and
+Record Refund) when value is returned to a buyer, and UC-53 (Print
+Packing Slip) extends UC-08 (Dispatch Order). The zone does not change
+the main path. It adds the route back along it, so that a batch sold
+through the platform can still be traced if it returns.
+
 ## 9. Use Cases
 
-The forty-four use cases below define how every user interacts with the
+The fifty-three use cases below define how every user interacts with the
 proposed solution. Every role in Exhibit \#2 owns at least one use case,
 and every functional requirement in Section 6 traces to at least one use
 case. Each specification follows the same structure, with no more than
@@ -949,6 +1008,15 @@ dropdowns the user works with.
 | UC-42 | Configure Business Rules                  | System Administrator                                                                    | IMS              |
 | UC-43 | Manage Reference Data                     | System Administrator                                                                    | IMS              |
 | UC-44 | Review Audit Trail                        | System Administrator, Management                                                        | IMS              |
+| UC-45 | Place or Release Order Hold               | Finance Officer, Warehouse Officer, Management (COO)                                    | IMS              |
+| UC-46 | Cancel Order Lines                        | Finance Officer                                                                         | IMS              |
+| UC-47 | Review Order Exception Queue              | Finance Officer, Warehouse Officer, QA Officer, Management                              | IMS              |
+| UC-48 | Request Return                            | E-Commerce Buyer                                                                        | Platform         |
+| UC-49 | Decide Return Request                     | Finance Officer                                                                         | IMS              |
+| UC-50 | Receive Returned Stock                    | Warehouse Officer                                                                       | IMS              |
+| UC-51 | Inspect Returned Stock                    | QA Officer                                                                              | IMS              |
+| UC-52 | Issue Credit Note and Record Refund       | Finance Officer                                                                         | IMS              |
+| UC-53 | Print Packing Slip                        | Warehouse Officer, E-Commerce Buyer                                                     | IMS and Platform |
 
 *Exhibit \#6: Use Case Summary*
 
@@ -2502,6 +2570,325 @@ dropdowns the user works with.
 
 - A2. User without audit access: the system denies access.
 
+#### UC-45 Place or Release Order Hold
+
+| Field           | Detail                                                                                                                         |
+|-----------------|--------------------------------------------------------------------------------------------------------------------------------|
+| Primary Actor   | Finance Officer, Warehouse Officer, Management (COO)                                                                           |
+| Trigger         | A payment query, damaged stock found at picking, an address problem, or a compliance question stops an order from going ahead. |
+| Pre-Conditions  | The user is logged in. The order is Placed, Awaiting Payment, or Confirmed.                                                    |
+| Post-Conditions | The order is held with its stock still reserved, or the hold is released and the order continues.                              |
+| Relationships   | Extends UC-08 (Dispatch Order) when the Warehouse Officer finds damaged stock at picking.                                      |
+| Related FRs     | FR-90, FR-91                                                                                                                   |
+
+**Main Flow**
+
+1.  The user opens All Orders or Order Exceptions and selects the order.
+
+2.  The system shows the order lines, payment, invoice, and hold
+    history.
+
+3.  The user selects Put on Hold, chooses a Reason (Payment Query, Stock
+    Damaged at Picking, Delivery Address, Compliance Check, Other), and
+    enters a Note.
+
+4.  The system holds the order, blocks payment confirmation and
+    dispatch, keeps the stock reserved, and notifies the buyer.
+
+5.  Once the problem is resolved, the user selects Release Hold and
+    enters a Comment.
+
+6.  The system releases the hold, restarts the reservation period of a
+    bank transfer order, and logs both actions.
+
+**Alternative Flows**
+
+- A1. Order already dispatched, delivered, or cancelled: the system does
+  not offer the hold.
+
+- A2. Order already on hold: the system shows the active hold and offers
+  only Release Hold.
+
+#### UC-46 Cancel Order Lines
+
+| Field           | Detail                                                                                                                                 |
+|-----------------|----------------------------------------------------------------------------------------------------------------------------------------|
+| Primary Actor   | Finance Officer                                                                                                                        |
+| Trigger         | A buyer asks to reduce or cancel an order, or stock cannot be supplied after checkout.                                                 |
+| Pre-Conditions  | The Finance Officer is logged in. The order has not been dispatched.                                                                   |
+| Post-Conditions | The cancelled quantity is back on the listing, the order total is recalculated, and a credit note is issued if the order was invoiced. |
+| Relationships   | Includes UC-52 (Issue Credit Note and Record Refund) when the order has been invoiced.                                                 |
+| Related FRs     | FR-92, FR-93                                                                                                                           |
+
+**Main Flow**
+
+1.  The officer opens the order from All Orders.
+
+2.  The system lists each line with its ordered, cancelled, and
+    remaining quantity.
+
+3.  The officer enters the Quantity to Cancel for one or more lines and
+    a Reason.
+
+4.  The officer selects Cancel Selected Quantities.
+
+5.  The system returns the quantity to the listing and releases its
+    reservation on the batch.
+
+6.  The system recalculates the order total, notifies the buyer, and
+    logs the change.
+
+**Alternative Flows**
+
+- A1. Every line cancelled in full: the system cancels the order.
+
+- A2. Order already invoiced: the system issues a credit note for the
+  cancelled value (UC-52).
+
+- A3. Quantity above what remains on the line: the system rejects the
+  entry.
+
+#### UC-47 Review Order Exception Queue
+
+| Field           | Detail                                                                             |
+|-----------------|------------------------------------------------------------------------------------|
+| Primary Actor   | Finance Officer, Warehouse Officer, QA Officer, Management                         |
+| Trigger         | The user starts the working day, or the dashboard shows open order exceptions.     |
+| Pre-Conditions  | The user is logged in with access to platform orders.                              |
+| Post-Conditions | The user sees every order that needs action and opens the screen that resolves it. |
+| Relationships   | None.                                                                              |
+| Related FRs     | FR-94                                                                              |
+
+**Main Flow**
+
+1.  The user opens Order Exceptions.
+
+2.  The system lists each exception with its type (On Hold, Reservation
+    Ending, Payment Overdue, Delivery Problem, Return to Decide, Return
+    to Receive, Return to Inspect, Refund to Pay), order, buyer, age,
+    and next action.
+
+3.  The user filters by Exception Type.
+
+4.  The user selects an exception.
+
+5.  The system opens the order, return, or credit note screen where the
+    exception is resolved.
+
+**Alternative Flows**
+
+- A1. No open exceptions: the system shows that the queue is clear.
+
+#### UC-48 Request Return
+
+| Field           | Detail                                                                                                  |
+|-----------------|---------------------------------------------------------------------------------------------------------|
+| Primary Actor   | E-Commerce Buyer                                                                                        |
+| Trigger         | The buyer receives goods that are damaged, from the wrong lot, short, or exposed to a cold-chain break. |
+| Pre-Conditions  | The buyer is logged in. The order was delivered within the return window in Exhibit \#4.                |
+| Post-Conditions | A return request with status Requested exists and the Finance Officer is notified.                      |
+| Relationships   | None.                                                                                                   |
+| Related FRs     | FR-95                                                                                                   |
+
+**Main Flow**
+
+1.  The buyer opens My Orders and selects the delivered order.
+
+2.  The buyer selects Request Return.
+
+3.  For each line, the buyer enters the Quantity to Return and selects a
+    Reason (Damaged in Transit, Wrong Lot or Product, Cold-Chain Break,
+    Short Delivery, Other).
+
+4.  The buyer adds a Comment and may attach a Photo.
+
+5.  The buyer selects Submit.
+
+6.  The system creates the request, shows its return number, and
+    notifies the Finance Officer.
+
+**Alternative Flows**
+
+- A1. Return window has passed: the system hides Request Return and
+  shows the deadline that applied.
+
+- A2. Quantity above what was delivered and not already returned: the
+  system rejects the entry.
+
+#### UC-49 Decide Return Request
+
+| Field           | Detail                                                                            |
+|-----------------|-----------------------------------------------------------------------------------|
+| Primary Actor   | Finance Officer                                                                   |
+| Trigger         | A buyer submits a return request.                                                 |
+| Pre-Conditions  | The Finance Officer is logged in. The return is Requested.                        |
+| Post-Conditions | The return is Approved with a resolution, or Rejected, and the buyer is notified. |
+| Relationships   | None.                                                                             |
+| Related FRs     | FR-96, FR-97                                                                      |
+
+**Main Flow**
+
+1.  The officer opens Returns and selects the request.
+
+2.  The system shows the order, the lines, reasons, quantities, and
+    value, the buyer's comment, and the photo.
+
+3.  The officer selects a Resolution (Credit Note or Replacement) and
+    enters a Comment.
+
+4.  The officer selects Approve Return.
+
+5.  The system approves the request, notifies the buyer and the
+    Warehouse Officer, and logs the decision.
+
+**Alternative Flows**
+
+- A1. Reject: the officer selects Reject with a comment, and the system
+  closes the request and notifies the buyer.
+
+- A2. Replacement chosen: the system creates a free replacement order
+  from the same listing and reserves its stock. If the listing no longer
+  holds enough stock, the system resolves the return with a credit note
+  instead.
+
+#### UC-50 Receive Returned Stock
+
+| Field           | Detail                                                                            |
+|-----------------|-----------------------------------------------------------------------------------|
+| Primary Actor   | Warehouse Officer                                                                 |
+| Trigger         | Returned goods arrive at the warehouse.                                           |
+| Pre-Conditions  | The Warehouse Officer is logged in. The return is Approved.                       |
+| Post-Conditions | The quantities received are recorded and the QA Officer is asked to inspect them. |
+| Relationships   | None.                                                                             |
+| Related FRs     | FR-98                                                                             |
+
+**Main Flow**
+
+1.  The officer opens Returns and selects the approved request.
+
+2.  The system lists each returned line with product, lot number, and
+    quantity requested.
+
+3.  The officer enters the Quantity Received for each line.
+
+4.  The officer selects Record Goods Received.
+
+5.  The system sets the return to Received, notifies the QA Officer, and
+    logs the receipt.
+
+**Alternative Flows**
+
+- A1. Quantity received above quantity requested: the system rejects the
+  entry.
+
+- A2. Fewer units arrive than requested: the system records the lower
+  quantity, and only that quantity is inspected and credited.
+
+#### UC-51 Inspect Returned Stock
+
+| Field           | Detail                                                                                                                                                                       |
+|-----------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Primary Actor   | QA Officer                                                                                                                                                                   |
+| Trigger         | The Warehouse Officer records the receipt of a return.                                                                                                                       |
+| Pre-Conditions  | The QA Officer is logged in. The return is Received.                                                                                                                         |
+| Post-Conditions | Each line is restocked or sent to write-off, and the return is Completed.                                                                                                    |
+| Relationships   | Includes UC-52 (Issue Credit Note and Record Refund) when the resolution is a credit note. Includes UC-21 (Request Write-Off and Disposal) for a line that fails inspection. |
+| Related FRs     | FR-99, FR-100                                                                                                                                                                |
+
+**Main Flow**
+
+1.  The officer opens Returns and selects the received request.
+
+2.  The system lists each line with product, lot number, expiry date,
+    storage condition, quantity received, and the buyer's reason.
+
+3.  For each line, the officer selects an Outcome (Restock or Write Off)
+    and a Location that matches the storage condition.
+
+4.  The officer selects Save Inspection.
+
+5.  The system adds the quantity back to the batch, records a Customer
+    Return stock movement, and completes the return.
+
+6.  Where the resolution is a credit note, the system issues it for the
+    value received (UC-52).
+
+**Alternative Flows**
+
+- A1. Write Off selected: the system raises a write-off request for the
+  line, which follows the approval in UC-22.
+
+- A2. Restock selected for an expired lot: the system rejects it and
+  requires Write Off.
+
+#### UC-52 Issue Credit Note and Record Refund
+
+| Field           | Detail                                                                                                                 |
+|-----------------|------------------------------------------------------------------------------------------------------------------------|
+| Primary Actor   | Finance Officer                                                                                                        |
+| Trigger         | A line is cancelled after invoicing, a return is resolved with a credit, or a price correction is agreed with a buyer. |
+| Pre-Conditions  | The Finance Officer is logged in. The order has an invoice.                                                            |
+| Post-Conditions | A numbered credit note exists against the invoice and is Settled, Refund Due, or Refunded.                             |
+| Relationships   | Included by UC-46 and UC-51.                                                                                           |
+| Related FRs     | FR-93, FR-100                                                                                                          |
+
+**Main Flow**
+
+1.  The officer opens the order and selects Issue Credit Note.
+
+2.  The officer enters the Amount in EGP and a Reason.
+
+3.  The system issues a numbered credit note against the invoice.
+
+4.  If the invoice is unpaid, the system sets the amount off against the
+    balance and marks the note Settled.
+
+5.  If the invoice is paid, the system marks the note Refund Due and
+    alerts the Finance Officer.
+
+6.  After the bank transfer, the officer opens Credit Notes, enters the
+    Bank Reference, and selects Refund Paid.
+
+7.  The system marks the note Refunded, notifies the buyer, and logs the
+    refund.
+
+**Alternative Flows**
+
+- A1. Amount above the uncredited value of the invoice: the system
+  rejects it and shows the amount left.
+
+- A2. Buyer view: the buyer opens Returns and Credits on the platform
+  and downloads the credit note as a PDF.
+
+#### UC-53 Print Packing Slip
+
+| Field           | Detail                                                                                 |
+|-----------------|----------------------------------------------------------------------------------------|
+| Primary Actor   | Warehouse Officer, E-Commerce Buyer                                                    |
+| Trigger         | An order is picked for dispatch, or the buyer checks a delivery against what was sent. |
+| Pre-Conditions  | The user is logged in. The order has at least one line that is not cancelled.          |
+| Post-Conditions | A packing slip lists every lot in the shipment.                                        |
+| Relationships   | Extends UC-08 (Dispatch Order).                                                        |
+| Related FRs     | FR-101                                                                                 |
+
+**Main Flow**
+
+1.  The user opens the order (Dispatch Queue in the IMS, or My Orders on
+    the platform once the order is dispatched).
+
+2.  The user selects Packing Slip.
+
+3.  The system generates a PDF that lists product, SKU, lot number,
+    expiry date, storage condition, and quantity for each line, with the
+    delivery address and a signature line for receipt.
+
+4.  The Warehouse Officer packs the slip with the goods.
+
+**Alternative Flows**
+
+- A1. Cold-chain items in the order: the slip carries the 2 to 8°C
+  storage instruction.
+
 # 10. Activity Diagrams
 
 The four activity diagrams below follow a batch through its full life:
@@ -2513,8 +2900,7 @@ proposed system is visible.
 
 ## 10.1 Demand Forecasting and Purchase Planning
 
-<img src="figures/image4.png"
-style="width:6.5in;height:1.45694in" />
+<img src="figures/image4.png" style="width:6.5in;height:1.45694in" />
 
 *Exhibit \#7: Activity Diagram, Demand Forecasting and Purchase
 Planning*
@@ -2540,8 +2926,7 @@ The diagram supports FR-41 to FR-49 and UC-23 to UC-26.
 
 ## 10.2 Warehouse Audit
 
-<img src="figures/image5.png"
-style="width:6.5in;height:2.43472in" />
+<img src="figures/image5.png" style="width:6.5in;height:2.43472in" />
 
 *Exhibit \#8: Activity Diagram, Warehouse Audit*
 
@@ -2566,8 +2951,7 @@ diagram supports FR-18 to FR-23 and UC-10 to UC-13.
 
 ## 10.3 Near-Expiry Products
 
-<img src="figures/image6.png"
-style="width:6.5in;height:1.98472in" />
+<img src="figures/image6.png" style="width:6.5in;height:1.98472in" />
 
 *Exhibit \#9: Activity Diagram, Near-Expiry Products*
 
@@ -2597,8 +2981,7 @@ missing. The diagram supports FR-24 to FR-40 and UC-14 to UC-22.
 
 ## 10.4 E-Commerce Purchase
 
-<img src="figures/image7.png"
-style="width:6.5in;height:2.21736in" />
+<img src="figures/image7.png" style="width:6.5in;height:2.21736in" />
 
 *Exhibit \#10: Activity Diagram, E-Commerce Purchase*
 
@@ -2632,8 +3015,7 @@ selling, and verification controls who can buy it.
 
 ## 11.1 Data Flow Diagram
 
-<img src="figures/image8.png"
-style="width:6.5in;height:6.80625in" />
+<img src="figures/image8.png" style="width:6.5in;height:6.80625in" />
 
 *Exhibit \#11: Data Flow Diagram (As-Is), Kubbar International*
 
@@ -2661,8 +3043,7 @@ these four changes as new processes and flows on the existing diagram.
 
 ## 11.2 Entity Relationship Diagram
 
-<img src="figures/image9.png"
-style="width:6.5in;height:4.07014in" />
+<img src="figures/image9.png" style="width:6.5in;height:4.07014in" />
 
 *Exhibit \#12: Entity Relationship Diagram, Kubbar International*
 
@@ -2688,7 +3069,10 @@ Location_ID and Market_ID; CUSTOMER needs Commercial_Register_No so that
 a buyer registration can be matched to an existing account (FR-70);
 PURCHASE_FORECAST needs Region_ID, Method, and MAPE; and SALES_INVOICE
 needs an optional Platform_Order_ID so that platform sales are invoiced
-through the same entity.
+through the same entity. For Module 11, PLATFORM_ORDER needs
+Replacement_For_Order_ID, PLATFORM_ORDER_LINE needs Cancelled_Qty and
+Cancel_Reason, and SALES_INVOICE needs Credited_Amount, so that every
+correction stays attached to the sale it corrects.
 
 | Entity               | Purpose                                           | Key Attributes                                                                                                                                                               | Related FRs           |
 |----------------------|---------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------|
@@ -2712,6 +3096,10 @@ through the same entity.
 | PAYMENT_PROOF        | Uploaded bank transfer receipt                    | Proof_ID, Order_ID, File_Ref, Amount, Status, Confirmed_By                                                                                                                   | FR-82, FR-83          |
 | BUSINESS_RULE        | Configurable rules and their history              | Rule_ID, Rule_Name, Value, Changed_By, Approved_By, Changed_Date                                                                                                             | FR-52                 |
 | AUDIT_LOG            | Tamper-proof record of actions                    | Log_ID, User_ID, Action, Record_Ref, Old_Value, New_Value, Timestamp                                                                                                         | FR-54, NFR-27         |
+| ORDER_HOLD           | A hold on an order and its release                | Hold_ID, Order_ID, Reason, Note, Placed_By, Placed_Date, Released_By, Released_Date, Release_Comment                                                                         | FR-90, FR-91          |
+| RETURN_REQUEST       | A buyer's request to return delivered stock       | Return_ID, Order_ID, Buyer_ID, Status, Resolution, Photo_Ref (encrypted), Decided_By, Received_By, Inspected_By, Replacement_Order_ID                                        | FR-95 to FR-98        |
+| RETURN_LINE          | One returned line and its inspection outcome      | Return_Line_ID, Return_ID, Order_Line_ID, Batch_ID, Reason, Qty_Requested, Qty_Received, Outcome, Location_ID                                                                | FR-95, FR-98, FR-99   |
+| CREDIT_NOTE          | A credit against an invoice and its refund        | Credit_Note_ID, Invoice_ID, Buyer_ID, Return_ID, Amount, Reason, Status, Issued_By, Refund_Reference, Refund_Date                                                            | FR-93, FR-100         |
 
 *Exhibit \#13: Entities Required by the Proposed System*
 
@@ -2721,7 +3109,9 @@ and PLATFORM_ORDER_LINE form a chain that records every decision a batch
 passes through between its first alert and its sale, which is exactly
 the record the DFD As-Is showed to be missing. The data model therefore
 captures not only what was lost but where in that chain the loss
-occurred.
+occurred. ORDER_HOLD, RETURN_REQUEST, RETURN_LINE, and CREDIT_NOTE
+extend the chain past the sale, so a unit that comes back is traced to
+the inspection that restocked it or the write-off that ended it.
 
 ## 12. Conclusion
 
@@ -2742,16 +3132,18 @@ customers first, then release by the COO at 65% to 70% of the original
 price, and disposal only for what remains. The E-Commerce Platform then
 adds the outlet the DFD As-Is lacked. It is open only to verified trade
 buyers, limited to registered products with remaining shelf life, and
-protected against selling the same batch twice.
+protected against selling the same batch twice. When an order goes
+wrong, it is corrected against the original order and invoice, and
+nothing returned is sold again until QA has inspected it.
 
-The specification is deliberately bounded. It covers forty-four use
-cases for eleven user roles, eighty-nine functional requirements, and
-twenty-seven non-functional requirements, and it stops short of
-accounting, field sales, card payments, and machine learning. Authority
-stays where the organization already places it: the General Manager
-approves purchasing and disposal, the COO controls release and price,
-and the sales team enters the new channel through the flagging role
-rather than being bypassed by it.
+The specification is deliberately bounded. It covers fifty-three use
+cases for eleven user roles, one hundred and two functional
+requirements, and twenty-seven non-functional requirements, and it stops
+short of accounting, field sales, card payments, and machine learning.
+Authority stays where the organization already places it: the General
+Manager approves purchasing and disposal, the COO controls release and
+price, and the sales team enters the new channel through the flagging
+role rather than being bypassed by it.
 
 The company currently pays three times for the same inventory error. The
 proposed solution does not remove the forecast error, because no
