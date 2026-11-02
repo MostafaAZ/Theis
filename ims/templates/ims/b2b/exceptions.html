@@ -1,0 +1,9 @@
+{% extends "ims/base.html" %}
+{% block content %}
+<h1 class="h4">Order exceptions</h1>
+<p class="text-muted small">Open a row to fix it. It leaves the list once it is resolved.</p>
+{% if kinds %}<div class="d-flex flex-wrap gap-2 mb-3"><a href="?" class="btn btn-sm {% if not kind %}btn-primary{% else %}btn-outline-secondary{% endif %}">All ({{ rows|length }})</a>{% for k in kinds %}<a href="?kind={{ k|urlencode }}" class="btn btn-sm {% if kind == k %}btn-primary{% else %}btn-outline-secondary{% endif %}">{{ k }}</a>{% endfor %}</div>{% endif %}
+<div class="table-wrap"><table class="table table-hover align-middle"><thead><tr><th>Problem</th><th>Order</th><th>Buyer</th><th>Details</th><th>Since</th><th>Who acts</th><th></th></tr></thead><tbody>
+{% for r in rows %}<tr class="pick" onclick="location.href='{{ r.url }}'"><td><span class="badge {% if r.level == 'bad' %}text-bg-danger{% elif r.level == 'warn' %}text-bg-warning{% else %}text-bg-info{% endif %}">{{ r.kind }}</span></td><td class="fw-semibold">{{ r.order.reference }}</td><td>{{ r.order.buyer }}</td><td class="small">{{ r.detail }}</td><td class="small text-muted text-nowrap">{{ r.since|timesince }} ago</td><td class="small">{{ r.owner }}</td><td class="text-end"><a href="{{ r.url }}" class="btn btn-sm btn-outline-primary">Open</a></td></tr>
+{% empty %}<tr><td colspan="7"><div class="empty-state"><i class="bi bi-check2-circle"></i>No exceptions – every order is moving.</div></td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

@@ -297,7 +297,10 @@ def dispatch_platform_order(user, order, picked_lots, delivery_method, delivery_
     order = PlatformOrder.objects.select_for_update().get(pk=order.pk)
     if order.status != PlatformOrder.CONFIRMED:
         raise ValidationError("Only confirmed orders can be dispatched.")
-    lines = list(order.lines.select_related("batch__product"))
+    if order.on_hold:
+        raise ValidationError("This order is on hold. Release the hold before dispatch.")
+    lines = [line for line in order.lines.select_related("batch__product")
+             if line.active_qty > 0]
     for line in lines:
         lot = (picked_lots.get(line.pk) or "").strip()
         if lot != line.batch.lot_number:
@@ -307,10 +310,10 @@ def dispatch_platform_order(user, order, picked_lots, delivery_method, delivery_
         raise ValidationError("Confirm the cold-chain packaging check before dispatch.")
     for line in lines:
         b = Batch.objects.select_for_update().get(pk=line.batch_id)
-        if line.quantity > b.qty_on_hand:
+        if line.active_qty > b.qty_on_hand:
             raise ValidationError(f"Cannot dispatch more than on hand for lot {b.lot_number}.")
-        _deduct(b, line.quantity, user, StockMovement.DISPATCH, order.reference)
-        b.qty_reserved = max(0, b.qty_reserved - line.quantity)
+        _deduct(b, line.active_qty, user, StockMovement.DISPATCH, order.reference)
+        b.qty_reserved = max(0, b.qty_reserved - line.active_qty)
         _set_depleted_if_empty(b)
         b.save()
         line.picked_lot = b.lot_number
@@ -320,7 +323,6 @@ def dispatch_platform_order(user, order, picked_lots, delivery_method, delivery_
     order.dispatched_at = timezone.now()
     order.delivery_method = delivery_method
     order.delivery_date = delivery_date
-    order.on_hold = False
     order.save()
     audit(user, AuditLog.ORDER, f"Order {order.reference} dispatched", order.reference)
     notify_order_status(order)
@@ -329,12 +331,12 @@ def dispatch_platform_order(user, order, picked_lots, delivery_method, delivery_
 
 @transaction.atomic
 def hold_order_for_damage(user, order, note):
-    """UC-08 A2: stock found damaged at picking."""
-    order.on_hold = True
-    order.hold_reason = note
-    order.save(update_fields=["on_hold", "hold_reason"])
+    """UC-08 A2: stock found damaged at picking puts the order on hold."""
+    from commerce.orders import hold_order
+
+    hold_order(user, order, "stock_damaged", note)
     notify_roles(Role.INVENTORY, f"Order {order.reference} on hold: {note}",
-                 f"/dispatch/{order.pk}/", level="warning")
+                 f"/b2b/orders/{order.pk}/", level="warning")
 
 
 # --------------------------------------------------------------------------

@@ -33,10 +33,18 @@ MENU = [
         ("Product registrations", "/registrations/", (R.REGULATORY, R.COO), None),
         ("Expiry scans", "/scans/", (R.ADMIN, R.INVENTORY), None),
     ]),
-    ("B2B sales", "bi-shop", [
-        ("Platform orders", "/b2b/orders/", None, None),
-        ("Dispatch queue", "/dispatch/", (R.WAREHOUSE,), "dispatch"),
+    ("B2B orders", "bi-receipt", [
+        ("All orders", "/b2b/orders/", None, None),
+        ("Order exceptions", "/b2b/exceptions/", (R.FINANCE, R.WAREHOUSE, R.QA, R.COO, R.GM,
+                                                  R.MANAGEMENT), "exceptions"),
         ("Payment queue", "/payments/", (R.FINANCE,), "payments"),
+        ("Dispatch queue", "/dispatch/", (R.WAREHOUSE,), "dispatch"),
+        ("Returns", "/b2b/returns/", (R.FINANCE, R.WAREHOUSE, R.QA, R.COO, R.GM, R.MANAGEMENT,
+                                      R.SALES, R.INVENTORY), "returns"),
+        ("Credit notes", "/b2b/credit-notes/", (R.FINANCE, R.GM, R.COO, R.MANAGEMENT),
+         "refunds"),
+    ]),
+    ("B2B buyers", "bi-shop", [
         ("Buyers", "/buyers/", (R.REGULATORY, R.FINANCE, R.SALES, R.ADMIN), "buyers"),
         ("Buyer credit", "/credit/", (R.FINANCE,), None),
         ("Buyer messages", "/b2b/messages/", (R.SALES, R.REGULATORY, R.FINANCE, R.WAREHOUSE,
@@ -117,12 +125,24 @@ PAGES = {
     "batch_review": ("Expiry & clearance", "Batch review",
                      "Offer to customers, flag surplus, or keep under watch.", []),
     "post_batch": ("Expiry & clearance", "Post to B2B", "Set the quantity and price.", []),
-    "platform_order": ("B2B sales", "Platform order", "Order details and status.", []),
-    "messages_inbox": ("B2B sales", "Buyer messages",
+    "platform_order": ("B2B orders", "Order", "Everything about one order, and what can still be done to it.", ["Put on hold, cancel lines or issue a credit note from the right-hand panel.", "Packing slip prints the lot-level delivery note."]),
+    "exceptions": ("B2B orders", "Order exceptions",
+                   "Every platform order that needs someone to act.",
+                   ["Filter by problem type.", "Open a row: the order page has the action "
+                    "(release hold, confirm payment, decide a return, record a refund)."]),
+    "returns": ("B2B orders", "Returns",
+                "Stock buyers send back, from request to QA inspection.",
+                ["Finance approves or rejects and chooses credit note or replacement.",
+                 "The Warehouse Officer records what arrived.",
+                 "QA restocks it or sends it to write-off; the credit note follows."]),
+    "return_detail": ("B2B orders", "Return", "Decide, receive or inspect this return.", []),
+    "credit_notes": ("B2B orders", "Credit notes",
+                     "Credits against invoices, and refunds still to pay.", []),
+    "messages_inbox": ("B2B buyers", "Buyer messages",
                        "Questions sent from the platform's Contact page.",
                        ["Open a message, write the reply, send: the buyer gets it by email "
                         "and in their account."]),
-    "message_detail": ("B2B sales", "Buyer message", "Read and reply.", []),
+    "message_detail": ("B2B buyers", "Buyer message", "Read and reply.", []),
     "supplier_new": ("Purchasing", "New supplier", "", []),
     "customer_new": ("Customers", "New customer", "", []),
     "post_b2b": ("Expiry & clearance", "Post to B2B",
@@ -143,20 +163,20 @@ PAGES = {
                       "EDA / GOVS registration status per product and market.", []),
     "scans": ("Expiry & clearance", "Expiry scans",
               "The daily scan that raises near-expiry and expiry alerts.", []),
-    "platform_orders": ("B2B sales", "Platform orders",
+    "platform_orders": ("B2B orders", "All orders",
                         "All orders placed by buyers on the B2B platform.", []),
-    "dispatch_queue": ("B2B sales", "Dispatch queue",
+    "dispatch_queue": ("B2B orders", "Dispatch queue",
                        "Paid platform orders waiting to be picked and shipped.",
                        ["Open an order, pick the listed lot, type the lot number, dispatch."]),
-    "dispatch_order": ("B2B sales", "Dispatch order", "Pick, check the lot and dispatch.", []),
-    "payments": ("B2B sales", "Payment queue",
+    "dispatch_order": ("B2B orders", "Dispatch order", "Pick, check the lot and dispatch.", []),
+    "payments": ("B2B orders", "Payment queue",
                  "Transfer receipts and credit orders waiting for Finance.", []),
-    "payment_detail": ("B2B sales", "Confirm payment", "Check the receipt, then confirm.", []),
-    "buyers": ("B2B sales", "Buyers", "Trade buyers registered on the platform.",
+    "payment_detail": ("B2B orders", "Confirm payment", "Check the receipt, then confirm.", []),
+    "buyers": ("B2B buyers", "Buyers", "Trade buyers registered on the platform.",
                ["Pending buyers need document review and verification."]),
-    "buyer_detail": ("B2B sales", "Buyer", "Company details, documents and decision.", []),
-    "credit": ("B2B sales", "Buyer credit", "Payment terms and credit limits.", []),
-    "credit_edit": ("B2B sales", "Payment terms", "Set terms and credit limit.", []),
+    "buyer_detail": ("B2B buyers", "Buyer", "Company details, documents and decision.", []),
+    "credit": ("B2B buyers", "Buyer credit", "Payment terms and credit limits.", []),
+    "credit_edit": ("B2B buyers", "Payment terms", "Set terms and credit limit.", []),
     "audits": ("Warehouse audit", "Audits", "Full and cycle counts and their results.",
                ["'New count' schedules a count and assigns a Warehouse Officer.",
                 "After counting, reconcile flagged variances."]),
@@ -223,8 +243,19 @@ def badge_counts(user):
 
     from commerce.models import SupportMessage
 
+    from commerce.models import CreditNote, ReturnRequest
+
     c = {"notifications": user.notifications.filter(is_read=False).count(),
          "messages": SupportMessage.objects.filter(status=SupportMessage.OPEN).count()}
+    mine = {R.FINANCE: ReturnRequest.REQUESTED, R.WAREHOUSE: ReturnRequest.APPROVED,
+            R.QA: ReturnRequest.RECEIVED}
+    states = [st for role, st in mine.items() if user.has_role(role)]
+    if states:
+        c["returns"] = ReturnRequest.objects.filter(status__in=states).count()
+    if user.has_role(R.FINANCE):
+        c["refunds"] = CreditNote.objects.filter(status=CreditNote.REFUND_DUE).count()
+    if user.has_role(R.FINANCE, R.WAREHOUSE, R.COO):
+        c["exceptions"] = PlatformOrder.objects.filter(on_hold=True).count()
     if user.has_role(R.GM, R.QA):
         n = 0
         if user.has_role(R.GM):

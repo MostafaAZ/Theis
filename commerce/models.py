@@ -90,7 +90,8 @@ class Buyer(models.Model):
     def outstanding_credit(self):
         from django.db.models import Sum
 
-        unpaid = self.invoices.filter(status=Invoice.UNPAID).aggregate(t=Sum("amount"))["t"] or 0
+        unpaid = self.invoices.filter(status=Invoice.UNPAID).aggregate(
+            t=Sum(models.F("amount") - models.F("credited")))["t"] or 0
         pending = self.orders.filter(
             payment_method=PlatformOrder.INVOICE,
             status__in=[PlatformOrder.PLACED, PlatformOrder.AWAITING_PAYMENT],
@@ -100,6 +101,13 @@ class Buyer(models.Model):
     def has_overdue_invoice(self):
         return self.invoices.filter(status=Invoice.UNPAID,
                                     due_date__lt=timezone.localdate()).exists()
+
+    def credit_balance(self):
+        """Refunds owed to the buyer that Finance has not yet paid."""
+        from django.db.models import Sum
+
+        return self.credit_notes.filter(status=CreditNote.REFUND_DUE).aggregate(
+            t=Sum("amount"))["t"] or 0
 
 
 class BuyerDocument(models.Model):
@@ -176,6 +184,9 @@ class PlatformOrder(models.Model):
     delivered_at = models.DateTimeField(null=True, blank=True)
     on_hold = models.BooleanField(default=False)
     hold_reason = models.CharField(max_length=255, blank=True)
+    # A free replacement sent after an approved return (FR-97).
+    replacement_for = models.ForeignKey("self", null=True, blank=True, on_delete=models.PROTECT,
+                                        related_name="replacements")
     cancelled_at = models.DateTimeField(null=True, blank=True)
     cancel_reason = models.CharField(max_length=255, blank=True)
     delivery_issue = models.TextField(blank=True)
@@ -198,6 +209,43 @@ class PlatformOrder(models.Model):
     def has_cold_chain(self):
         return any(line.batch.is_cold_chain for line in self.lines.all())
 
+    @property
+    def active_hold(self):
+        return self.holds.filter(released_at__isnull=True).first()
+
+    @property
+    def can_change(self):
+        """Lines can be held or cancelled until the order leaves the warehouse."""
+        return self.status in (self.PLACED, self.AWAITING_PAYMENT, self.CONFIRMED)
+
+    def recalculate_total(self):
+        self.total = sum((line.line_total for line in self.lines.all()), 0)
+        return self.total
+
+
+class OrderHold(models.Model):
+    """A hold placed on an order and its release (FR-90, FR-91)."""
+
+    REASONS = [("payment", "Payment query"), ("stock_damaged", "Stock damaged at picking"),
+               ("address", "Delivery address"), ("compliance", "Compliance check"),
+               ("other", "Other")]
+
+    order = models.ForeignKey(PlatformOrder, on_delete=models.CASCADE, related_name="holds")
+    reason = models.CharField(max_length=15, choices=REASONS)
+    note = models.CharField(max_length=255, blank=True)
+    placed_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name="+")
+    placed_at = models.DateTimeField(default=timezone.now)
+    released_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.PROTECT,
+                                    related_name="+")
+    released_at = models.DateTimeField(null=True, blank=True)
+    release_comment = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        ordering = ["-placed_at"]
+
+    def __str__(self):
+        return f"{self.get_reason_display()}{': ' + self.note if self.note else ''}"
+
 
 class OrderLine(models.Model):
     order = models.ForeignKey(PlatformOrder, on_delete=models.CASCADE, related_name="lines")
@@ -207,10 +255,23 @@ class OrderLine(models.Model):
     quantity = models.PositiveIntegerField()
     unit_price = models.DecimalField(max_digits=12, decimal_places=2)
     picked_lot = models.CharField(max_length=60, blank=True)
+    # Part of the line cancelled before dispatch (FR-92).
+    cancelled_qty = models.PositiveIntegerField(default=0)
+    cancel_reason = models.CharField(max_length=255, blank=True)
+
+    @property
+    def active_qty(self):
+        return self.quantity - self.cancelled_qty
 
     @property
     def line_total(self):
-        return self.unit_price * self.quantity
+        return self.unit_price * self.active_qty
+
+    @property
+    def returnable_qty(self):
+        requested = sum(r.qty_requested for r in self.return_lines.exclude(
+            request__status=ReturnRequest.REJECTED))
+        return max(0, self.active_qty - requested)
 
 
 class PaymentProof(models.Model):
@@ -248,6 +309,8 @@ class Invoice(models.Model):
     due_date = models.DateField()
     status = models.CharField(max_length=10, choices=STATUSES, default=UNPAID)
     paid_at = models.DateTimeField(null=True, blank=True)
+    # Credit notes set off against this invoice before it was paid (FR-100).
+    credited = models.DecimalField(max_digits=14, decimal_places=2, default=0)
     synced_to_odoo = models.BooleanField(default=False)
 
     class Meta:
@@ -255,6 +318,10 @@ class Invoice(models.Model):
 
     def __str__(self):
         return self.number
+
+    @property
+    def balance(self):
+        return self.amount - self.credited
 
     @property
     def is_overdue(self):
@@ -292,3 +359,104 @@ class SupportMessage(models.Model):
 
     def __str__(self):
         return f"{self.get_topic_display()} – {self.name}"
+
+
+class ReturnRequest(models.Model):
+    """A buyer's request to return delivered stock (FR-95 to FR-99)."""
+
+    REQUESTED = "requested"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    RECEIVED = "received"
+    COMPLETED = "completed"
+    STATUSES = [(REQUESTED, "Requested"), (APPROVED, "Approved – awaiting goods"),
+                (REJECTED, "Rejected"), (RECEIVED, "Received – awaiting inspection"),
+                (COMPLETED, "Completed")]
+    CREDIT = "credit"
+    REPLACEMENT = "replacement"
+    RESOLUTIONS = [(CREDIT, "Credit note"), (REPLACEMENT, "Replacement")]
+
+    number = models.CharField(max_length=20, unique=True)
+    order = models.ForeignKey(PlatformOrder, on_delete=models.PROTECT, related_name="returns")
+    buyer = models.ForeignKey(Buyer, on_delete=models.PROTECT, related_name="returns")
+    status = models.CharField(max_length=10, choices=STATUSES, default=REQUESTED, db_index=True)
+    resolution = models.CharField(max_length=12, choices=RESOLUTIONS, blank=True)
+    buyer_comment = models.CharField(max_length=500, blank=True)
+    photo = models.FileField(upload_to="return_photos/", blank=True)
+    photo_name = models.CharField(max_length=200, blank=True)
+    photo_type = models.CharField(max_length=60, blank=True)
+    requested_at = models.DateTimeField(default=timezone.now)
+    decided_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.PROTECT,
+                                   related_name="+")
+    decided_at = models.DateTimeField(null=True, blank=True)
+    decision_comment = models.CharField(max_length=255, blank=True)
+    received_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.PROTECT,
+                                    related_name="+")
+    received_at = models.DateTimeField(null=True, blank=True)
+    inspected_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.PROTECT,
+                                     related_name="+")
+    inspected_at = models.DateTimeField(null=True, blank=True)
+    replacement_order = models.OneToOneField(PlatformOrder, null=True, blank=True,
+                                             on_delete=models.SET_NULL, related_name="+")
+
+    class Meta:
+        ordering = ["-requested_at"]
+
+    def __str__(self):
+        return self.number
+
+    @property
+    def value(self):
+        return sum((line.qty_requested * line.order_line.unit_price for line in
+                    self.lines.select_related("order_line")), 0)
+
+
+class ReturnLine(models.Model):
+    REASONS = [("damaged", "Damaged in transit"), ("wrong_lot", "Wrong lot or product"),
+               ("cold_chain", "Cold-chain break"), ("short", "Short delivery"),
+               ("other", "Other")]
+    RESTOCK = "restock"
+    WRITE_OFF = "write_off"
+    OUTCOMES = [(RESTOCK, "Restock"), (WRITE_OFF, "Write off")]
+
+    request = models.ForeignKey(ReturnRequest, on_delete=models.CASCADE, related_name="lines")
+    order_line = models.ForeignKey(OrderLine, on_delete=models.PROTECT,
+                                   related_name="return_lines")
+    batch = models.ForeignKey("inventory.Batch", on_delete=models.PROTECT, related_name="+")
+    qty_requested = models.PositiveIntegerField()
+    reason = models.CharField(max_length=12, choices=REASONS)
+    qty_received = models.PositiveIntegerField(default=0)
+    outcome = models.CharField(max_length=10, choices=OUTCOMES, blank=True)
+    location = models.ForeignKey("core.BinLocation", null=True, blank=True,
+                                 on_delete=models.PROTECT, related_name="+")
+
+
+class CreditNote(models.Model):
+    """A credit against an invoice: set off if unpaid, refunded if paid (FR-100)."""
+
+    SETTLED = "settled"
+    REFUND_DUE = "refund_due"
+    REFUNDED = "refunded"
+    STATUSES = [(SETTLED, "Set off against invoice"), (REFUND_DUE, "Refund due"),
+                (REFUNDED, "Refunded")]
+
+    number = models.CharField(max_length=20, unique=True)
+    invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT, related_name="credit_notes")
+    buyer = models.ForeignKey(Buyer, on_delete=models.PROTECT, related_name="credit_notes")
+    order = models.ForeignKey(PlatformOrder, on_delete=models.PROTECT,
+                              related_name="credit_notes")
+    return_request = models.ForeignKey(ReturnRequest, null=True, blank=True,
+                                       on_delete=models.PROTECT, related_name="credit_notes")
+    amount = models.DecimalField(max_digits=14, decimal_places=2)
+    reason = models.CharField(max_length=255)
+    status = models.CharField(max_length=10, choices=STATUSES)
+    issued_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name="+")
+    issued_at = models.DateTimeField(default=timezone.now)
+    refunded_at = models.DateTimeField(null=True, blank=True)
+    refund_reference = models.CharField(max_length=80, blank=True)
+
+    class Meta:
+        ordering = ["-issued_at"]
+
+    def __str__(self):
+        return self.number

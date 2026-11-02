@@ -152,3 +152,31 @@ class PresentationModeB2BTests(TestCase):
             self.assertRedirects(r, "/catalogue/")
             gm = self.w.user(Role.GM)
             self.assertEqual(self.client.get(f"/demo/login/{gm.pk}/").status_code, 404)
+
+
+@override_settings(ROOT_URLCONF="kubbar.urls_b2b", APP_NAME="b2b", LOGIN_URL="b2b:login")
+class BuyerReturnTests(TestCase):
+    def test_request_a_return_from_the_order_page(self):
+        from commerce import services as shop
+        from inventory import services as inv
+
+        w = World()
+        listing = w.listing(qty=50)
+        b = w.buyer()
+        order, _ = shop.place_order(b, [(listing.pk, 10)], "addr")
+        shop.submit_bank_transfer(order, pdf("r.pdf"), order.total)
+        shop.confirm_payment(w.user(Role.FINANCE), order)
+        line = order.lines.get()
+        order = inv.dispatch_platform_order(w.user(Role.WAREHOUSE), order,
+                                            {line.pk: line.batch.lot_number}, "F", w.today)
+        shop.confirm_delivery(order)
+        self.client.post("/login/", {"email": "buyer@test.example", "password": PASSWORD})
+        r = self.client.get(f"/orders/{order.pk}/")
+        self.assertContains(r, "Request a return")
+        self.assertContains(r, "Packing slip")
+        r = self.client.post(f"/orders/{order.pk}/return/", {
+            f"qty_{line.pk}": "3", f"reason_{line.pk}": "short", "comment": "Missing"})
+        self.assertRedirects(r, "/account/returns/")
+        self.assertContains(self.client.get("/account/returns/"), "Requested")
+        self.assertTrue(self.client.get(f"/orders/{order.pk}/packing-slip/").content
+                        .startswith(b"%PDF"))

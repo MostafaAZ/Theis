@@ -239,7 +239,8 @@ class StockMovement(models.Model):
     ADJUSTMENT = "adjustment"
     WRITE_OFF = "write_off"
     REVERSAL = "reversal"
-    TYPES = [(RECEIPT, "Receipt"), (TRANSFER, "Transfer"), (DISPATCH, "Dispatch"),
+    RETURN = "return"
+    TYPES = [(RETURN, "Customer return"), (RECEIPT, "Receipt"), (TRANSFER, "Transfer"), (DISPATCH, "Dispatch"),
              (ADJUSTMENT, "Adjustment"), (WRITE_OFF, "Write-Off"), (REVERSAL, "Reversal")]
 
     batch = models.ForeignKey(Batch, on_delete=models.PROTECT, related_name="movements")
@@ -493,8 +494,10 @@ class Listing(models.Model):
     def sold_qty(self):
         from commerce.models import OrderLine, PlatformOrder
 
-        return OrderLine.objects.filter(listing=self).exclude(
-            order__status=PlatformOrder.CANCELLED).aggregate(t=Sum("quantity"))["t"] or 0
+        totals = OrderLine.objects.filter(listing=self).exclude(
+            order__status=PlatformOrder.CANCELLED).aggregate(q=Sum("quantity"),
+                                                              c=Sum("cancelled_qty"))
+        return (totals["q"] or 0) - (totals["c"] or 0)
 
 
 # --------------------------------------------------------------------------

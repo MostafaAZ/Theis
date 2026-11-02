@@ -1,0 +1,12 @@
+{% extends "ims/base.html" %}{% load kubbar %}
+{% block content %}
+<h1 class="h4">Credit notes</h1>
+<p class="text-muted">A credit note on an unpaid invoice is deducted from what the buyer owes. On a paid invoice it becomes a refund: transfer the money, then record the bank reference here.</p>
+<ul class="nav nav-tabs mb-3"><li class="nav-item"><a class="nav-link {% if not status %}active{% endif %}" href="?">All</a></li>{% for v, l in statuses %}<li class="nav-item"><a class="nav-link {% if status == v %}active{% endif %}" href="?status={{ v }}">{{ l }}</a></li>{% endfor %}</ul>
+<div class="table-wrap"><table class="table align-middle"><thead><tr><th>Credit note</th><th>Buyer</th><th>Invoice / order</th><th>Reason</th><th class="num">Amount (EGP)</th><th>Status</th><th></th></tr></thead><tbody>
+{% for c in items %}<tr><td class="fw-semibold">{{ c.number }}<div class="small text-muted">{{ c.issued_at|date:"d M Y" }}</div></td><td>{{ c.buyer }}</td><td class="small">{{ c.invoice.number }} · <a href="/b2b/orders/{{ c.order.pk }}/">{{ c.order.reference }}</a></td><td class="small">{{ c.reason }}</td><td class="num">{{ c.amount|egp }}</td>
+<td><span class="badge {{ c.status|status_class }}">{{ c.get_status_display }}</span>{% if c.refund_reference %}<div class="small text-muted">{{ c.refund_reference }}</div>{% endif %}</td>
+<td class="text-end text-nowrap"><a href="/b2b/credit-notes/{{ c.pk }}/pdf/" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="bi bi-filetype-pdf"></i></a>
+{% if c.status == 'refund_due' and can_refund %}<form method="post" class="d-inline-flex gap-1 ms-1">{% csrf_token %}<input type="hidden" name="note" value="{{ c.pk }}"><input name="reference" class="form-control form-control-sm" placeholder="Bank ref" style="width:110px" required><button class="btn btn-sm btn-primary">Refund paid</button></form>{% endif %}</td></tr>
+{% empty %}<tr><td colspan="7"><div class="empty-state"><i class="bi bi-receipt-cutoff"></i>No credit notes.</div></td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

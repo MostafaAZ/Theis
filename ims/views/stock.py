@@ -168,7 +168,7 @@ def dispatch_queue(request):
 @role_required(Role.WAREHOUSE, Role.INVENTORY)
 def dispatch_order(request, pk):
     order = get_object_or_404(PlatformOrder.objects.select_related("buyer"), pk=pk)
-    lines = list(order.lines.select_related("batch__product"))
+    lines = [line for line in order.lines.select_related("batch__product") if line.active_qty]
     for line in lines:
         line.pick_locations = line.batch.locations()
     form = DispatchForm(request.POST or None)

@@ -99,9 +99,12 @@ class ScreenTests(TestCase):
 
     def test_analytics_exports(self):  # FR-65
         self.client.force_login(User.objects.get(email="gm@kubbar.example"))
-        for key in ("inventory", "sales", "forecast", "recovery", "audit", "platform"):
+        for key in ("inventory", "sales", "forecast", "recovery", "audit", "platform",
+                    "exceptions"):
             r = self.client.get(f"/analytics/?d={key}")
             self.assertEqual(r.status_code, 200)
+        r = self.client.get("/analytics/?d=exceptions&export=xlsx")
+        self.assertTrue(r.content.startswith(b"PK"))
         r = self.client.get("/analytics/?d=sales&export=pdf")
         self.assertEqual(r["Content-Type"], "application/pdf")
         self.assertTrue(r.content.startswith(b"%PDF"))
@@ -257,3 +260,68 @@ class PresentationModeTests(TestCase):
     def test_buyers_cannot_be_used_on_ims(self):
         b = self.w.buyer()
         self.assertEqual(self.client.get(f"/demo/login/{b.user.pk}/").status_code, 404)
+
+
+class AfterSalesScreenTests(TestCase):
+    """Order page actions, exception queue, returns and credit notes."""
+
+    def setUp(self):
+        from commerce import services as shop
+        from core.testing import pdf
+
+        self.w = World()
+        listing = self.w.listing(qty=50)
+        self.buyer = self.w.buyer()
+        self.order, _ = shop.place_order(self.buyer, [(listing.pk, 10)], "addr")
+        shop.submit_bank_transfer(self.order, pdf("r.pdf"), self.order.total)
+        shop.confirm_payment(self.w.user(Role.FINANCE), self.order)
+
+    def test_finance_holds_and_cancels_from_the_order_page(self):
+        self.client.force_login(self.w.user(Role.FINANCE))
+        url = f"/b2b/orders/{self.order.pk}/"
+        self.assertContains(self.client.get(url), "Put on hold")
+        self.client.post(url, {"action": "hold", "reason": "payment", "note": "Check"})
+        self.order.refresh_from_db()
+        self.assertTrue(self.order.on_hold)
+        self.assertContains(self.client.get("/b2b/exceptions/"), self.order.reference)
+        self.client.post(url, {"action": "release", "comment": "OK"})
+        line = self.order.lines.get()
+        self.client.post(url, {"action": "cancel_lines", f"cancel_{line.pk}": "2",
+                               "reason": "Buyer asked"})
+        line.refresh_from_db()
+        self.assertEqual(line.cancelled_qty, 2)
+        self.assertContains(self.client.get("/b2b/credit-notes/"), "Refund due")
+        r = self.client.get(f"/b2b/orders/{self.order.pk}/packing-slip/")
+        self.assertTrue(r.content.startswith(b"%PDF"))
+
+    def test_warehouse_cannot_cancel_lines(self):
+        self.client.force_login(self.w.user(Role.WAREHOUSE))
+        line = self.order.lines.get()
+        self.client.post(f"/b2b/orders/{self.order.pk}/",
+                         {"action": "cancel_lines", f"cancel_{line.pk}": "2", "reason": "x"})
+        line.refresh_from_db()
+        self.assertEqual(line.cancelled_qty, 0)
+        self.assertEqual(self.client.get("/b2b/credit-notes/").status_code, 403)
+
+    def test_return_steps_by_role(self):
+        from commerce import orders, services as shop
+        from inventory import services as inv
+
+        o = inv.dispatch_platform_order(self.w.user(Role.WAREHOUSE), self.order,
+                                        {self.order.lines.get().pk:
+                                         self.order.lines.get().batch.lot_number},
+                                        "Fleet", self.w.today)
+        shop.confirm_delivery(o)
+        rr = orders.request_return(self.buyer, o, [(o.lines.get(), 2, "damaged")])
+        url = f"/b2b/returns/{rr.pk}/"
+        self.client.force_login(self.w.user(Role.FINANCE))
+        self.client.post(url, {"decide": "approve", "resolution": "credit"})
+        self.client.force_login(self.w.user(Role.WAREHOUSE))
+        rl = rr.lines.get()
+        self.client.post(url, {"receive": "1", f"received_{rl.pk}": "2"})
+        self.client.force_login(self.w.user(Role.QA))
+        self.client.post(url, {"inspect": "1", f"outcome_{rl.pk}": "restock",
+                               f"location_{rl.pk}": self.w.ambient.pk})
+        rr.refresh_from_db()
+        self.assertEqual(rr.status, "completed")
+        self.assertEqual(rr.credit_notes.count(), 1)

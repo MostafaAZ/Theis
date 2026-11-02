@@ -126,7 +126,7 @@ def tasks_for(user):
             "These products cannot be listed", "/registrations/"))
     if user.has_role(R.FINANCE):
         t.append(_task(PlatformOrder.objects.filter(
-            status=PlatformOrder.AWAITING_PAYMENT).count(), "Payments to confirm",
+            status=PlatformOrder.AWAITING_PAYMENT, on_hold=False).count(), "Payments to confirm",
             "Transfer receipts and credit orders", "/payments/", "warn"))
         t.append(_task(Invoice.objects.filter(status=Invoice.UNPAID, due_date__lt=today)
                        .count(), "Overdue invoices", "Follow up with the buyer", "/payments/",
@@ -140,6 +140,27 @@ def tasks_for(user):
         last = ExpiryScanRun.objects.first()
         t.append(_task(1 if last and not last.succeeded else 0, "Last expiry scan failed",
                        "Check the scan log and run it again", "/scans/", "bad"))
+    from commerce.models import CreditNote, ReturnRequest
+
+    if user.has_role(R.FINANCE):
+        t.append(_task(ReturnRequest.objects.filter(status=ReturnRequest.REQUESTED).count(),
+                       "Return requests to decide", "Approve with a credit note or replacement",
+                       "/b2b/returns/", "warn"))
+        t.append(_task(CreditNote.objects.filter(status=CreditNote.REFUND_DUE).count(),
+                       "Refunds to pay", "Transfer the money, then record the reference",
+                       "/b2b/credit-notes/?status=refund_due", "warn"))
+    if user.has_role(R.FINANCE, R.WAREHOUSE, R.COO):
+        t.append(_task(PlatformOrder.objects.filter(on_hold=True).count(),
+                       "Orders on hold", "Resolve the reason, then release the hold",
+                       "/b2b/exceptions/?kind=On+hold", "warn"))
+    if user.has_role(R.WAREHOUSE):
+        t.append(_task(ReturnRequest.objects.filter(status=ReturnRequest.APPROVED).count(),
+                       "Returns to receive", "Record what the buyer sent back",
+                       "/b2b/returns/", "info"))
+    if user.has_role(R.QA):
+        t.append(_task(ReturnRequest.objects.filter(status=ReturnRequest.RECEIVED).count(),
+                       "Returned stock to inspect", "Restock it or send it to write-off",
+                       "/b2b/returns/", "warn"))
     if user.has_role(R.SALES, R.REGULATORY, R.FINANCE, R.WAREHOUSE, R.COO):
         from commerce.models import SupportMessage
 

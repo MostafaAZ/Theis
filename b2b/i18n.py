@@ -227,6 +227,31 @@ AR.update({
     "Nutritional Products": "المنتجات الغذائية",
     "Capital Equipment": "المعدات",
     "Placed ": "تم الطلب",
+    "Request a return": "طلب إرجاع",
+    "Returns & credits": "المرتجعات والإشعارات الدائنة",
+    "Returns": "المرتجعات",
+    "Credit notes": "الإشعارات الدائنة",
+    "Credit note": "إشعار دائن",
+    "Packing slip": "إذن التسليم",
+    "Reason": "السبب",
+    "What happened?": "ماذا حدث؟",
+    "Photo (optional)": "صورة (اختياري)",
+    "Send return request": "إرسال طلب الإرجاع",
+    "Open until": "متاح حتى",
+    "Returns open until": "الإرجاع متاح حتى",
+    "Replacement order": "طلب بديل",
+    "cancelled": "ملغى",
+    "Damaged in transit": "تلف أثناء النقل",
+    "Wrong lot or product": "تشغيلة أو منتج خطأ",
+    "Cold-chain break": "انقطاع سلسلة التبريد",
+    "Short delivery": "نقص في الكمية",
+    "Other": "أخرى",
+    "Tell us what is wrong. Keep the goods until we reply – cold-chain items must stay refrigerated.":
+        "أخبرنا بالمشكلة واحتفظ بالبضاعة حتى نرد – يجب حفظ منتجات التبريد في الثلاجة.",
+    "To return something, open the delivered order and choose Request a return.":
+        "لإرجاع منتج افتح الطلب المسلَّم واختر طلب إرجاع.",
+    "This order is on hold while we check something. Your stock stays reserved.":
+        "هذا الطلب معلق مؤقتاً للمراجعة، والكمية محجوزة لك.",
 })
 
 

@@ -346,10 +346,14 @@ def order_detail(request, pk):
     current = flow.index(order.status) if order.status in flow else -1
     track = [{"label": labels[s], "done": i <= current, "current": i == current}
              for i, s in enumerate(flow)]
+    from commerce.orders import can_request_return, return_deadline
+
     return render(request, "b2b/order.html", {
         "order": order, "lines": order.lines.select_related("batch__product"),
         "history": history, "invoice": invoice, "track": track, "buyer": request.buyer,
-        "tab": "orders"})
+        "tab": "orders", "can_return": can_request_return(order),
+        "return_deadline": return_deadline(order), "returns": order.returns.all(),
+        "credit_notes": order.credit_notes.all()})
 
 
 @buyer_required()
@@ -370,7 +374,7 @@ def invoice_pdf(request, pk):
     rows = [["Product", "Lot", "Expiry", "Qty", "Unit price (EGP)", "Total (EGP)"]]
     for line in order.lines.select_related("batch__product"):
         rows.append([line.batch.product.name, line.batch.lot_number,
-                     str(line.batch.expiry_date), line.quantity, f"{line.unit_price:,.2f}",
+                     str(line.batch.expiry_date), line.active_qty, f"{line.unit_price:,.2f}",
                      f"{line.line_total:,.2f}"])
     rows.append(["", "", "", "", "Total", f"{invoice.amount:,.2f}"])
     t = Table(rows, repeatRows=1)

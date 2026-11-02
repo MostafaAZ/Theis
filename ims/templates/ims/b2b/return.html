@@ -1,0 +1,30 @@
+{% extends "ims/base.html" %}{% load kubbar %}
+{% block content %}
+<div class="page-actions"><div><h1 class="h4 mb-0">Return {{ rr.number }} <span class="badge {{ rr.status|status_class }} align-middle">{{ rr.get_status_display }}</span></h1>
+<div class="text-muted small">{{ rr.buyer }} · order <a href="/b2b/orders/{{ rr.order.pk }}/">{{ rr.order.reference }}</a> · requested {{ rr.requested_at|date:"d M Y H:i" }}{% if rr.resolution %} · resolution: <strong>{{ rr.get_resolution_display }}</strong>{% endif %}</div></div></div>
+<div class="steps">{% for label, done in steps %}<span class="step {% if done %}done{% endif %}"><b>{% if done %}✓{% else %}{{ forloop.counter }}{% endif %}</b>{{ label }}</span>{% endfor %}</div>
+{% if rr.buyer_comment %}<div class="alert alert-light border"><i class="bi bi-chat-left-quote me-1"></i>Buyer: “{{ rr.buyer_comment }}”{% if rr.photo %} · <a href="/b2b/returns/{{ rr.pk }}/photo/" target="_blank">photo</a>{% endif %}</div>{% elif rr.photo %}<p><a href="/b2b/returns/{{ rr.pk }}/photo/" target="_blank"><i class="bi bi-image me-1"></i>Photo from buyer</a></p>{% endif %}
+
+<form method="post">{% csrf_token %}
+<div class="table-wrap"><table class="table align-middle"><thead><tr><th>Product</th><th>Lot</th><th>Reason</th><th class="num">Requested</th><th class="num">Unit price</th><th class="num">Received</th>{% if can_inspect or rr.status == 'completed' %}<th>QA outcome</th><th>Location</th>{% endif %}</tr></thead><tbody>
+{% for rl in lines %}<tr><td>{{ rl.batch.product.name }}</td><td>{{ rl.batch.lot_number }}<div class="small text-muted">exp {{ rl.batch.expiry_date }}</div></td><td>{{ rl.get_reason_display }}</td><td class="num">{{ rl.qty_requested }}</td><td class="num">{{ rl.order_line.unit_price|egp }}</td>
+<td class="num">{% if can_receive %}<input type="number" name="received_{{ rl.pk }}" min="0" max="{{ rl.qty_requested }}" value="{{ rl.qty_requested }}" class="form-control form-control-sm ms-auto" style="width:90px">{% elif rr.status == 'received' or rr.status == 'completed' %}{{ rl.qty_received }}{% else %}–{% endif %}</td>
+{% if can_inspect %}<td>{% if rl.qty_received %}<select name="outcome_{{ rl.pk }}" class="form-select form-select-sm" style="min-width:130px"><option value="">Choose…</option>{% for v, l in outcomes %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select>{% else %}–{% endif %}</td>
+<td>{% if rl.qty_received %}<select name="location_{{ rl.pk }}" class="form-select form-select-sm" style="min-width:230px">{% for b in rl.locations %}<option value="{{ b.pk }}" {% if b.pk == rl.default_location %}selected{% endif %}>{{ b }}</option>{% endfor %}</select>{% endif %}</td>
+{% elif rr.status == 'completed' %}<td>{{ rl.get_outcome_display|default:"–" }}</td><td class="small">{{ rl.location|default:"" }}</td>{% endif %}</tr>{% endfor %}
+</tbody></table></div>
+{% if can_receive %}<button name="receive" value="1" class="btn btn-primary">Record goods received</button> <span class="small text-muted ms-2">Count what actually came back; QA inspects it next.</span>{% endif %}
+{% if can_inspect %}<p class="small text-muted">Restock puts the units back into the batch at the chosen bin. Write off puts them into the bin and raises a write-off request for GM and QA approval. Expired lots can only be written off.</p><button name="inspect" value="1" class="btn btn-primary">Save inspection</button>{% endif %}
+</form>
+
+{% if can_decide %}<form method="post" class="card mt-3"><div class="card-body">{% csrf_token %}
+  <h2 class="h6">Decision</h2>
+  <div class="d-flex flex-wrap gap-3 mb-2"><div class="form-check"><input class="form-check-input" type="radio" name="resolution" value="credit" id="r1" checked><label class="form-check-label" for="r1">Credit note <span class="text-muted small">(issued after QA inspects the goods)</span></label></div>
+  <div class="form-check"><input class="form-check-input" type="radio" name="resolution" value="replacement" id="r2"><label class="form-check-label" for="r2">Free replacement <span class="text-muted small">(from the same listing, if stock is left)</span></label></div></div>
+  <input name="comment" class="form-control mb-2" placeholder="Comment to the buyer (required to reject)">
+  <div class="d-flex gap-2"><button name="decide" value="approve" class="btn btn-success">Approve return</button><button name="decide" value="reject" class="btn btn-outline-danger">Reject</button></div>
+</div></form>{% endif %}
+
+{% if rr.decided_by %}<p class="small text-muted mt-3">Decided by {{ rr.decided_by }} on {{ rr.decided_at|date:"d M Y H:i" }}{% if rr.decision_comment %}: “{{ rr.decision_comment }}”{% endif %}.{% if rr.replacement_order %} Replacement order <a href="/b2b/orders/{{ rr.replacement_order.pk }}/">{{ rr.replacement_order.reference }}</a>.{% endif %}{% if rr.received_by %} Received by {{ rr.received_by }}.{% endif %}{% if rr.inspected_by %} Inspected by {{ rr.inspected_by }}.{% endif %}</p>{% endif %}
+{% for c in credit_notes %}<div class="alert alert-success small mb-1"><i class="bi bi-receipt-cutoff me-1"></i>Credit note {{ c.number }} · {{ c.amount|egp }} EGP · {{ c.get_status_display }}</div>{% endfor %}
+{% endblock %}

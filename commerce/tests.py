@@ -6,7 +6,8 @@ from django.test import TestCase
 from django.utils import timezone
 
 from commerce import services as shop
-from commerce.models import Buyer, BuyerDocument, Invoice, PlatformOrder
+from commerce.models import (Buyer, BuyerDocument, CreditNote, Invoice, PlatformOrder,
+                             ReturnRequest)
 from core.models import Notification, Role
 from core.testing import PDF, World, pdf
 from inventory import services as inv
@@ -167,3 +168,142 @@ class OrderingTests(TestCase):
         order.refresh_from_db()
         self.assertEqual(order.status, PlatformOrder.PLACED)
         self.assertEqual(order.lines.get().quantity, 10)
+
+
+class OrderExceptionTests(TestCase):
+    """Holds, line cancellation, credit notes, returns (FR-90 to FR-101)."""
+
+    def setUp(self):
+        from commerce import orders
+
+        self.svc = orders
+        self.w = World()
+        self.listing = self.w.listing(qty=50)
+        self.buyer = self.w.buyer()
+        self.fin = self.w.user(Role.FINANCE)
+
+    def paid_order(self, qty=10):
+        order, _ = shop.place_order(self.buyer, [(self.listing.pk, qty)], "addr")
+        shop.submit_bank_transfer(order, pdf("r.pdf"), order.total)
+        shop.confirm_payment(self.fin, order)
+        order.refresh_from_db()
+        return order
+
+    def deliver(self, order):
+        order = inv.dispatch_platform_order(
+            self.w.user(Role.WAREHOUSE), order,
+            {line.pk: line.batch.lot_number for line in order.lines.all()}, "Fleet",
+            self.w.today)
+        shop.confirm_delivery(order)
+        order.refresh_from_db()
+        return order
+
+    def test_hold_blocks_confirmation_and_dispatch(self):  # FR-90, FR-91
+        order, _ = shop.place_order(self.buyer, [(self.listing.pk, 5)], "addr")
+        shop.submit_bank_transfer(order, pdf("r.pdf"), order.total)
+        self.svc.hold_order(self.fin, order, "payment", "Amount differs")
+        with self.assertRaises(ValidationError):
+            shop.confirm_payment(self.fin, order)
+        PlatformOrder.objects.filter(pk=order.pk).update(
+            reservation_expires_at=timezone.now() - timedelta(minutes=1))
+        self.assertEqual(shop.release_expired_reservations(), 0)  # not while on hold
+        self.svc.release_hold(self.fin, order, "Bank confirmed")
+        order.refresh_from_db()
+        self.assertFalse(order.on_hold)
+        self.assertGreater(order.reservation_expires_at, timezone.now())
+        shop.confirm_payment(self.fin, order)
+
+    def test_cancel_line_returns_stock_and_credits_paid_invoice(self):  # FR-92, FR-93
+        order = self.paid_order(10)
+        line = order.lines.get()
+        self.svc.cancel_lines(self.fin, order, {line.pk: 4}, "Buyer asked")
+        order.refresh_from_db()
+        self.listing.refresh_from_db()
+        self.assertEqual(order.total, self.listing.clearance_price * 6)
+        self.assertEqual(self.listing.available_qty, 44)
+        self.assertEqual(Batch.objects.get(pk=self.listing.batch_id).qty_reserved, 6)
+        note = order.credit_notes.get()
+        self.assertEqual((note.status, note.amount), (CreditNote.REFUND_DUE,
+                                                      self.listing.clearance_price * 4))
+        dispatched = inv.dispatch_platform_order(
+            self.w.user(Role.WAREHOUSE), order, {line.pk: line.batch.lot_number}, "F",
+            self.w.today)
+        # 100 on hand, 6 left after the cancellation and dispatch.
+        self.assertEqual(Batch.objects.get(pk=self.listing.batch_id).qty_on_hand, 94)
+        self.assertEqual(dispatched.status, PlatformOrder.DISPATCHED)
+
+    def test_cancelling_everything_cancels_the_order(self):
+        order = self.paid_order(3)
+        self.svc.cancel_lines(self.fin, order, {order.lines.get().pk: 3}, "Out of budget")
+        order.refresh_from_db()
+        self.assertEqual(order.status, PlatformOrder.CANCELLED)
+
+    def test_credit_note_offsets_unpaid_invoice(self):  # FR-100
+        shop.set_payment_terms(self.fin, self.buyer, "30", Decimal("100000"))
+        order, _ = shop.place_order(self.buyer, [(self.listing.pk, 10)], "addr")
+        shop.choose_invoice(order)
+        invoice = shop.confirm_payment(self.fin, order)
+        note = self.svc.issue_credit_note(self.fin, invoice, Decimal("100"), "Goodwill")
+        invoice.refresh_from_db()
+        self.assertEqual((note.status, invoice.balance), (CreditNote.SETTLED,
+                                                          invoice.amount - 100))
+        with self.assertRaises(ValidationError):
+            self.svc.issue_credit_note(self.fin, invoice, invoice.amount, "Too much")
+
+    def test_return_with_credit_restock_and_write_off(self):  # FR-95 to FR-100
+        order = self.deliver(self.paid_order(10))
+        line = order.lines.get()
+        with self.assertRaises(ValidationError):
+            self.svc.request_return(self.buyer, order, [(line, 11, "damaged")])
+        rr = self.svc.request_return(self.buyer, order, [(line, 6, "damaged")], "Broken")
+        self.assertEqual(line.returnable_qty, 4)
+        with self.assertRaises(ValidationError):
+            self.svc.decide_return(self.fin, rr, False, comment="")  # reason needed
+        self.svc.decide_return(self.fin, rr, True, ReturnRequest.CREDIT)
+        rl = rr.lines.get()
+        self.svc.receive_return(self.w.user(Role.WAREHOUSE), rr, {rl.pk: 6})
+        before = Batch.objects.get(pk=line.batch_id).qty_on_hand
+        self.svc.inspect_return(self.w.user(Role.QA), rr, {rl.pk: ("restock", self.w.ambient)})
+        rr.refresh_from_db()
+        self.assertEqual(rr.status, ReturnRequest.COMPLETED)
+        self.assertEqual(Batch.objects.get(pk=line.batch_id).qty_on_hand, before + 6)
+        note = rr.credit_notes.get()
+        self.assertEqual(note.amount, line.unit_price * 6)
+
+    def test_write_off_outcome_raises_write_off_request(self):  # FR-99
+        from inventory.models import WriteOff
+
+        order = self.deliver(self.paid_order(5))
+        rr = self.svc.request_return(self.buyer, order, [(order.lines.get(), 2, "cold_chain")])
+        self.svc.decide_return(self.fin, rr, True, ReturnRequest.CREDIT)
+        rl = rr.lines.get()
+        self.svc.receive_return(self.w.user(Role.WAREHOUSE), rr, {rl.pk: 2})
+        self.svc.inspect_return(self.w.user(Role.QA), rr, {rl.pk: ("write_off", self.w.ambient)})
+        wo = WriteOff.objects.get()
+        self.assertEqual((wo.quantity, wo.reason), (2, "temperature"))
+
+    def test_replacement_order(self):  # FR-97
+        order = self.deliver(self.paid_order(5))
+        rr = self.svc.request_return(self.buyer, order, [(order.lines.get(), 2, "wrong_lot")])
+        self.svc.decide_return(self.fin, rr, True, ReturnRequest.REPLACEMENT)
+        rr.refresh_from_db()
+        rep = rr.replacement_order
+        self.assertEqual((rep.status, rep.total, rep.replacement_for), (
+            PlatformOrder.CONFIRMED, 0, order))
+        self.listing.refresh_from_db()
+        self.assertEqual(self.listing.available_qty, 43)
+
+    def test_return_window(self):  # FR-95
+        order = self.deliver(self.paid_order(5))
+        PlatformOrder.objects.filter(pk=order.pk).update(
+            delivered_at=timezone.now() - timedelta(days=8))
+        order.refresh_from_db()
+        self.assertFalse(self.svc.can_request_return(order))
+        with self.assertRaises(ValidationError):
+            self.svc.request_return(self.buyer, order, [(order.lines.get(), 1, "damaged")])
+
+    def test_exception_queue(self):  # FR-94
+        order = self.paid_order(5)
+        self.svc.hold_order(self.fin, order, "address", "Wrong building")
+        kinds = {r["kind"] for r in self.svc.exceptions()}
+        self.assertIn("On hold", kinds)

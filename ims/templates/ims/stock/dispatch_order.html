@@ -7,14 +7,14 @@
 <div class="card mb-3"><div class="card-header">Pick list (allocation from the listed batch, FEFO)</div>
 <div class="table-responsive"><table class="table mb-0"><thead><tr><th>Product</th><th>Allocated lot</th><th>Pick from</th><th>Qty</th><th>Lot picked</th></tr></thead>
 <tbody>{% for l in lines %}<tr><td>{{ l.batch.product.name }}{% if l.batch.is_cold_chain %} <span class="badge text-bg-info">cold chain</span>{% endif %}</td><td><strong>{{ l.batch.lot_number }}</strong><br><span class="small text-muted">exp {{ l.batch.expiry_date }}</span></td>
-<td class="small">{% for s in l.pick_locations %}{{ s.location }} ({{ s.quantity }})<br>{% endfor %}</td><td>{{ l.quantity }}</td>
+<td class="small">{% for s in l.pick_locations %}{{ s.location }} ({{ s.quantity }})<br>{% endfor %}</td><td>{{ l.active_qty }}</td>
 <td><input name="lot_{{ l.pk }}" class="form-control form-control-sm" placeholder="Scan / type lot" value="{{ l.picked_lot }}" {% if order.status != 'confirmed' %}disabled{% endif %}></td></tr>{% endfor %}</tbody></table></div></div>
-{% if order.status == 'confirmed' %}
+{% if order.on_hold %}<div class="alert alert-warning">This order is on hold. Release it on the <a href="/b2b/orders/{{ order.pk }}/">order page</a> before dispatch.</div>{% elif order.status == 'confirmed' %}
 <div class="card mb-3"><div class="card-body">{% include "ims/_fields.html" with col="col-md-4" %}{% if not cold %}<style>#id_cold_chain_checked,label[for=id_cold_chain_checked]{display:none}</style>{% endif %}
-<button class="btn btn-primary mt-3">Confirm Dispatch</button> <button type="button" class="btn btn-link mt-3" onclick="window.print()">Print pick list</button></div></div>
+<button class="btn btn-primary mt-3">Confirm Dispatch</button> <a href="/b2b/orders/{{ order.pk }}/packing-slip/" target="_blank" class="btn btn-outline-secondary mt-3"><i class="bi bi-printer me-1"></i>Packing slip</a></div></div>
 {% endif %}
 </form>
-{% if order.status == 'confirmed' %}
+{% if order.status == 'confirmed' and not order.on_hold %}
 <form method="post" class="card card-body border-warning">{% csrf_token %}<label class="form-label">Stock found damaged at picking?</label>
 <div class="input-group"><input name="hold_note" class="form-control" placeholder="Describe the shortage"><button name="hold" value="1" class="btn btn-outline-warning">Hold order and alert Inventory Controller</button></div></form>
 {% endif %}

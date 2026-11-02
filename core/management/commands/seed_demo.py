@@ -138,6 +138,8 @@ class Command(BaseCommand):
             self.audits()
         with transaction.atomic():
             self.extras()
+        with transaction.atomic():
+            self.after_sales()
         inv.run_expiry_scan(triggered_by="seed")
         self.stdout.write(self.style.SUCCESS(
             f"Demo data loaded. Internal users and buyers share the password '{PASSWORD}'."))
@@ -490,3 +492,55 @@ class Command(BaseCommand):
         answered.replied_by = self.u["sales"]
         answered.replied_at = timezone.now()
         answered.save()
+
+    def after_sales(self):
+        """Holds, a cancelled line, and returns at different stages (UC-45 to UC-53)."""
+        from commerce import orders as order_svc
+        from commerce.models import Buyer, PlatformOrder
+        from inventory.models import Listing
+
+        fin, wh = self.u["finance"], self.u["warehouse"]
+        nile = Buyer.objects.get(commercial_register_no="CR-70001")
+        pdf = lambda: SimpleUploadedFile("transfer.pdf", TINY_PDF,  # noqa: E731
+                                         content_type="application/pdf")
+
+        def paid_order(sku, qty):
+            listing = Listing.objects.get(batch__product__sku=sku, status=Listing.ACTIVE)
+            order, _ = shop.place_order(nile, [(listing.pk, qty)], nile.address,
+                                        cold_chain_confirmed=True)
+            shop.submit_bank_transfer(order, pdf(), order.total)
+            shop.confirm_payment(fin, order)
+            return order
+
+        def delivered(order, days_ago):
+            order = inv.dispatch_platform_order(
+                wh, order, {line.pk: line.batch.lot_number for line in order.lines.all()},
+                "Kubbar fleet", timezone.localdate(), cold_chain_checked=True)
+            shop.confirm_delivery(order)
+            PlatformOrder.objects.filter(pk=order.pk).update(
+                delivered_at=timezone.now() - timedelta(days=days_ago))
+            order.refresh_from_db()
+            return order
+
+        # A return waiting for Finance to decide.
+        a = delivered(paid_order("NUT-AD3E-1L", 40), 2)
+        line = a.lines.first()
+        order_svc.request_return(nile, a, [(line, 5, "damaged")],
+                                 "Five bottles arrived with broken seals.")
+        # A return approved and received, waiting for QA inspection.
+        b = delivered(paid_order("VAC-IB-1000", 30), 4)
+        rr = order_svc.request_return(nile, b, [(b.lines.first(), 10, "cold_chain")],
+                                      "The cool box was warm on arrival.")
+        order_svc.decide_return(fin, rr, True, "credit", "Accepted – cold-chain break")
+        order_svc.receive_return(wh, rr, {rl.pk: rl.qty_requested for rl in rr.lines.all()})
+        # A paid order with one line partly cancelled: a refund to pay.
+        c = paid_order("FAD-MYC-25", 20)
+        order_svc.cancel_lines(fin, c, {c.lines.first().pk: 5},
+                               "Buyer reduced the quantity by phone")
+        # An order on hold while Finance checks the transfer.
+        sinai_waiting = PlatformOrder.objects.filter(
+            buyer__commercial_register_no="CR-70002",
+            status=PlatformOrder.AWAITING_PAYMENT).first()
+        if sinai_waiting:
+            order_svc.hold_order(fin, sinai_waiting, "payment",
+                                 "Transfer amount does not match the order total")

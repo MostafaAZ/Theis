@@ -22,6 +22,7 @@ DASHBOARDS = [
     ("recovery", "Recovery and Write-Off"),
     ("audit", "Audit Accuracy"),
     ("platform", "Platform Activity"),
+    ("exceptions", "Order Exceptions"),
 ]
 
 ACTIVE = [BatchStatus.IN_STOCK, BatchStatus.NEAR_EXPIRY, BatchStatus.SURPLUS,
@@ -312,8 +313,8 @@ def recovery(f):
         for line in o.lines.all():
             if f.product and str(line.listing.batch.product_id) != str(f.product):
                 continue
-            sold_q += line.quantity
-            sold_v += line.unit_price * line.quantity
+            sold_q += line.active_qty
+            sold_v += line.unit_price * line.active_qty
             days_to_sale.append((o.created_at - line.listing.published_at).days)
     recovery_rate = 100 * float(sold_v) / float(released_orig) if released_orig else None
     wos = WriteOff.objects.filter(status__in=[WriteOff.APPROVED, WriteOff.DISPOSED],
@@ -413,7 +414,59 @@ def platform_activity(f):
     }
 
 
-BUILDERS = {"inventory": inventory_health, "sales": sales_performance,
+def order_exceptions(f):
+    """FR-102: cancellations, returns, credit notes and order-to-dispatch time."""
+    from commerce.models import CreditNote, OrderHold, OrderLine, ReturnLine, ReturnRequest
+    orders = PlatformOrder.objects.filter(created_at__date__gte=f.date_from,
+                                          created_at__date__lte=f.date_to)
+    n_orders = orders.count()
+    cancelled = OrderLine.objects.filter(order__in=orders, cancelled_qty__gt=0)
+    by_cancel = defaultdict(lambda: [0, Decimal(0)])
+    for line in cancelled:
+        key = line.cancel_reason or "No reason given"
+        by_cancel[key][0] += line.cancelled_qty
+        by_cancel[key][1] += line.cancelled_qty * line.unit_price
+    returns = ReturnRequest.objects.filter(requested_at__date__gte=f.date_from,
+                                           requested_at__date__lte=f.date_to)
+    reasons = dict(ReturnLine.REASONS)
+    by_reason = (ReturnLine.objects.filter(request__in=returns).values("reason")
+                 .annotate(n=Count("id"), q=Sum("qty_requested")).order_by("-q"))
+    notes = CreditNote.objects.filter(issued_at__date__gte=f.date_from,
+                                      issued_at__date__lte=f.date_to)
+    statuses = dict(CreditNote.STATUSES)
+    by_status = notes.values("status").annotate(n=Count("id"), v=Sum("amount"))
+    dispatched = [o.dispatched_at - o.created_at for o in orders.filter(
+        dispatched_at__isnull=False).only("created_at", "dispatched_at")]
+    hours = (sum(d.total_seconds() for d in dispatched) / 3600 / len(dispatched)
+             if dispatched else None)
+    holds = OrderHold.objects.filter(placed_at__date__gte=f.date_from,
+                                     placed_at__date__lte=f.date_to)
+    hold_reasons = dict(OrderHold.REASONS)
+    return {
+        "kpis": [("Orders placed", n_orders),
+                 ("Return rate", pct(returns.count() * 100 / n_orders if n_orders else None)),
+                 ("Credit notes (EGP)", egp(notes.aggregate(t=Sum("amount"))["t"])),
+                 ("Orders put on hold", holds.count()),
+                 ("Avg. order to dispatch", "–" if hours is None else f"{hours:,.1f} h")],
+        "tables": [
+            table("Cancelled quantity by reason", ["Reason", "Units", "EGP"],
+                  [[k, v[0], egp(v[1])] for k, v in sorted(by_cancel.items(),
+                                                          key=lambda i: -i[1][1])]),
+            table("Returns by reason", ["Reason", "Lines", "Units"],
+                  [[reasons.get(r["reason"], r["reason"]), r["n"], r["q"]]
+                   for r in by_reason], link="/b2b/returns/?status=all"),
+            table("Credit notes by status", ["Status", "Notes", "EGP"],
+                  [[statuses.get(r["status"], r["status"]), r["n"], egp(r["v"])]
+                   for r in by_status], link="/b2b/credit-notes/"),
+            table("Holds by reason", ["Reason", "Holds"],
+                  [[hold_reasons.get(r["reason"], r["reason"]), r["n"]] for r in
+                   holds.values("reason").annotate(n=Count("id")).order_by("-n")]),
+        ],
+        "charts": [],
+    }
+
+
+BUILDERS = {"exceptions": order_exceptions, "inventory": inventory_health, "sales": sales_performance,
             "forecast": forecast_accuracy, "recovery": recovery, "audit": audit_accuracy,
             "platform": platform_activity}
 

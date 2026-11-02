@@ -1,7 +1,7 @@
 from django.urls import path
 
 from .views import (admin, analytics, audits, auth, b2b, buyers, catalog, demo, expiry, misc,
-                    planning, stock, writeoffs)
+                    orders, planning, stock, writeoffs)
 
 app_name = "ims"
 
@@ -40,7 +40,14 @@ urlpatterns = [
     path("b2b/post/", b2b.post_list, name="post_b2b"),
     path("b2b/post/<int:pk>/", b2b.post_batch, name="post_batch"),
     path("b2b/orders/", b2b.platform_orders, name="platform_orders"),
-    path("b2b/orders/<int:pk>/", b2b.platform_order, name="platform_order"),
+    path("b2b/orders/<int:pk>/", orders.order_detail, name="platform_order"),
+    path("b2b/orders/<int:pk>/packing-slip/", orders.packing_slip, name="packing_slip"),
+    path("b2b/exceptions/", orders.exception_queue, name="exceptions"),
+    path("b2b/returns/", orders.returns, name="returns"),
+    path("b2b/returns/<int:pk>/", orders.return_detail, name="return_detail"),
+    path("b2b/returns/<int:pk>/photo/", orders.return_photo, name="return_photo"),
+    path("b2b/credit-notes/", orders.credit_notes, name="credit_notes"),
+    path("b2b/credit-notes/<int:pk>/pdf/", orders.credit_note_document, name="credit_note_pdf"),
     path("b2b/messages/", b2b.messages_inbox, name="messages_inbox"),
     path("b2b/messages/<int:pk>/", b2b.message_detail, name="message_detail"),
     # Module 1

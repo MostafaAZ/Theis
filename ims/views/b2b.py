@@ -82,14 +82,6 @@ def platform_orders(request):
         "counts": counts})
 
 
-@role_required(*ORDER_VIEWERS)
-def platform_order(request, pk):
-    order = get_object_or_404(PlatformOrder.objects.select_related("buyer"), pk=pk)
-    return render(request, "ims/b2b/order.html", {
-        "order": order, "lines": order.lines.select_related("batch__product"),
-        "payments": order.payments.all(), "invoice": getattr(order, "invoice", None)})
-
-
 MESSAGE_HANDLERS = (Role.SALES, Role.REGULATORY, Role.FINANCE, Role.WAREHOUSE, Role.COO)
 
 

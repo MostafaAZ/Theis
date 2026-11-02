@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import demo, shop, views
+from . import demo, returns, shop, views
 
 app_name = "b2b"
 
@@ -26,6 +26,10 @@ urlpatterns = [
     path("orders/<int:pk>/", views.order_detail, name="order"),
     path("orders/<int:pk>/pay/", views.pay, name="pay"),
     path("orders/<int:pk>/invoice/", views.invoice_pdf, name="invoice"),
+    path("orders/<int:pk>/return/", returns.request_return, name="request_return"),
+    path("orders/<int:pk>/packing-slip/", returns.packing_slip, name="packing_slip"),
+    path("credit-notes/<int:pk>/", returns.credit_note, name="credit_note"),
+    path("account/returns/", returns.account_returns, name="account_returns"),
     path("account/", shop.account, name="account"),
     path("account/profile/", shop.account_profile, name="account_profile"),
     path("account/documents/", shop.account_documents, name="account_documents"),

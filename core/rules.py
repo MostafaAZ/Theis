@@ -38,6 +38,11 @@ DEFAULT_RULES = {
                            "Regulatory Affairs is alerted this long before a licence expires."),
     "rejected_doc_retention_days": ("Rejected document retention", 90, "days", 1, 365,
                                     "Documents of rejected applications are deleted after this."),
+    "return_window_days": ("Return request window", 7, "days after delivery", 1, 60,
+                           "Buyers can ask to return stock for this long after delivery."),
+    "exception_reservation_hours": ("Expiring reservation alert", 12, "hours", 1, 48,
+                                    "Orders whose stock hold ends sooner join the exception "
+                                    "queue."),
     "max_failed_logins": ("Failed logins before lock", 5, "attempts", 3, 10,
                           "Accounts lock after this many consecutive failures."),
 }
