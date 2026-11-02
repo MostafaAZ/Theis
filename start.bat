@@ -1,7 +1,7 @@
 @echo off
-rem Double-click to set up and start both Kubbar demo applications (Windows).
+rem Double-click to set up and start both VETREX demo applications (Windows).
 cd /d "%~dp0"
-title Kubbar demo launcher
+title VETREX demo launcher
 
 set "PY="
 where py >nul 2>nul && set "PY=py -3"
@@ -36,8 +36,8 @@ if defined NEWDB (
 )
 
 echo Starting the IMS on http://localhost:8000 and the platform on http://localhost:8001
-start "Kubbar IMS (close to stop)" cmd /k ""%VPY%" manage.py runserver 8000"
-start "Kubbar B2B platform (close to stop)" cmd /k ""%VPY%" manage.py runserver 8001 --settings=kubbar.settings.b2b"
+start "VETREX IMS (close to stop)" cmd /k ""%VPY%" manage.py runserver 8000"
+start "VETREX B2B platform (close to stop)" cmd /k ""%VPY%" manage.py runserver 8001 --settings=kubbar.settings.b2b"
 timeout /t 5 /nobreak >nul
 if "%KUBBAR_DEMO_MODE%"=="1" (
     start "" http://localhost:8000/login/

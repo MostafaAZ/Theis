@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Double-click (macOS) or run ./start.command (Linux) to set up and start
-# both Kubbar demo applications. Press Ctrl+C in this window to stop them.
+# both VETREX demo applications. Press Ctrl+C in this window to stop them.
 set -e
 cd "$(dirname "$0")"
 

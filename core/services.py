@@ -36,7 +36,7 @@ def notify(users, message, link="", level="info", email=True):
     if email and users:
         base = settings.IMS_BASE_URL
         body = message + (f"\n\nOpen: {base}{link}" if link else "")
-        send_mail("Kubbar IMS: " + message[:80], body, None, [u.email for u in users],
+        send_mail("VETREX: " + message[:80], body, None, [u.email for u in users],
                   fail_silently=True)
 
 
@@ -47,7 +47,7 @@ def notify_roles(roles, message, link="", level="info", email=True):
 
 
 def email_buyer(buyer_user, subject, body):
-    send_mail("Kubbar B2B: " + subject, body, None, [buyer_user.email], fail_silently=True)
+    send_mail("VETREX B2B: " + subject, body, None, [buyer_user.email], fail_silently=True)
 
 
 __all__ = ["audit", "notify", "notify_roles", "users_with_role", "email_buyer", "Role"]

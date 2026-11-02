@@ -116,7 +116,7 @@ def message_detail(request, pk):
             if msg.buyer:
                 email_buyer(msg.buyer.user, "Reply to your message", body)
             else:
-                send_mail("Kubbar B2B: reply to your message", body, None, [msg.email],
+                send_mail("VETREX B2B: reply to your message", body, None, [msg.email],
                           fail_silently=True)
             messages.success(request, "Reply sent by email and shown in the buyer's account.")
             return redirect("ims:messages_inbox")
