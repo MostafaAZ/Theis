@@ -75,6 +75,8 @@ Verification](#buyer-registration-and-verification)
 
 [6.13 Order Exceptions and Returns](#order-exceptions-and-returns)
 
+[6.14 Reminders](#reminders)
+
 [7. Non-Functional Requirements](#non-functional-requirements)
 
 [7.1 Functionality](#functionality)
@@ -249,6 +251,18 @@ holds it.
 user accounts and roles for both applications, configures business rules
 such as the near-expiry window and the clearance price band, maintains
 reference data, and reviews the audit trail.
+
+**Reminders.** Across the seven modules, the system reminds each role of
+the recurring work the data says is due. It does not use a fixed reorder
+point, which would trigger orders outside the approved plan. Instead, it
+reminds the Procurement Officer to prepare the purchase plan when a
+product's stock cover falls below its lead time plus safety stock and to
+refresh the forecast when it is out of date, the Sales Representative to
+follow up unanswered offers and lapsed customers, the Inventory
+Controller to count an overdue warehouse, and the Warehouse Officer to
+transfer stock that sits in the wrong place. Each reminder states what
+the data shows, how it affects the company and its KPIs, what to do, and
+what the recommendation is based on.
 
 The E-Commerce Platform is organized into four modules:
 
@@ -470,6 +484,10 @@ Section 4.
 - User accounts and roles, business rule configuration, reference data
   maintenance, and the audit trail.
 
+- Daily, data-based reminders for the purchase plan, demand forecast,
+  customer follow-up, warehouse audit, and warehouse transfers, each
+  stating what it is based on.
+
 **Buyer Registration and Verification (Module 8)**
 
 - Company registration with the owner's national ID, commercial
@@ -553,6 +571,11 @@ from drifting into functions that Odoo already performs.
   nothing. Every decision in Exhibit \#2 stays with the role that holds
   it.
 
+- **Automatic Reordering.** The proposed solution does not set a fixed
+  reorder point or raise purchase orders on its own. Purchasing follows
+  the plan the General Manager approves, and the system reminds
+  Procurement when the data shows that the plan is due.
+
 ## 5.3 Release Phasing
 
 The proposed solution is delivered in two releases. The prototype proves
@@ -634,7 +657,7 @@ release connects it to Odoo.
 # 6. Functional Requirements
 
 The functional requirements below are organized by module and trace to
-the fifty-five use cases in Section 9. Each requirement states what the
+the fifty-seven use cases in Section 9. Each requirement states what the
 system shall do, not how it is built. The requirements that carry the
 most weight are the ones the Root Cause Analysis points to directly:
 batch-level expiry data (FR-07 to FR-12), the six-month alert and
@@ -738,6 +761,12 @@ the decisions recorded in the proposal and in this specification.
 | Platform order reservation hold      | 48 hours for bank transfer orders    |
 | Reservation expiry warning           | 12 hours before a reservation lapses |
 | Return request window                | 7 days after delivery                |
+| Purchase plan cycle                  | 30 days                              |
+| Forecast refresh cycle               | 30 days                              |
+| Customer offer follow-up             | 5 days                               |
+| Lapsed customer follow-up            | 90 days                              |
+| Warehouse audit interval             | 90 days                              |
+| Reminder snooze                      | 7 days                               |
 | Active market                        | Egypt                                |
 
 *Exhibit \#4: Business Rules and Default Values*
@@ -767,7 +796,7 @@ the decisions recorded in the proposal and in this specification.
 | FR-65  | The system shall allow authorized users to export any report or dashboard in PDF or Excel format, stamped with filters, user, and time.                                                                                                                                                                                                                                                  | UC-28        |
 | FR-103 | The system shall display an executive briefing for the CEO, Group CFO, COO, and General Manager: where near-expiry stock value ends up, the expiry calendar for the next 12 months, value at risk by category, batches at each step of the release route, MOQ surplus in the latest purchase plan, recovered versus written-off value by month, the sales trend, and receivables by age. | UC-54        |
 | FR-104 | The system shall title every chart with the finding it shows, computed from the data, and shall offer the numbers behind every chart as a table.                                                                                                                                                                                                                                         | UC-27, UC-54 |
-| FR-105 | The system shall write an analysis for every chart and dashboard (what it shows, what it means for the reader, and the next step) for the perspective the user selects: CEO, Group CFO, COO, or General Manager.                                                                                                                                                                         | UC-27, UC-54 |
+| FR-105 | The system shall write an analysis for every chart and dashboard in four steps (what the chart or table shows, its impact on the company and the KPIs it moves, the recommendation, and the figures and business rules the recommendation is based on) for the perspective the user selects: CEO, Group CFO, COO, or General Manager.                                                    | UC-27, UC-54 |
 | FR-106 | The system shall allow management and the Finance Officer to request an AI analysis of a dashboard, label it as AI analysis, store it for six hours, and keep the automated analysis when the AI service is unavailable.                                                                                                                                                                 | UC-55        |
 | FR-107 | The system shall include the charts and their analysis in the PDF and Excel export of every dashboard.                                                                                                                                                                                                                                                                                   | UC-28, UC-54 |
 
@@ -856,6 +885,32 @@ The person who handles the goods records what happened, a second role
 decides what it means, and the financial effect follows that decision
 rather than preceding it. A return therefore cannot become free stock or
 an unrecorded refund.
+
+## 6.14 Reminders
+
+The requirements below replace a fixed reorder point with reminders that
+read the same data the rest of the system holds. A reorder point answers
+one question for one product: when to order. Kubbar's problem is wider.
+Its losses come from work that is done late or not at all: a plan
+prepared after the stock has run down, a forecast that no longer
+reflects sales, an offer nobody follows up, a warehouse whose record has
+drifted. Each reminder therefore names its owner and shows its evidence,
+so that the person who acts can see why the work is due.
+
+| ID     | Requirement                                                                                                                                                                                                                                                                                                                         | Use Case     |
+|--------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------|
+| FR-108 | The system shall check the data every day and raise reminders for the role that owns each recurring task: the Procurement Officer, the Sales Representative, the Inventory Controller, and the Warehouse Officer.                                                                                                                   | UC-57        |
+| FR-109 | The system shall remind the Procurement Officer to prepare the purchase plan when no plan has been prepared within the purchase plan cycle, when a product's usable stock and open purchase orders cover less than its lead time plus safety stock and no plan in progress includes it, or when the General Manager returns a plan. | UC-56, UC-57 |
+| FR-110 | The system shall remind the Procurement Officer to refresh the demand forecast when it is older than the forecast refresh cycle or when sales data has been imported since it was generated.                                                                                                                                        | UC-56, UC-57 |
+| FR-111 | The system shall remind the Sales Representative to follow up offers to existing customers still pending after the follow-up period, and regular customers who have not bought within the lapsed customer period.                                                                                                                   | UC-56, UC-57 |
+| FR-112 | The system shall remind the Inventory Controller to schedule a count when a warehouse has not been counted within the audit interval or its last count fell below 95% accuracy.                                                                                                                                                     | UC-56, UC-57 |
+| FR-113 | The system shall remind the Warehouse Officer and the Inventory Controller to transfer stock held in a location whose storage type does not suit it, stock above a location's capacity, and near-expiry, surplus, or released batches split across warehouses.                                                                      | UC-56, UC-57 |
+| FR-114 | The system shall state in every reminder what the data shows, its impact on the company and its KPIs, the recommendation, and what the recommendation is based on; allow the user to open the screen that resolves it, snooze it, or mark it done; and close it automatically when the data no longer calls for it.                 | UC-56        |
+
+The reminders advise and do not decide. A purchase plan reminder does
+not raise an order, and an audit reminder does not schedule a count.
+Each leaves the work with the role that holds the authority in Exhibit
+\#2, which keeps the control structure of the proposed solution intact.
 
 # 7. Non-Functional Requirements
 
@@ -978,13 +1033,16 @@ Record Refund) when value is returned to a buyer, and UC-53 (Print
 Packing Slip) extends UC-08 (Dispatch Order). UC-54 (View Executive
 Briefing) and UC-55 (Request AI Analysis) were added to the Sales and
 Inventory Analytics zone on the same basis: UC-28 (Export Report) and
-UC-55 both extend UC-54. The new zone does not change the main path. It
-adds the route back along it, so that a batch sold through the platform
-can still be traced if it returns.
+UC-55 both extend UC-54. UC-56 (Review and Act on Reminders) sits in the
+Shared Access zone with Internal User, because every internal role
+receives reminders, and UC-57 (Generate Reminders) with the System
+Scheduler. The new zone does not change the main path. It adds the route
+back along it, so that a batch sold through the platform can still be
+traced if it returns.
 
 ## 9. Use Cases
 
-The fifty-five use cases below define how every user interacts with the
+The fifty-seven use cases below define how every user interacts with the
 proposed solution. Every role in Exhibit \#2 owns at least one use case,
 and every functional requirement in Section 6 traces to at least one use
 case. Each specification follows the same structure, with no more than
@@ -1050,6 +1108,8 @@ dropdowns the user works with.
 | UC-53 | Print Packing Slip                        | Warehouse Officer, E-Commerce Buyer                                                     | IMS and Platform |
 | UC-54 | View Executive Briefing                   | Management (CEO, Group CFO, COO), General Manager                                       | IMS              |
 | UC-55 | Request AI Analysis                       | Management, General Manager, Finance Officer                                            | IMS              |
+| UC-56 | Review and Act on Reminders               | Procurement Officer, Sales Representative, Inventory Controller, Warehouse Officer      | IMS              |
+| UC-57 | Generate Reminders                        | System Scheduler                                                                        | IMS              |
 
 *Exhibit \#6: Use Case Summary*
 
@@ -2950,8 +3010,9 @@ dropdowns the user works with.
     written off, the sales trend, and receivables by age.
 
 4.  For each chart, the system shows a headline that states the finding,
-    the numbers behind it, and an analysis: what the chart shows, what
-    it means for the reader, and the next step.
+    the numbers behind it, and an analysis in four steps: what the chart
+    shows, its impact on the company and its KPIs, the recommendation,
+    and what the recommendation is based on.
 
 5.  The user selects a Perspective (CEO, Group CFO, COO, General
     Manager), and the system rewrites the analysis and reorders the
@@ -2986,8 +3047,10 @@ dropdowns the user works with.
 2.  The system sends the dashboard's aggregated figures, the filters,
     and the selected perspective to the AI service.
 
-3.  The AI service returns a summary, key findings, risks, recommended
-    actions, and an analysis for each chart.
+3.  The AI service returns, for the dashboard and for each chart, the
+    same four steps: what it shows, its impact on the company and its
+    KPIs, the recommendations, and the figures and rules each
+    recommendation is based on.
 
 4.  The system replaces the automated analysis with the AI analysis,
     labels it "AI analysis", and logs the request in the audit trail.
@@ -2999,6 +3062,85 @@ dropdowns the user works with.
 
 - A2. AI service unavailable, key missing, or request declined: the
   system keeps the automated analysis and shows the reason.
+
+#### UC-56 Review and Act on Reminders
+
+| Field           | Detail                                                                             |
+|-----------------|------------------------------------------------------------------------------------|
+| Primary Actor   | Procurement Officer, Sales Representative, Inventory Controller, Warehouse Officer |
+| Trigger         | The system raises a reminder for the user's role (UC-57).                          |
+| Pre-Conditions  | The user is logged in. At least one reminder is open for the user's role.          |
+| Post-Conditions | The reminder is acted on, snoozed, or marked done, and the action is logged.       |
+| Relationships   | None.                                                                              |
+| Related FRs     | FR-109 to FR-114                                                                   |
+
+**Main Flow**
+
+1.  The user opens Reminders from the dashboard or the menu.
+
+2.  The system lists the open reminders by priority, each with its type
+    (Purchase Plan, Demand Forecast, Customer Follow-Up, Inventory
+    Audit, Warehouse Transfer).
+
+3.  For each reminder, the system shows what the data shows, the impact
+    on the company and its KPIs, the recommendation, and what the
+    recommendation is based on.
+
+4.  The user selects the action button (for example, Open Purchase Plans
+    or Schedule a Count) and completes the work on that screen.
+
+5.  The user returns to the reminder and selects Mark as Done.
+
+6.  The system closes the reminder and logs the action in the audit
+    trail.
+
+**Alternative Flows**
+
+- A1. Not now: the user selects Remind Me Later, and the system hides
+  the reminder for the snooze period in Exhibit \#4.
+
+- A2. Work done without opening the reminder: the system closes it at
+  its next check, once the data no longer calls for it.
+
+- A3. Marked done but the data still calls for it after the snooze
+  period: the system reopens it.
+
+#### UC-57 Generate Reminders
+
+| Field           | Detail                                                                                                 |
+|-----------------|--------------------------------------------------------------------------------------------------------|
+| Primary Actor   | System Scheduler                                                                                       |
+| Trigger         | The daily scheduled run, or a user selects Check the Data Now on Reminders.                            |
+| Pre-Conditions  | The reminder cycles are configured as business rules (Exhibit \#4).                                    |
+| Post-Conditions | Reminders are opened, refreshed, reopened, or resolved, and the owning roles are notified of new ones. |
+| Relationships   | None.                                                                                                  |
+| Related FRs     | FR-108 to FR-113                                                                                       |
+
+**Main Flow**
+
+1.  The system reads the purchase plans, forecasts, sales imports, stock
+    on hand, open purchase orders, customer offers, sales history, stock
+    counts, and storage locations.
+
+2.  The system applies the reminder rules: purchase plan cycle, stock
+    cover against lead time and safety stock, forecast refresh cycle,
+    offer follow-up, lapsed customers, audit interval, storage
+    condition, location capacity, and batches split across warehouses.
+
+3.  For each condition found, the system writes the four-part
+    explanation from the figures that triggered it.
+
+4.  The system opens a reminder for each new condition and notifies the
+    owning role.
+
+5.  The system refreshes the figures in reminders that are already open.
+
+6.  The system resolves reminders whose condition has cleared.
+
+**Alternative Flows**
+
+- A1. Snoozed reminder whose snooze period has passed and whose
+  condition still holds: the system reopens it and notifies the role.
 
 # 10. Activity Diagrams
 
@@ -3211,6 +3353,7 @@ correction stays attached to the sale it corrects.
 | RETURN_REQUEST       | A buyer's request to return delivered stock       | Return_ID, Order_ID, Buyer_ID, Status, Resolution, Photo_Ref (encrypted), Decided_By, Received_By, Inspected_By, Replacement_Order_ID                                        | FR-95 to FR-98        |
 | RETURN_LINE          | One returned line and its inspection outcome      | Return_Line_ID, Return_ID, Order_Line_ID, Batch_ID, Reason, Qty_Requested, Qty_Received, Outcome, Location_ID                                                                | FR-95, FR-98, FR-99   |
 | CREDIT_NOTE          | A credit against an invoice and its refund        | Credit_Note_ID, Invoice_ID, Buyer_ID, Return_ID, Amount, Reason, Status, Issued_By, Refund_Reference, Refund_Date                                                            | FR-93, FR-100         |
+| REMINDER             | A data-based reminder and its explanation         | Reminder_ID, Kind, Roles, Explanation, Impact, Recommendation, Basis, Priority, Status, Snoozed_Until, Done_By                                                               | FR-108 to FR-114      |
 
 *Exhibit \#13: Entities Required by the Proposed System*
 
@@ -3240,18 +3383,19 @@ as goods. It audits the warehouse against the record, so that alerts and
 listings rest on data that has been checked. And it flags every batch
 six months before expiry and routes it through a fixed order: existing
 customers first, then release by the COO at 65% to 70% of the original
-price, and disposal only for what remains. The E-Commerce Platform then
-adds the outlet the DFD As-Is lacked. It is open only to verified trade
-buyers, limited to registered products with remaining shelf life, and
-protected against selling the same batch twice. When an order goes
-wrong, it is corrected against the original order and invoice, and
-nothing returned is sold again until QA has inspected it. Management
-sees the result as a briefing that states what the figures mean and who
-acts next, with an AI analysis available on request but no decision
-delegated to it.
+price, and disposal only for what remains. Between these points, it
+reminds each role of the recurring work the data says is due, and shows
+why. The E-Commerce Platform then adds the outlet the DFD As-Is lacked.
+It is open only to verified trade buyers, limited to registered products
+with remaining shelf life, and protected against selling the same batch
+twice. When an order goes wrong, it is corrected against the original
+order and invoice, and nothing returned is sold again until QA has
+inspected it. Management sees the result as a briefing that states what
+the figures mean and who acts next, with an AI analysis available on
+request but no decision delegated to it.
 
-The specification is deliberately bounded. It covers fifty-five use
-cases for eleven user roles, one hundred and seven functional
+The specification is deliberately bounded. It covers fifty-seven use
+cases for eleven user roles, one hundred and fourteen functional
 requirements, and twenty-eight non-functional requirements, and it stops
 short of accounting, field sales, card payments, and machine learning.
 Authority stays where the organization already places it: the General

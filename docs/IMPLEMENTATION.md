@@ -61,6 +61,8 @@ the SRS left something open.
 | 53 | `/b2b/orders/<id>/packing-slip/`, platform `/orders/<id>/packing-slip/` | `packing_slip_pdf` |
 | 54 | `/` executive briefing, `/analytics/?d=executive` (FR-103 to FR-105, FR-107) | `analytics/story.py`, `ims/dashboard.briefing_for` |
 | 55 | `/analytics/ai/` Analyse with AI (FR-106, NFR-28) | `analytics/ai.py` |
+| 56 | `/reminders/` (open, Remind me later, Mark as done) and the dashboard Reminders cards | `ims/views/reminders.py` |
+| 57 | `manage.py run_daily_jobs`, *Check the data now* | `core/reminders.generate` (FR-108 to FR-114) |
 | FR-102 | `/analytics/?d=exceptions` (Order Exceptions dashboard) | `analytics.services.order_exceptions` |
 
 ## Screens added beyond the use cases

@@ -63,6 +63,19 @@ python manage.py runserver 8001 --settings=kubbar.settings.b2b   # B2B platform
 Everything is served locally (Bootstrap, icons and Chart.js are vendored in
 `core/static/vendor`), so the demo works offline. Emails print to the console.
 
+### Reminders
+
+Instead of a fixed reorder point, the system checks the data every day and
+reminds each role of recurring work that is due. The Procurement Officer is
+reminded to prepare the purchase plan and refresh the forecast, the Sales
+Representative to follow up offers and lapsed customers, the Inventory
+Controller to count an overdue warehouse, and the Warehouse Officer to
+transfer stock. Each reminder shows four things: what the data shows, the
+impact on the company and its KPIs, the recommendation, and what it is based
+on. Open *Home → Reminders* (or the cards on the dashboard), then *Remind me
+later* or *Mark as done*. Reminders close themselves once the data clears, and
+the cycles are business rules under *Administration → Business rules*.
+
 ### Management analytics and AI analysis
 
 The CEO, CFO, COO and GM land on an **Executive briefing**, and *Reports →
