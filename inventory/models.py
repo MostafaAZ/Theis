@@ -30,6 +30,9 @@ class Product(models.Model):
     moq = models.PositiveIntegerField("Supplier MOQ", default=1)
     lead_time_days = models.PositiveIntegerField(default=90)
     shelf_life_months = models.PositiveIntegerField("Typical shelf life (months)", default=24)
+    description = models.TextField(blank=True, help_text="Shown to buyers on the platform")
+    image = models.FileField(upload_to="products/", blank=True,
+                             help_text="JPG or PNG; a drawing is shown when empty")
     is_active = models.BooleanField(default=True)
 
     class Meta:
@@ -236,7 +239,8 @@ class StockMovement(models.Model):
     ADJUSTMENT = "adjustment"
     WRITE_OFF = "write_off"
     REVERSAL = "reversal"
-    TYPES = [(RECEIPT, "Receipt"), (TRANSFER, "Transfer"), (DISPATCH, "Dispatch"),
+    RETURN = "return"
+    TYPES = [(RETURN, "Customer return"), (RECEIPT, "Receipt"), (TRANSFER, "Transfer"), (DISPATCH, "Dispatch"),
              (ADJUSTMENT, "Adjustment"), (WRITE_OFF, "Write-Off"), (REVERSAL, "Reversal")]
 
     batch = models.ForeignKey(Batch, on_delete=models.PROTECT, related_name="movements")
@@ -490,8 +494,10 @@ class Listing(models.Model):
     def sold_qty(self):
         from commerce.models import OrderLine, PlatformOrder
 
-        return OrderLine.objects.filter(listing=self).exclude(
-            order__status=PlatformOrder.CANCELLED).aggregate(t=Sum("quantity"))["t"] or 0
+        totals = OrderLine.objects.filter(listing=self).exclude(
+            order__status=PlatformOrder.CANCELLED).aggregate(q=Sum("quantity"),
+                                                              c=Sum("cancelled_qty"))
+        return (totals["q"] or 0) - (totals["c"] or 0)
 
 
 # --------------------------------------------------------------------------

@@ -9,7 +9,8 @@ from core.models import Role
 
 ALL_INTERNAL = tuple(r for r, _ in Role.choices)
 ANALYTICS = (Role.SALES, Role.PROCUREMENT, Role.FINANCE, Role.GM, Role.MANAGEMENT, Role.COO)
-EXPIRY_VIEW = (Role.SALES, Role.INVENTORY, Role.GM, Role.COO, Role.MANAGEMENT)
+# Read-only views open to every internal role; actions inside stay restricted.
+EXPIRY_VIEW = ALL_INTERNAL
 AUDIT_TRAIL = (Role.ADMIN, Role.MANAGEMENT, Role.COO)
 
 

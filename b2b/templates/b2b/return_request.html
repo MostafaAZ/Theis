@@ -1,0 +1,15 @@
+{% extends "b2b/account/_layout.html" %}{% load b2b kubbar %}
+{% block account %}
+<h1 class="h4 mb-1">{% t "Request a return" %} · {{ order.reference }}</h1>
+<p class="text-muted">{% t "Tell us what is wrong. Keep the goods until we reply – cold-chain items must stay refrigerated." %} {% t "Open until" %} {{ deadline|date:"d M Y H:i" }} ({{ days }} {% t "days" %}).</p>
+<form method="post" enctype="multipart/form-data">{% csrf_token %}
+<div class="table-wrap"><table class="table align-middle"><thead><tr><th>{% t "Product" %}</th><th>{% t "Lot number" %}</th><th style="width:120px">{% t "Quantity" %}</th><th>{% t "Reason" %}</th></tr></thead><tbody>
+{% for l in lines %}<tr><td>{{ l.batch.product.name }}</td><td>{{ l.batch.lot_number }}</td>
+<td><input type="number" name="qty_{{ l.pk }}" min="0" max="{{ l.returnable_qty }}" placeholder="0" class="form-control form-control-sm"><div class="small text-muted">max {{ l.returnable_qty }}</div></td>
+<td><select name="reason_{{ l.pk }}" class="form-select form-select-sm">{% for v, label in reasons %}<option value="{{ v }}">{% t label %}</option>{% endfor %}</select></td></tr>{% endfor %}
+</tbody></table></div>
+<div class="row g-3"><div class="col-md-7"><label class="form-label">{% t "What happened?" %}</label><textarea name="comment" rows="3" class="form-control"></textarea></div>
+<div class="col-md-5"><label class="form-label">{% t "Photo (optional)" %}</label><input type="file" name="photo" accept=".jpg,.jpeg,.png,.pdf" class="form-control"><div class="form-text">{% t "PDF, JPG or PNG, up to 10 MB each." %}</div></div></div>
+<div class="d-flex gap-2 mt-3"><button class="btn btn-b2b">{% t "Send return request" %}</button><a href="/orders/{{ order.pk }}/" class="btn btn-outline-secondary">{% t "Back" %}</a></div>
+</form>
+{% endblock %}

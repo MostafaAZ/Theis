@@ -1,0 +1,15 @@
+{% extends "b2b/account/_layout.html" %}{% load b2b kubbar %}
+{% block account %}
+<h1 class="h4 mb-3">{% t "Overview" %}</h1>
+<div class="card mb-3"><div class="card-header">{% t "Next steps" %}</div><div class="list-group list-group-flush">
+{% for icon, text, url in steps %}<{% if url %}a href="{{ url }}"{% else %}div{% endif %} class="list-group-item {% if url %}list-group-item-action{% endif %} d-flex gap-3 align-items-center py-3"><i class="bi {{ icon }} fs-4 text-b2b"></i><span>{{ text }}</span>{% if url %}<i class="bi bi-chevron-right ms-auto text-muted"></i>{% endif %}</{% if url %}a{% else %}div{% endif %}>{% endfor %}
+</div></div>
+{% if missing %}<div class="alert alert-warning">Missing documents: {{ missing|join:", " }}. <a href="/account/documents/">{% t "Upload again" %}</a></div>{% endif %}
+<div class="row g-3 mb-3">
+  <div class="col-sm-4"><div class="card kpi"><div class="card-body"><span class="kpi-icon ok"><i class="bi bi-grid"></i></span><div><div class="kpi-label">{% t "Licensed categories" %}</div><div class="kpi-value fs-5">{{ buyer.categories.count }}</div></div></div></div></div>
+  <div class="col-sm-4"><div class="card kpi"><div class="card-body"><span class="kpi-icon info"><i class="bi bi-credit-card"></i></span><div><div class="kpi-label">{% t "Payment terms" %}</div><div class="kpi-value fs-6">{{ buyer.get_payment_terms_display }}</div></div></div></div></div>
+  <div class="col-sm-4"><a href="/account/invoices/" class="card kpi"><div class="card-body"><span class="kpi-icon warn"><i class="bi bi-receipt-cutoff"></i></span><div><div class="kpi-label">{% t "Unpaid" %} {% t "Invoices" %}</div><div class="kpi-value fs-5">{{ unpaid }}</div></div></div></a></div>
+</div>
+<div class="card"><div class="card-header d-flex">{% t "Recent orders" %}<a href="/orders/" class="ms-auto small fw-normal">{% t "View all" %}</a></div>
+<div class="table-wrap"><table class="table mb-0"><tbody>{% for o in recent %}<tr><td class="fw-semibold">{{ o.reference }}</td><td>{{ o.created_at|date:"d M Y" }}</td><td class="num">{{ o.total|egp }} EGP</td><td><span class="badge {{ o.status|status_class }}">{% t o.get_status_display %}</span></td><td class="text-end"><a href="/orders/{{ o.pk }}/" class="btn btn-sm btn-outline-b2b">{% t "Track" %}</a></td></tr>{% empty %}<tr><td class="text-muted">—</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

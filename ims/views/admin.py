@@ -93,7 +93,8 @@ def rules(request):
 def rule_edit(request, pk):
     """UC-42 / FR-52."""
     r = get_object_or_404(BusinessRule, pk=pk)
-    form = RuleForm(request.POST or None, initial={"new_value": r.value})
+    current = int(r.value) if r.value == r.value.to_integral() else r.value.normalize()
+    form = RuleForm(request.POST or None, initial={"new_value": current})
     if request.method == "POST" and form.is_valid():
         v = form.cleaned_data["new_value"]
         problem = None
@@ -204,7 +205,7 @@ def audit_trail(request):
                                                   "Record", "Old value", "New value"],
               "rows": rows}]
         fn = exports.to_pdf if fmt == "pdf" else exports.to_excel
-        content = fn("Kubbar – Audit Trail", request.GET.urlencode() or "none", request.user,
+        content = fn("Kubbar International – Audit Trail", request.GET.urlencode() or "none", request.user,
                      [], t)
         ctype = "application/pdf" if fmt == "pdf" else \
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"

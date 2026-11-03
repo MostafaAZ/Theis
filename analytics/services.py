@@ -12,16 +12,21 @@ from django.db.models.functions import TruncMonth
 from django.utils import timezone
 
 from commerce.models import Buyer, PlatformOrder
+
+from . import story
+from .story import chart, emphasis
 from inventory.models import Batch, BatchStatus, Listing, StockCount, WriteOff
 from planning.models import ForecastProduct, PurchasePlanLine, SalesRecord
 
 DASHBOARDS = [
+    ("executive", "Executive Briefing"),
     ("inventory", "Inventory Health"),
     ("sales", "Sales Performance"),
     ("forecast", "Forecast Accuracy"),
     ("recovery", "Recovery and Write-Off"),
     ("audit", "Audit Accuracy"),
     ("platform", "Platform Activity"),
+    ("exceptions", "Order Exceptions"),
 ]
 
 ACTIVE = [BatchStatus.IN_STOCK, BatchStatus.NEAR_EXPIRY, BatchStatus.SURPLUS,
@@ -89,8 +94,12 @@ class Filters:
         return qs
 
     def sales(self):
-        qs = SalesRecord.objects.filter(period__gte=self.date_from.replace(day=1),
-                                        period__lte=self.date_to)
+        return self.sales_any_date().filter(period__gte=self.date_from.replace(day=1),
+                                            period__lte=self.date_to)
+
+    def sales_any_date(self):
+        """Sales in scope of every filter except the dates (for year-on-year)."""
+        qs = SalesRecord.objects.all()
         if self.category:
             qs = qs.filter(product__category_id=self.category)
         if self.product:
@@ -117,6 +126,70 @@ def table(title, headers, rows, link=None):
 
 
 # --------------------------------------------------------------------------
+def _ranked(cid, what, pairs, noun, unit="EGP"):
+    """Ranked horizontal bars with the leader highlighted."""
+    pairs = [(str(k or "–"), float(v or 0)) for k, v in pairs if v]
+    if not pairs:
+        return None
+    pairs.sort(key=lambda kv: -kv[1])
+    total = sum(v for _k, v in pairs)
+    top, top_v = pairs[0]
+    share = 100 * top_v / total if total else 0
+    fmt = story.money if unit == "EGP" else (lambda v: f"{v:,.0f} {unit}")
+    values = [v for _k, v in pairs]
+    return chart(
+        cid, "hbar", f"{top} leads with {share:.0f}% of the total", what,
+        [k for k, _v in pairs], [{"name": what, "data": values,
+                                  "colors": emphasis(values, 0)}], unit,
+        f"{top} accounts for {fmt(top_v)} of {fmt(total)} across {len(pairs)} {noun}s"
+        + (f"; the next is {pairs[1][0]} with {fmt(pairs[1][1])}." if len(pairs) > 1
+           else "."),
+        implication=story._per(
+            f"A {noun} that dominates this much is both the biggest opportunity and the "
+            f"biggest dependency."),
+        action=story._per(f"Drill into {top} in the table below before acting on the rest."))
+
+
+def _ageing_chart(bands, band_v, total_value):
+    labels = [n for n, _a, _b in bands]
+    values = [float(band_v[n]) for n in labels]
+    short = values[2] + values[3]
+    colors = [story.GOOD, story.BLUE_SOFT, story.WARNING, story.CRITICAL]
+    return chart(
+        "ageing", "bar",
+        f"{story.pct(short, float(total_value)):.0f}% of stock value has less than six "
+        f"months of shelf life left", "Stock value at cost by remaining shelf life",
+        labels, [{"name": "Stock value", "data": values, "colors": colors}], "EGP",
+        f"{story.money(short)} of {story.money(total_value)} sits inside the near-expiry "
+        f"window; {story.money(values[3])} has less than 30 days left and can no longer be "
+        f"sold (minimum sellable shelf life).",
+        implication=story._per(
+            "The two right-hand bars are the stock the release route has to clear now.",
+            cfo="Value under 30 days is effectively a write-off already."),
+        action=story._per("Open Near-expiry stock sorted by days to expiry."))
+
+
+def _audit_chart(counts):
+    counts = [c for c in counts if c.accuracy_rate is not None]
+    if not counts:
+        return None
+    values = [float(c.accuracy_rate) for c in counts]
+    worst = min(range(len(values)), key=lambda i: values[i])
+    avg = sum(values) / len(values)
+    return chart(
+        "accuracy", "bar", f"Audit accuracy averages {avg:.0f}%; {counts[worst].number} was "
+        f"the weakest count at {values[worst]:.0f}%", "Share of lines counted within "
+        "tolerance, per closed count", [c.number for c in counts],
+        [{"name": "Accuracy", "data": values, "colors": [
+            story.CRITICAL if v < 95 else story.BLUE_SOFT for v in values]}], "%",
+        f"{len(values)} counts closed; accuracy below 95% is highlighted.",
+        implication=story._per(
+            "Alerts and listings are only as good as the stock record; low accuracy means "
+            "the near-expiry numbers may be wrong.",
+            gm="Adjustments above the threshold come to you for approval."),
+        action=story._per("Schedule a cycle count in the warehouse with the weakest result."))
+
+
 def inventory_health(f):
     batches = list(f.batches())
     today = timezone.localdate()
@@ -186,9 +259,9 @@ def inventory_health(f):
             table("Days of cover and inventory turnover",
                   ["Product", "On hand", "Days of cover", "Turnover (12m)"], cover_rows),
         ],
-        "charts": [{"id": "ageing", "type": "bar", "title": "Stock ageing (EGP at cost)",
-                    "labels": [n for n, _a, _b in bands],
-                    "data": [float(band_v[n]) for n, _a, _b in bands]}],
+        "charts": [c for c in [
+            _ageing_chart(bands, band_v, total_value), story.var_by_category(f),
+            story.expiry_calendar(f)] if c],
     }
 
 
@@ -234,9 +307,12 @@ def sales_performance(f):
             table("Sales by month", ["Month", "Units", "EGP"],
                   [[f"{r['period']:%b %Y}", r["q"], egp(r["v"])] for r in by_month]),
         ],
-        "charts": [{"id": "monthly", "type": "line", "title": "Sales by month (EGP)",
-                    "labels": [f"{r['period']:%b %y}" for r in by_month],
-                    "data": [float(r["v"]) for r in by_month]}],
+        "charts": [c for c in [story.sales_trend(f), _ranked(
+            "regions", "Sales value by region", [(r["region__name"], r["v"])
+                                                 for r in by_region], "region"),
+            _ranked("products", "Top products by sales value",
+                    [(r["product__name"], r["v"]) for r in by_product[:8]], "product")]
+            if c],
     }
 
 
@@ -288,7 +364,7 @@ def forecast_accuracy(f):
             table("Forecast versus actual (months with actuals)",
                   ["Product", "Region", "Forecast", "Actual", "Error"], comp_rows),
         ],
-        "charts": [],
+        "charts": [c for c in [story.forecast_error(f), story.moq_surplus(f)] if c],
     }
 
 
@@ -312,8 +388,8 @@ def recovery(f):
         for line in o.lines.all():
             if f.product and str(line.listing.batch.product_id) != str(f.product):
                 continue
-            sold_q += line.quantity
-            sold_v += line.unit_price * line.quantity
+            sold_q += line.active_qty
+            sold_v += line.unit_price * line.active_qty
             days_to_sale.append((o.created_at - line.listing.published_at).days)
     recovery_rate = 100 * float(sold_v) / float(released_orig) if released_orig else None
     wos = WriteOff.objects.filter(status__in=[WriteOff.APPROVED, WriteOff.DISPOSED],
@@ -350,7 +426,8 @@ def recovery(f):
             table("Batches expired per month", ["Month", "Batches"],
                   sorted([[k, v] for k, v in expired_month.items()])),
         ],
-        "charts": [],
+        "charts": [c for c in [story.at_risk_outcomes(f), story.clearance_funnel(f),
+                               story.recovered_vs_written_off(f)] if c],
     }
 
 
@@ -374,9 +451,7 @@ def audit_accuracy(f):
                          [[c.number, c.get_count_type_display(), c.warehouse.name,
                            f"{c.closed_at:%d %b %Y}", c.lines.count(), pct(c.accuracy_rate),
                            egp(c.adjustment_value)] for c in counts])],
-        "charts": [{"id": "accuracy", "type": "bar", "title": "Audit accuracy by count (%)",
-                    "labels": [c.number for c in counts],
-                    "data": [float(c.accuracy_rate or 0) for c in counts]}],
+        "charts": [c for c in [_audit_chart(counts)] if c],
     }
 
 
@@ -409,58 +484,82 @@ def platform_activity(f):
             table("Orders by status", ["Status", "Orders"],
                   [[labels.get(r["status"], r["status"]), r["n"]] for r in by_status]),
         ],
-        "charts": [],
+        "charts": [c for c in [story.receivables(f), _ranked(
+            "buyer_types", "Platform sales by buyer type",
+            [(r["t"], r["v"]) for r in by_type], "buyer type")] if c],
     }
 
 
-BUILDERS = {"inventory": inventory_health, "sales": sales_performance,
+def order_exceptions(f):
+    """FR-102: cancellations, returns, credit notes and order-to-dispatch time."""
+    from commerce.models import CreditNote, OrderHold, OrderLine, ReturnLine, ReturnRequest
+    orders = PlatformOrder.objects.filter(created_at__date__gte=f.date_from,
+                                          created_at__date__lte=f.date_to)
+    n_orders = orders.count()
+    cancelled = OrderLine.objects.filter(order__in=orders, cancelled_qty__gt=0)
+    by_cancel = defaultdict(lambda: [0, Decimal(0)])
+    for line in cancelled:
+        key = line.cancel_reason or "No reason given"
+        by_cancel[key][0] += line.cancelled_qty
+        by_cancel[key][1] += line.cancelled_qty * line.unit_price
+    returns = ReturnRequest.objects.filter(requested_at__date__gte=f.date_from,
+                                           requested_at__date__lte=f.date_to)
+    reasons = dict(ReturnLine.REASONS)
+    by_reason = (ReturnLine.objects.filter(request__in=returns).values("reason")
+                 .annotate(n=Count("id"), q=Sum("qty_requested")).order_by("-q"))
+    notes = CreditNote.objects.filter(issued_at__date__gte=f.date_from,
+                                      issued_at__date__lte=f.date_to)
+    statuses = dict(CreditNote.STATUSES)
+    by_status = notes.values("status").annotate(n=Count("id"), v=Sum("amount"))
+    dispatched = [o.dispatched_at - o.created_at for o in orders.filter(
+        dispatched_at__isnull=False).only("created_at", "dispatched_at")]
+    hours = (sum(d.total_seconds() for d in dispatched) / 3600 / len(dispatched)
+             if dispatched else None)
+    holds = OrderHold.objects.filter(placed_at__date__gte=f.date_from,
+                                     placed_at__date__lte=f.date_to)
+    hold_reasons = dict(OrderHold.REASONS)
+    return {
+        "kpis": [("Orders placed", n_orders),
+                 ("Return rate", pct(returns.count() * 100 / n_orders if n_orders else None)),
+                 ("Credit notes (EGP)", egp(notes.aggregate(t=Sum("amount"))["t"])),
+                 ("Orders put on hold", holds.count()),
+                 ("Avg. order to dispatch", "–" if hours is None else f"{hours:,.1f} h")],
+        "tables": [
+            table("Cancelled quantity by reason", ["Reason", "Units", "EGP"],
+                  [[k, v[0], egp(v[1])] for k, v in sorted(by_cancel.items(),
+                                                          key=lambda i: -i[1][1])]),
+            table("Returns by reason", ["Reason", "Lines", "Units"],
+                  [[reasons.get(r["reason"], r["reason"]), r["n"], r["q"]]
+                   for r in by_reason], link="/b2b/returns/?status=all"),
+            table("Credit notes by status", ["Status", "Notes", "EGP"],
+                  [[statuses.get(r["status"], r["status"]), r["n"], egp(r["v"])]
+                   for r in by_status], link="/b2b/credit-notes/"),
+            table("Holds by reason", ["Reason", "Holds"],
+                  [[hold_reasons.get(r["reason"], r["reason"]), r["n"]] for r in
+                   holds.values("reason").annotate(n=Count("id")).order_by("-n")]),
+        ],
+        "charts": [c for c in [_ranked(
+            "return_reasons", "Returned units by reason",
+            [(reasons.get(r["reason"], r["reason"]), r["q"]) for r in by_reason], "reason",
+            unit="units")] if c],
+    }
+
+
+BUILDERS = {"executive": story.executive, "exceptions": order_exceptions,
+            "inventory": inventory_health, "sales": sales_performance,
             "forecast": forecast_accuracy, "recovery": recovery, "audit": audit_accuracy,
             "platform": platform_activity}
 
 
-def build(key, filters):
+def build(key, filters, perspective=None):
     data = BUILDERS[key](filters)
     data["key"] = key
     data["title"] = dict(DASHBOARDS)[key]
+    perspective = perspective or (story.default_perspective(filters.user) if filters.user
+                                  else "ceo")
+    data["perspective"] = perspective
+    if key == "executive":
+        data["charts"] = story.order_for(data["charts"], perspective)
+    data["analysis"] = story.summarise(data["charts"], perspective, data["title"])
+    story.prepare(data["charts"], perspective)
     return data
-
-
-def dashboard_cards(user):
-    """Summary cards for the role dashboard (UC-03)."""
-    from core.models import Role
-    from inventory.services import value_at_risk
-
-    near = Batch.objects.filter(status__in=AT_RISK, qty_on_hand__gt=0).count()
-    cards = [("Near-expiry batches", near, "/expiry/"),
-             ("Value at risk (EGP)", egp(value_at_risk()), "/analytics/?d=inventory")]
-    if user.has_role(Role.GM):
-        from inventory.models import StockCountLine
-        from planning.models import PurchasePlan
-
-        cards.append(("Pending approvals",
-                      StockCountLine.objects.filter(status=StockCountLine.AWAITING).count()
-                      + WriteOff.objects.filter(status=WriteOff.PENDING,
-                                                gm_approved_by__isnull=True).count()
-                      + PurchasePlan.objects.filter(status=PurchasePlan.SUBMITTED).count(),
-                      "/approvals/"))
-    if user.has_role(Role.COO):
-        from inventory.models import SurplusRelease
-
-        cards.append(("Release requests",
-                      SurplusRelease.objects.filter(status=SurplusRelease.PENDING).count(),
-                      "/releases/"))
-    if user.has_role(Role.INVENTORY, Role.WAREHOUSE):
-        cards.append(("Open audits", StockCount.objects.exclude(
-            status=StockCount.CLOSED).count(), "/audits/"))
-    if user.has_role(Role.WAREHOUSE, Role.FINANCE):
-        cards.append(("Open platform orders", PlatformOrder.objects.filter(status__in=[
-            PlatformOrder.AWAITING_PAYMENT, PlatformOrder.CONFIRMED]).count(),
-            "/dispatch/" if user.has_role(Role.WAREHOUSE) else "/payments/"))
-    if user.has_role(Role.REGULATORY):
-        cards.append(("Buyers awaiting verification",
-                      Buyer.objects.filter(status=Buyer.PENDING).count(), "/buyers/"))
-    if user.has_role(Role.QA):
-        cards.append(("Write-offs awaiting QA", WriteOff.objects.filter(
-            status=WriteOff.PENDING, qa_approved_by__isnull=True).count(), "/write-offs/"))
-    return cards
-

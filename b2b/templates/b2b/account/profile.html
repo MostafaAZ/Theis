@@ -1,0 +1,18 @@
+{% extends "b2b/account/_layout.html" %}{% load b2b %}
+{% block account %}
+<h1 class="h4 mb-3">{% t "Company profile" %}</h1>
+<div class="card mb-3"><div class="card-body">
+  <dl class="row small mb-3"><dt class="col-sm-4">{% t "Company Name" %}</dt><dd class="col-sm-8">{{ buyer.company_name }}</dd>
+  <dt class="col-sm-4">{% t "Commercial Register Number" %}</dt><dd class="col-sm-8">{{ buyer.commercial_register_no }}</dd>
+  <dt class="col-sm-4">{% t "Tax Card Number" %}</dt><dd class="col-sm-8">{{ buyer.tax_card_no }}</dd>
+  <dt class="col-sm-4">{% t "Buyer Type" %}</dt><dd class="col-sm-8">{{ buyer.buyer_type }}</dd>
+  <dt class="col-sm-4">{% t "Email Address" %}</dt><dd class="col-sm-8">{{ buyer.user.email }}</dd>
+  <dt class="col-sm-4">{% t "National ID Number" %}</dt><dd class="col-sm-8">{{ buyer.masked_national_id }}</dd></dl>
+  <p class="small text-muted">To change the company name, register or tax card, <a href="/contact/">contact us</a> – it requires re-verification.</p>
+  <form method="post">{% csrf_token %}{% include "b2b/_fields.html" with form=form col="col-md-6" %}<button name="company" value="1" class="btn btn-b2b mt-3">{% t "Save" %}</button></form>
+</div></div>
+<div class="row g-3">
+<div class="col-md-6"><div class="card h-100"><div class="card-header">{% t "Change password" %}</div><div class="card-body"><form method="post">{% csrf_token %}{% include "b2b/_fields.html" with form=pw col="col-12" %}<button name="password" value="1" class="btn btn-b2b mt-3">{% t "Save" %}</button></form></div></div></div>
+<div class="col-md-6" id="prefs"><div class="card h-100"><div class="card-header">{% t "Preferences" %}</div><div class="card-body"><form method="post">{% csrf_token %}{% include "b2b/_fields.html" with form=prefs col="col-12" %}<button name="prefs" value="1" class="btn btn-outline-b2b mt-3">{% t "Save" %}</button></form></div></div></div>
+</div>
+{% endblock %}

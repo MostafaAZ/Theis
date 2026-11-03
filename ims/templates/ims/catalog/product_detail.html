@@ -1,0 +1,41 @@
+{% extends "ims/base.html" %}{% load static kubbar %}
+{% block content %}
+<div class="row g-4 mb-3">
+  <div class="col-md-3"><img src="/products/{{ p.pk }}/image/" class="prod-img border" alt="{{ p.name }}"></div>
+  <div class="col-md-9">
+    <div class="d-flex flex-wrap gap-2 align-items-start">
+      <div><h1 class="h3 mb-1">{{ p.name }}</h1><div class="text-muted">{{ p.sku }} · {{ p.category }}{% if p.name_ar %} · <span dir="rtl">{{ p.name_ar }}</span>{% endif %}</div></div>
+      <div class="ms-auto d-flex gap-2">{% if can_edit %}<a href="/products/{{ p.pk }}/edit/" class="btn btn-outline-primary"><i class="bi bi-pencil me-1"></i>Edit</a>{% endif %}<a href="/stock/?product={{ p.pk }}" class="btn btn-outline-secondary">Stock</a></div>
+    </div>
+    {% if p.description %}<p class="mt-2 mb-0">{{ p.description }}</p>{% endif %}
+    <div class="row g-3 mt-1">
+      <div class="col-6 col-lg-3"><div class="card kpi"><div class="card-body"><span class="kpi-icon"><i class="bi bi-box-seam"></i></span><div><div class="kpi-label">On hand</div><div class="kpi-value">{{ on_hand }}</div></div></div></div></div>
+      <div class="col-6 col-lg-3"><div class="card kpi"><div class="card-body"><span class="kpi-icon ok"><i class="bi bi-graph-up"></i></span><div><div class="kpi-label">Avg monthly sales</div><div class="kpi-value">{{ avg|floatformat:0 }}</div></div></div></div></div>
+      <div class="col-6 col-lg-3"><div class="card kpi"><div class="card-body"><span class="kpi-icon info"><i class="bi bi-tag"></i></span><div><div class="kpi-label">Price / cost (EGP)</div><div class="kpi-value fs-5">{{ p.original_price|egp }} / {{ p.unit_cost|egp }}</div></div></div></div></div>
+      <div class="col-6 col-lg-3"><div class="card kpi"><div class="card-body"><span class="kpi-icon warn"><i class="bi bi-truck"></i></span><div><div class="kpi-label">MOQ · lead time</div><div class="kpi-value fs-5">{{ p.moq }} · {{ p.lead_time_days }}d</div></div></div></div></div>
+    </div>
+    <div class="small text-muted mt-2">{{ p.get_storage_condition_display }} · {{ p.unit }} · shelf life {{ p.shelf_life_months }} months · supplier {{ p.supplier|default:"–" }}</div>
+  </div>
+</div>
+
+<ul class="nav nav-tabs mb-3" role="tablist">
+  <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#t-batches">Batches ({{ batches|length }})</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#t-sales">Sales</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#t-reg">Registrations</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#t-b2b">B2B listings ({{ listings|length }})</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#t-po">Purchase orders</button></li>
+</ul>
+<div class="tab-content">
+<div class="tab-pane fade show active" id="t-batches"><div class="table-wrap"><table class="table table-hover align-middle"><thead><tr><th>Lot</th><th>Expiry</th><th>Days left</th><th class="num">On hand</th><th class="num">Reserved</th><th>Status</th><th></th></tr></thead><tbody>
+{% for b in batches %}<tr><td><a href="/stock/batch/{{ b.pk }}/">{{ b.lot_number }}</a></td><td>{{ b.expiry_date }}</td><td><span class="badge {{ b.days_to_expiry|expiry_class }}">{{ b.days_to_expiry }}</span></td><td class="num">{{ b.qty_on_hand }}</td><td class="num">{{ b.qty_reserved }}</td><td><span class="badge {{ b.status|status_class }}">{{ b.get_status_display }}</span></td>
+<td class="text-end">{% if b.status == 'near_expiry' %}<a href="/expiry/batch/{{ b.pk }}/" class="btn btn-sm btn-outline-warning">Review</a>{% endif %}</td></tr>
+{% empty %}<tr><td colspan="7"><div class="empty-state">No stock.</div></td></tr>{% endfor %}</tbody></table></div></div>
+<div class="tab-pane fade" id="t-sales"><div class="row g-3"><div class="col-lg-8"><div class="card"><div class="card-header">Units sold per month (last 12 months)</div><div class="card-body">{% if has_sales %}<canvas id="salesChart" height="110"></canvas>{% else %}<div class="empty-state">No sales history imported.</div>{% endif %}</div></div></div>
+<div class="col-lg-4"><div class="card"><div class="card-header">By region</div><ul class="list-group list-group-flush">{% for r in regions %}<li class="list-group-item d-flex">{{ r.region__name }}<span class="ms-auto fw-semibold">{{ r.q }}</span></li>{% empty %}<li class="list-group-item text-muted">–</li>{% endfor %}</ul></div></div></div></div>
+<div class="tab-pane fade" id="t-reg"><div class="table-wrap"><table class="table"><thead><tr><th>Market</th><th>Authority</th><th>Number</th><th>Status</th><th>Expires</th></tr></thead><tbody>{% for r in registrations %}<tr><td>{{ r.market }}</td><td>{{ r.authority }}</td><td>{{ r.registration_no }}</td><td><span class="badge {{ r.status|status_class }}">{{ r.get_status_display }}</span></td><td>{{ r.expiry_date }}</td></tr>{% empty %}<tr><td colspan="5" class="text-muted">Not registered.</td></tr>{% endfor %}</tbody></table></div></div>
+<div class="tab-pane fade" id="t-b2b"><div class="table-wrap"><table class="table"><thead><tr><th>#</th><th>Lot</th><th class="num">Listed</th><th class="num">Remaining</th><th class="num">Price</th><th>Status</th></tr></thead><tbody>{% for l in listings %}<tr><td>{{ l.pk }}</td><td>{{ l.batch.lot_number }}</td><td class="num">{{ l.listed_qty }}</td><td class="num">{{ l.available_qty }}</td><td class="num">{{ l.clearance_price|egp }}</td><td><span class="badge {{ l.status|status_class }}">{{ l.get_status_display }}</span></td></tr>{% empty %}<tr><td colspan="6" class="text-muted">Never listed.</td></tr>{% endfor %}</tbody></table></div></div>
+<div class="tab-pane fade" id="t-po"><div class="table-wrap"><table class="table"><thead><tr><th>PO</th><th>Supplier</th><th>Date</th><th class="num">Ordered</th><th class="num">Received</th><th>Status</th></tr></thead><tbody>{% for l in po_lines %}<tr><td><a href="/purchase-orders/{{ l.order.pk }}/">{{ l.order.number }}</a></td><td>{{ l.order.supplier }}</td><td>{{ l.order.order_date }}</td><td class="num">{{ l.quantity }}</td><td class="num">{{ l.quantity_received }}</td><td><span class="badge {{ l.order.status|status_class }}">{{ l.order.get_status_display }}</span></td></tr>{% empty %}<tr><td colspan="6" class="text-muted">No purchase orders.</td></tr>{% endfor %}</tbody></table></div></div>
+</div>
+{% endblock %}
+{% block scripts %}{% if has_sales %}<script src="{% static 'vendor/chartjs/chart.umd.js' %}"></script>
+<script>const c={{ chart_json|safe }};new Chart(document.getElementById("salesChart"),{type:"bar",data:{labels:c.labels,datasets:[{data:c.data,backgroundColor:"#3b82f6",borderRadius:6}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});</script>{% endif %}{% endblock %}

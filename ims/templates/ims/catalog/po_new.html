@@ -1,0 +1,12 @@
+{% extends "ims/base.html" %}
+{% block content %}
+<h1 class="h4">New purchase order</h1>
+<form method="post" class="card"><div class="card-body">{% csrf_token %}
+{% include "ims/_fields.html" with col="col-md-4" %}
+<div class="section-title">Products</div>
+<div class="table-wrap"><table class="table align-middle"><thead><tr><th>Product</th><th style="width:180px">Quantity</th></tr></thead><tbody>
+{% for i in rows %}<tr><td><select name="product_{{ i }}" class="form-select"><option value="">—</option>{% for p in products %}<option value="{{ p.pk }}">{{ p.name }} ({{ p.sku }}) · MOQ {{ p.moq }}{% if p.supplier %} · {{ p.supplier }}{% endif %}</option>{% endfor %}</select></td>
+<td><input name="qty_{{ i }}" type="number" min="1" class="form-control"></td></tr>{% endfor %}</tbody></table></div>
+<div class="d-flex gap-2"><button class="btn btn-primary">Create purchase order</button><a href="/purchase-orders/" class="btn btn-outline-secondary">Cancel</a></div>
+</div></form>
+{% endblock %}

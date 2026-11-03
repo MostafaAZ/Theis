@@ -1,7 +1,7 @@
 {% extends "ims/base.html" %}{% load kubbar %}
 {% block title %}Approve adjustment{% endblock %}
 {% block content %}
-<h1 class="h4 mb-3">Approve stock adjustment <small class="text-muted fs-6">UC-13</small></h1>
+<h1 class="h4 mb-3">Approve stock adjustment</h1>
 <div class="card mb-3"><div class="card-body"><dl class="row mb-0">
 <dt class="col-sm-3">Count</dt><dd class="col-sm-9">{{ line.count.number }} · {{ line.count.warehouse }}</dd>
 <dt class="col-sm-3">Batch</dt><dd class="col-sm-9">{{ line.batch.product.name }} · lot {{ line.batch.lot_number }} · {{ line.location }}</dd>

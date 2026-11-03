@@ -1,0 +1,15 @@
+{% extends "ims/base.html" %}
+{% block content %}
+<h1 class="h4">My profile</h1>
+<div class="row g-3">
+<div class="col-lg-6"><div class="card h-100"><div class="card-header">Your details</div><div class="card-body">
+  <div class="d-flex align-items-center gap-3 mb-3"><span class="avatar" style="width:56px;height:56px;font-size:1.2rem">{{ initials }}</span><div><div class="fw-semibold">{{ user }}</div><div class="text-muted small">{{ user.email }}</div><div class="small">{{ user.role_labels|join:", " }}</div></div></div>
+  <form method="post">{% csrf_token %}{% include "ims/_fields.html" with form=pform col="col-md-6" %}<button name="profile" value="1" class="btn btn-primary mt-3">Save</button></form>
+  <p class="small text-muted mt-3 mb-0">Your roles and email are managed by the System Administrator.</p>
+</div></div></div>
+<div class="col-lg-6" id="password"><div class="card h-100"><div class="card-header">Change password</div><div class="card-body">
+  <form method="post">{% csrf_token %}{% include "ims/_fields.html" with form=wform col="col-12" %}<button name="password" value="1" class="btn btn-primary mt-3">Change password</button></form>
+  <p class="small text-muted mt-3 mb-0">At least 10 characters, mixing letters and numbers.</p>
+</div></div></div>
+</div>
+{% endblock %}

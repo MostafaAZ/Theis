@@ -31,14 +31,19 @@ def money(value):
 
 
 def next_number(prefix, model, field="number"):
-    last = model.objects.filter(**{f"{field}__startswith": prefix}).order_by(f"-{field}").first()
-    n = 1
-    if last:
-        try:
-            n = int(getattr(last, field).replace(prefix, "")) + 1
-        except ValueError:
-            n = model.objects.count() + 1
-    return f"{prefix}{n:05d}"
+    """Next free reference such as PO-2026-00012, using the highest numeric suffix
+    (references imported from Odoo may use a different width)."""
+    n = 0
+    for value in model.objects.filter(**{f"{field}__startswith": prefix}).values_list(
+            field, flat=True):
+        tail = value[len(prefix):]
+        if tail.isdigit():
+            n = max(n, int(tail))
+    candidate = f"{prefix}{n + 1:05d}"
+    while model.objects.filter(**{field: candidate}).exists():
+        n += 1
+        candidate = f"{prefix}{n + 1:05d}"
+    return candidate
 
 
 # --------------------------------------------------------------------------
@@ -292,7 +297,10 @@ def dispatch_platform_order(user, order, picked_lots, delivery_method, delivery_
     order = PlatformOrder.objects.select_for_update().get(pk=order.pk)
     if order.status != PlatformOrder.CONFIRMED:
         raise ValidationError("Only confirmed orders can be dispatched.")
-    lines = list(order.lines.select_related("batch__product"))
+    if order.on_hold:
+        raise ValidationError("This order is on hold. Release the hold before dispatch.")
+    lines = [line for line in order.lines.select_related("batch__product")
+             if line.active_qty > 0]
     for line in lines:
         lot = (picked_lots.get(line.pk) or "").strip()
         if lot != line.batch.lot_number:
@@ -302,10 +310,10 @@ def dispatch_platform_order(user, order, picked_lots, delivery_method, delivery_
         raise ValidationError("Confirm the cold-chain packaging check before dispatch.")
     for line in lines:
         b = Batch.objects.select_for_update().get(pk=line.batch_id)
-        if line.quantity > b.qty_on_hand:
+        if line.active_qty > b.qty_on_hand:
             raise ValidationError(f"Cannot dispatch more than on hand for lot {b.lot_number}.")
-        _deduct(b, line.quantity, user, StockMovement.DISPATCH, order.reference)
-        b.qty_reserved = max(0, b.qty_reserved - line.quantity)
+        _deduct(b, line.active_qty, user, StockMovement.DISPATCH, order.reference)
+        b.qty_reserved = max(0, b.qty_reserved - line.active_qty)
         _set_depleted_if_empty(b)
         b.save()
         line.picked_lot = b.lot_number
@@ -315,7 +323,6 @@ def dispatch_platform_order(user, order, picked_lots, delivery_method, delivery_
     order.dispatched_at = timezone.now()
     order.delivery_method = delivery_method
     order.delivery_date = delivery_date
-    order.on_hold = False
     order.save()
     audit(user, AuditLog.ORDER, f"Order {order.reference} dispatched", order.reference)
     notify_order_status(order)
@@ -324,12 +331,12 @@ def dispatch_platform_order(user, order, picked_lots, delivery_method, delivery_
 
 @transaction.atomic
 def hold_order_for_damage(user, order, note):
-    """UC-08 A2: stock found damaged at picking."""
-    order.on_hold = True
-    order.hold_reason = note
-    order.save(update_fields=["on_hold", "hold_reason"])
+    """UC-08 A2: stock found damaged at picking puts the order on hold."""
+    from commerce.orders import hold_order
+
+    hold_order(user, order, "stock_damaged", note)
     notify_roles(Role.INVENTORY, f"Order {order.reference} on hold: {note}",
-                 f"/dispatch/{order.pk}/", level="warning")
+                 f"/b2b/orders/{order.pk}/", level="warning")
 
 
 # --------------------------------------------------------------------------
@@ -1038,10 +1045,17 @@ def withdraw_listing_by_user(user, listing, reason="Withdrawn by Management"):
 def request_write_off(user, batch, quantity, reason, disposal_method):
     """UC-21 / FR-36, FR-37."""
     batch = Batch.objects.select_for_update().get(pk=batch.pk)
-    blockable = batch.qty_on_hand - batch.qty_reserved - batch.blocked_for_write_off
+    blockable = batch.qty_available
+    if blockable <= 0:
+        raise ValidationError(
+            f"Nothing left to write off on lot {batch.lot_number}: all {batch.qty_on_hand} units "
+            f"are already in a write-off request ({batch.blocked_for_write_off}) or reserved "
+            f"for orders ({batch.qty_reserved}).")
     if quantity <= 0 or quantity > blockable:
-        raise ValidationError(f"Quantity must be between 1 and {blockable} (unreserved, not "
-                              f"already blocked).")
+        raise ValidationError(
+            f"You can write off between 1 and {blockable} units of lot {batch.lot_number} "
+            f"({batch.qty_on_hand} on hand, {batch.qty_reserved} reserved for orders, "
+            f"{batch.blocked_for_write_off} already in a write-off request).")
     wo = WriteOff.objects.create(batch=batch, quantity=quantity, reason=reason,
                                  disposal_method=disposal_method, requested_by=user)
     batch.blocked_for_write_off += quantity
@@ -1169,3 +1183,108 @@ def batches_for_user(user, qs):
             qs = qs.filter(product__category_id__in=cats)
     return qs
 
+
+
+# --------------------------------------------------------------------------
+# Purchase orders
+# --------------------------------------------------------------------------
+@transaction.atomic
+def create_purchase_order(user, supplier, lines, expected_date=None, plan=None, number=""):
+    """Create a purchase order. ``lines`` is a list of ``(product, quantity)``."""
+    from .models import PurchaseOrder, PurchaseOrderLine
+
+    lines = [(p, q) for p, q in lines if p and q and q > 0]
+    if not lines:
+        raise ValidationError("Add at least one product with a quantity.")
+    if number and PurchaseOrder.objects.filter(number=number).exists():
+        raise ValidationError(f"Purchase order {number} already exists.")
+    po = PurchaseOrder.objects.create(
+        number=number or next_number(f"PO-{timezone.localdate():%Y}-", PurchaseOrder),
+        supplier=supplier, expected_date=expected_date, plan=plan)
+    for product, qty in lines:
+        line = PurchaseOrderLine.objects.filter(order=po, product=product).first()
+        if line:
+            line.quantity += qty
+            line.save()
+        else:
+            PurchaseOrderLine.objects.create(order=po, product=product, quantity=qty)
+    audit(user, AuditLog.STOCK, f"Purchase order {po.number} created", po.number,
+          new=", ".join(f"{p.sku}×{q}" for p, q in lines))
+    notify_roles(Role.QA, f"Purchase order {po.number} from {supplier} expected "
+                          f"{expected_date or 'soon'}.", f"/purchase-orders/{po.pk}/")
+    return po
+
+
+@transaction.atomic
+def purchase_orders_from_plan(user, plan):
+    """One purchase order per supplier for the approved lines of a plan (FR-40)."""
+    from planning.models import PurchasePlan, PurchasePlanLine
+
+    if plan.status != PurchasePlan.APPROVED:
+        raise ValidationError("Only approved plans can be turned into purchase orders.")
+    if plan.purchase_orders.exists():
+        raise ValidationError("Purchase orders already exist for this plan.")
+    by_supplier = {}
+    for line in plan.lines.filter(status=PurchasePlanLine.APPROVED, final_qty__gt=0) \
+            .select_related("product__supplier"):
+        if line.product.supplier is None:
+            raise ValidationError(f"{line.product.name} has no supplier; set one first.")
+        by_supplier.setdefault(line.product.supplier, []).append((line.product, line.final_qty))
+    if not by_supplier:
+        raise ValidationError("The plan has no approved lines with a quantity.")
+    today = timezone.localdate()
+    pos = []
+    for supplier, lines in by_supplier.items():
+        lead = max(p.lead_time_days for p, _q in lines)
+        pos.append(create_purchase_order(user, supplier, lines,
+                                         expected_date=today + timedelta(days=lead), plan=plan))
+    return pos
+
+
+@transaction.atomic
+def close_purchase_order(user, po):
+    from .models import PurchaseOrder
+
+    po.status = PurchaseOrder.CLOSED
+    po.save(update_fields=["status"])
+    audit(user, AuditLog.STOCK, f"Purchase order {po.number} closed", po.number)
+
+
+# --------------------------------------------------------------------------
+# Post to B2B (one entry point for UC-16 to UC-18)
+# --------------------------------------------------------------------------
+def b2b_candidates():
+    """Near-expiry batches and whether each can be posted to the platform.
+
+    Returns ``(eligible, blocked)`` lists of ``(batch, free_qty, reason)``."""
+    eligible, blocked = [], []
+    qs = (Batch.objects.filter(status__in=[BatchStatus.NEAR_EXPIRY, BatchStatus.SURPLUS,
+                                           BatchStatus.RELEASED], qty_on_hand__gt=0)
+          .select_related("product__category", "market").order_by("expiry_date"))
+    for b in qs:
+        pending = b.releases.filter(status=SurplusRelease.PENDING).aggregate(
+            t=Sum("surplus_qty"))["t"] or 0
+        free = free_qty(b) - pending
+        if not b.product.is_expiring:
+            blocked.append((b, free, "Non-expiring products are not listed"))
+            continue
+        kind, reason = listing_blockers(b, b.market)
+        if kind:
+            blocked.append((b, free, reason))
+        elif free <= 0:
+            blocked.append((b, free, "All stock is already listed, reserved or requested"))
+        else:
+            eligible.append((b, free, ""))
+    return eligible, blocked
+
+
+@transaction.atomic
+def post_to_b2b(user, batch, quantity, reason, comment="", price=None):
+    """COO: flag and publish in one step. Sales: send a release request to the COO."""
+    release = flag_surplus(user, batch, quantity, reason, comment)
+    if user.has_role(Role.COO):
+        if price is None:
+            price = proposed_clearance_price(batch.product.original_price)
+        return release, approve_release(user, release, quantity, price,
+                                        "Posted directly by the COO")
+    return release, None

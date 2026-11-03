@@ -1,7 +1,7 @@
 {% extends "ims/base.html" %}{% load kubbar %}
 {% block title %}Purchase plans{% endblock %}
 {% block content %}
-<h1 class="h4 mb-1">Purchase plans <small class="text-muted fs-6">UC-25, UC-26</small></h1>
+<h1 class="h4 mb-1">Purchase plans</h1>
 <p class="text-muted">Build a plan from a saved forecast on the <a href="/forecasts/">Demand forecast</a> screen.</p>
 <table class="table bg-white"><thead><tr><th>Plan</th><th>Period</th><th>Prepared by</th><th>Created</th><th>Status</th><th>Approved by</th><th></th></tr></thead>
 <tbody>{% for p in items %}<tr><td>{{ p.number }}</td><td>{{ p.period_label }}</td><td>{{ p.prepared_by }}</td><td>{{ p.created_at|date:"d M Y" }}</td><td><span class="badge {{ p.status|status_class }}">{{ p.get_status_display }}</span></td><td>{{ p.approved_by|default:"" }}</td><td><a class="btn btn-sm btn-outline-primary" href="/plans/{{ p.pk }}/">Open</a></td></tr>

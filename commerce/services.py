@@ -139,7 +139,7 @@ def register_buyer(*, email, password, company_name, buyer_type, market, commerc
         else:
             notify_roles(Role.SALES, msg, f"/buyers/{buyer.pk}/")
     email_buyer(user, "Confirm your email address",
-                "Welcome to the Kubbar B2B clearance platform.\n\nConfirm your email address: "
+                "Welcome to the Kubbar International B2B clearance platform.\n\nConfirm your email address: "
                 + b2b_url(f"/register/confirm/{buyer.email_token}/"))
     return buyer
 
@@ -452,12 +452,14 @@ def notify_order_status(order):
 @transaction.atomic
 def release_reservation(order):
     for line in order.lines.all():
+        if line.active_qty <= 0:
+            continue
         Listing.objects.filter(pk=line.listing_id).update(
-            available_qty=F("available_qty") + line.quantity)
+            available_qty=F("available_qty") + line.active_qty)
         Listing.objects.filter(pk=line.listing_id, status=Listing.SOLD_OUT,
                                available_qty__gt=0).update(status=Listing.ACTIVE)
         Batch.objects.filter(pk=line.batch_id).update(qty_reserved=F("qty_reserved")
-                                                      - line.quantity)
+                                                      - line.active_qty)
 
 
 @transaction.atomic
@@ -481,7 +483,7 @@ def release_expired_reservations():
     """Cancel orders whose reservation hold lapsed without confirmation."""
     expired = PlatformOrder.objects.filter(
         status__in=[PlatformOrder.PLACED, PlatformOrder.AWAITING_PAYMENT],
-        reservation_expires_at__lt=timezone.now())
+        reservation_expires_at__lt=timezone.now(), on_hold=False)
     n = 0
     for order in expired:
         cancel_order(order, "Reservation hold expired without payment confirmation")
@@ -498,6 +500,8 @@ def confirm_payment(user, order):
     order = PlatformOrder.objects.select_for_update().get(pk=order.pk)
     if order.status != PlatformOrder.AWAITING_PAYMENT:
         raise ValidationError("This order is not awaiting payment.")
+    if order.on_hold:
+        raise ValidationError("This order is on hold. Release the hold before confirming.")
     today = timezone.localdate()
     if order.payment_method == PlatformOrder.BANK_TRANSFER:
         proof = order.payments.filter(status=PaymentProof.SUBMITTED).first()

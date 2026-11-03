@@ -22,7 +22,11 @@ def write_offs(request):
 
 @role_required(Role.INVENTORY)
 def request_write_off(request):
-    form = WriteOffForm(request.POST or None, initial={"batch": request.GET.get("batch")})
+    batch = None
+    if request.GET.get("batch"):
+        batch = Batch.objects.filter(pk=request.GET["batch"]).select_related("product").first()
+    initial = {"batch": batch.pk, "quantity": batch.qty_available} if batch else {}
+    form = WriteOffForm(request.POST or None, initial=initial)
     if request.method == "POST" and form.is_valid():
         d = form.cleaned_data
         batch = d["batch"]
@@ -40,10 +44,9 @@ def request_write_off(request):
                 return redirect("ims:write_off", pk=wo.pk)
             except ValidationError as e:
                 _err(request, e)
-    batch = None
-    if request.GET.get("batch"):
-        batch = Batch.objects.filter(pk=request.GET["batch"]).select_related("product").first()
-    return render(request, "ims/writeoffs/request.html", {"form": form, "batch": batch})
+    pending = batch.write_offs.filter(status=WriteOff.PENDING) if batch else []
+    return render(request, "ims/writeoffs/request.html", {"form": form, "batch": batch,
+                                                          "pending": pending})
 
 
 @role_required(Role.INVENTORY, Role.GM, Role.QA)

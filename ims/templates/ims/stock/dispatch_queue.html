@@ -1,7 +1,7 @@
 {% extends "ims/base.html" %}{% load kubbar %}
 {% block title %}Dispatch queue{% endblock %}
 {% block content %}
-<h1 class="h4 mb-3">Dispatch queue <small class="text-muted fs-6">UC-08</small></h1>
+<h1 class="h4 mb-3">Dispatch queue</h1>
 <div class="table-responsive"><table class="table bg-white">
 <thead><tr><th>Order</th><th>Buyer</th><th>Confirmed</th><th>Lines</th><th>Total (EGP)</th><th></th></tr></thead>
 <tbody>{% for o in orders %}<tr><td>{{ o.reference }}{% if o.on_hold %} <span class="badge text-bg-danger">on hold</span>{% endif %}</td><td>{{ o.buyer }}</td><td>{{ o.confirmed_at|date:"d M H:i" }}</td>

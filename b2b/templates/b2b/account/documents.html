@@ -1,0 +1,9 @@
+{% extends "b2b/account/_layout.html" %}{% load b2b kubbar %}
+{% block account %}
+<h1 class="h4 mb-3">{% t "Documents" %}</h1>
+<div class="card mb-3"><div class="list-group list-group-flush">
+{% for type, label, d, mandatory in docs %}<div class="list-group-item py-3 d-flex flex-wrap gap-2 align-items-center"><i class="bi bi-file-earmark-text fs-4 text-muted"></i><div><div class="fw-semibold">{% t label %}{% if not mandatory %} <span class="small text-muted">(optional)</span>{% endif %}</div>{% if d %}<div class="small text-muted">{{ d.original_name }} · {{ d.uploaded_at|date:"d M Y" }}{% if d.expiry_date %} · exp {{ d.expiry_date }}{% endif %}</div>{% if d.review_comment %}<div class="small text-danger">{{ d.review_comment }}</div>{% endif %}{% endif %}</div>
+<span class="ms-auto badge {% if d %}{{ d.review_status|status_class }}{% else %}text-bg-secondary{% endif %}">{% if d %}{{ d.get_review_status_display }}{% else %}Not uploaded{% endif %}</span></div>{% endfor %}
+</div></div>
+<div class="card"><div class="card-header">{% t "Upload again" %}</div><div class="card-body"><form method="post" enctype="multipart/form-data">{% csrf_token %}{% include "b2b/_fields.html" with form=form col="col-md-4" %}<p class="form-text">{% t "PDF, JPG or PNG, up to 10 MB each." %}</p><button class="btn btn-b2b">{% t "Submit" %}</button></form></div></div>
+{% endblock %}

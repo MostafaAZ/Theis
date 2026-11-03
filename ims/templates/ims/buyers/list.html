@@ -1,7 +1,7 @@
 {% extends "ims/base.html" %}{% load kubbar %}
 {% block title %}Buyers{% endblock %}
 {% block content %}
-<h1 class="h4 mb-3">Buyer verification <small class="text-muted fs-6">UC-31</small></h1>
+<h1 class="h4 mb-3">Buyer verification</h1>
 <div class="btn-group mb-3 flex-wrap"><a href="?" class="btn btn-sm btn-outline-secondary {% if not status %}active{% endif %}">All</a>{% for v, l in statuses %}<a href="?status={{ v }}" class="btn btn-sm btn-outline-secondary {% if status == v %}active{% endif %}">{{ l }}</a>{% endfor %}</div>
 <div class="table-responsive"><table class="table bg-white">
 <thead><tr><th>Company</th><th>Type</th><th>Market</th><th>Commercial register</th><th>Registered</th><th>Status</th><th></th></tr></thead>

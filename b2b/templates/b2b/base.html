@@ -3,45 +3,70 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}{% t "Kubbar B2B Clearance" %}{% endblock %}</title>
-  {% if DIR == "rtl" %}<link rel="stylesheet" href="{% static 'vendor/bootstrap/bootstrap.rtl.min.css' %}">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap"><style>body{font-family:Cairo,system-ui,sans-serif}</style>
-  {% else %}<link rel="stylesheet" href="{% static 'vendor/bootstrap/bootstrap.min.css' %}">{% endif %}
+  <title>{% block title %}{% t "Kubbar B2B Clearance" %}{% endblock %} · Kubbar</title>
+  {% if DIR == "rtl" %}<link rel="stylesheet" href="{% static 'vendor/bootstrap/bootstrap.rtl.min.css' %}">{% else %}<link rel="stylesheet" href="{% static 'vendor/bootstrap/bootstrap.min.css' %}">{% endif %}
   <link rel="stylesheet" href="{% static 'vendor/bootstrap-icons/bootstrap-icons.min.css' %}">
   <link rel="stylesheet" href="{% static 'kubbar/app.css' %}">
+  <link rel="stylesheet" href="{% static 'kubbar/b2b.css' %}">
 </head>
 <body class="b2b">
-<nav class="navbar navbar-expand-md navbar-dark bg-b2b">
-  <div class="container">
-    <a class="navbar-brand fw-semibold" href="/"><i class="bi bi-shop"></i> {% t "Kubbar B2B Clearance" %}</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav"><span class="navbar-toggler-icon"></span></button>
-    <div class="collapse navbar-collapse" id="nav">
-      <ul class="navbar-nav me-auto">
-        <li class="nav-item"><a class="nav-link" href="/catalogue/">{% t "Catalogue" %}</a></li>
-        {% if user.is_authenticated and user.is_buyer %}
-        <li class="nav-item"><a class="nav-link" href="/orders/">{% t "My Orders" %}</a></li>
-        <li class="nav-item"><a class="nav-link" href="/account/">{% t "My Account" %}</a></li>
-        {% endif %}
-      </ul>
-      <ul class="navbar-nav align-items-md-center gap-2">
-        <li class="nav-item"><a class="nav-link" href="/lang/{% if LANG == 'ar' %}en{% else %}ar{% endif %}/?next={{ request.path|urlencode }}">{% if LANG == 'ar' %}English{% else %}العربية{% endif %}</a></li>
-        {% if user.is_authenticated and user.is_buyer %}
-        <li class="nav-item"><a class="nav-link" href="/cart/"><i class="bi bi-cart3"></i> {% t "Cart" %}{% if request.session.cart %} <span class="badge bg-light text-dark">{{ request.session.cart|length }}</span>{% endif %}</a></li>
-        <li class="nav-item"><form method="post" action="/logout/">{% csrf_token %}<input type="hidden" name="lang" value="{{ LANG }}"><button class="btn btn-sm btn-outline-light">{% t "Log Out" %}</button></form></li>
-        {% else %}
-        <li class="nav-item"><a class="nav-link" href="/login/">{% t "Log In" %}</a></li>
-        <li class="nav-item"><a class="btn btn-sm btn-light" href="/register/">{% t "Register" %}</a></li>
-        {% endif %}
-      </ul>
-    </div>
-  </div>
-</nav>
+{% if DEMO_MODE %}<div class="demo-bar"><i class="bi bi-easel me-1"></i>Presentation mode · <div class="dropdown d-inline"><a href="#" data-bs-toggle="dropdown" class="text-white">Switch buyer <i class="bi bi-chevron-down"></i></a><div class="dropdown-menu shadow demo-menu text-start">{% for c in demo_buyers %}<a class="dropdown-item {% if c.user.pk == user.pk %}active{% endif %}" href="/demo/login/{{ c.user.pk }}/">{{ c.user.buyer.company_name }} <span class="small text-muted">· {{ c.user.buyer.get_status_display }}</span></a>{% endfor %}<div class="dropdown-divider"></div><a class="dropdown-item" href="/login/">All buyers with presenter notes</a><a class="dropdown-item" href="{{ IMS_URL }}/login/" target="_blank">Staff users (IMS)</a></div></div></div>{% endif %}
+<div class="utility-bar"><div class="container d-flex py-1 gap-3 align-items-center">
+  <span class="d-none d-sm-inline"><i class="bi bi-patch-check me-1"></i>{% t "Trade buyers only · Egypt" %}</span>
+  <span class="d-none d-md-inline"><i class="bi bi-telephone me-1"></i>+20 2 3333 0000</span>
+  <span class="ms-auto"></span>
+  <a href="/contact/">{% t "Contact us" %}</a>
+  <a href="/lang/{% if LANG == 'ar' %}en{% else %}ar{% endif %}/?next={{ request.get_full_path|urlencode }}"><i class="bi bi-translate me-1"></i>{% if LANG == 'ar' %}English{% else %}العربية{% endif %}</a>
+</div></div>
+<header class="shop-header"><div class="container d-flex align-items-center gap-3 py-2 flex-wrap flex-md-nowrap">
+  <a href="/" class="shop-brand"><span class="mark"><i class="bi bi-shop"></i></span><span>KUBBAR<small>B2B Clearance</small></span></a>
+  <form class="shop-search order-3 order-md-2 w-100" action="/catalogue/"><input name="q" value="{{ request.GET.q|default:'' }}" placeholder="{% t 'Search products or lot numbers' %}" aria-label="Search"><button aria-label="Search"><i class="bi bi-search"></i></button></form>
+  <nav class="d-flex align-items-center gap-1 order-2 order-md-3 ms-auto">
+    {% if shop_buyer %}
+      <a class="hdr-icon" href="/orders/"><i class="bi bi-receipt"></i>{% t "My Orders" %}</a>
+      <div class="dropdown"><a class="hdr-icon" href="#" data-bs-toggle="dropdown"><i class="bi bi-person-circle"></i>{% t "Account" %}</a>
+        <ul class="dropdown-menu dropdown-menu-end shadow">
+          <li class="px-3 py-2 small"><strong>{{ shop_buyer.company_name }}</strong><br><span class="badge {{ shop_buyer.status|status_class }}">{% t shop_buyer.get_status_display %}</span></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="/account/"><i class="bi bi-speedometer2 me-2"></i>{% t "Overview" %}</a></li>
+          <li><a class="dropdown-item" href="/account/profile/"><i class="bi bi-building me-2"></i>{% t "Company profile" %}</a></li>
+          <li><a class="dropdown-item" href="/account/documents/"><i class="bi bi-file-earmark-text me-2"></i>{% t "Documents" %}</a></li>
+          <li><a class="dropdown-item" href="/account/invoices/"><i class="bi bi-receipt-cutoff me-2"></i>{% t "Invoices" %}</a></li>
+          <li><a class="dropdown-item" href="/account/messages/"><i class="bi bi-chat-dots me-2"></i>{% t "Messages" %}</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><form method="post" action="/logout/">{% csrf_token %}<input type="hidden" name="lang" value="{{ LANG }}"><button class="dropdown-item text-danger"><i class="bi bi-box-arrow-right me-2"></i>{% t "Log Out" %}</button></form></li>
+        </ul></div>
+      <a class="hdr-icon" href="/cart/"><i class="bi bi-cart3"></i>{% t "Cart" %}{% if cart_count %}<span class="count">{{ cart_count }}</span>{% endif %}</a>
+    {% else %}
+      <a class="btn btn-outline-b2b btn-sm" href="/login/">{% t "Log In" %}</a>
+      <a class="btn btn-b2b btn-sm" href="/register/">{% t "Register" %}</a>
+    {% endif %}
+  </nav>
+</div>
+<div class="cat-nav d-none d-md-block"><div class="container">
+  <a href="/catalogue/" class="{% if request.path == '/catalogue/' and not request.GET.category %}active{% endif %}"><i class="bi bi-grid me-1"></i>{% t "Catalogue" %}</a>
+  {% for c in shop_categories %}<a href="/catalogue/?category={{ c.pk }}" class="{% if request.GET.category == c.pk|stringformat:'s' %}active{% endif %}">{% t c.name %}</a>{% endfor %}
+  <a href="/how-it-works/">{% t "How it works" %}</a><a href="/faq/">{% t "Help" %}</a>
+</div></div>
+</header>
+{% if shop_buyer and shop_buyer.status != 'verified' %}<div class="container mt-3"><div class="notice-verify p-3 d-flex align-items-center gap-2"><i class="bi bi-hourglass-split text-warning fs-5"></i><span>{% t "Your account is pending verification." %} {% t "Prices and ordering are available to verified buyers only." %}</span><a href="/account/" class="ms-auto btn btn-sm btn-outline-b2b">{% t "My Account" %}</a></div></div>{% endif %}
 <main class="container py-4">
   {% for message in messages %}<div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'info' }}{% endif %} alert-dismissible fade show">{{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>{% endfor %}
   {% block content %}{% endblock %}
 </main>
-<footer class="border-top py-3 mt-5 small text-muted"><div class="container">Kubbar International · {% t "Verified trade buyers only" %} · EGP</div></footer>
+<footer class="shop-footer"><div class="container"><div class="row g-4">
+  <div class="col-md-4"><div class="shop-brand text-white mb-2"><span class="mark"><i class="bi bi-shop"></i></span><span class="text-white">KUBBAR<small class="text-white-50">B2B Clearance</small></span></div>
+    <p class="mb-1">{% t "Clearance stock for licensed trade buyers" %}.</p><p class="mb-0"><i class="bi bi-envelope me-1"></i>b2b@kubbar.example · <i class="bi bi-telephone me-1"></i>+20 2 3333 0000</p></div>
+  <div class="col-6 col-md-2"><h6>{% t "Shop" %}</h6><a href="/catalogue/">{% t "Catalogue" %}</a>{% for c in shop_categories %}<a href="/catalogue/?category={{ c.pk }}">{% t c.name %}</a>{% endfor %}</div>
+  <div class="col-6 col-md-2"><h6>{% t "Account" %}</h6>{% if shop_buyer %}<a href="/account/">{% t "My Account" %}</a><a href="/orders/">{% t "My Orders" %}</a><a href="/account/invoices/">{% t "Invoices" %}</a>{% else %}<a href="/register/">{% t "Register" %}</a><a href="/login/">{% t "Log In" %}</a>{% endif %}</div>
+  <div class="col-6 col-md-2"><h6>{% t "Help" %}</h6><a href="/how-it-works/">{% t "How it works" %}</a><a href="/faq/">{% t "Frequently asked questions" %}</a><a href="/contact/">{% t "Contact us" %}</a></div>
+  <div class="col-6 col-md-2"><h6>{% t "Legal" %}</h6><a href="/terms/">{% t "Terms of Service" %}</a><a href="/privacy/">{% t "Privacy & data protection" %}</a></div>
+</div><div class="legal d-flex flex-wrap gap-2"><span>© {% now "Y" %} Kubbar International</span><span class="ms-auto">EGP · {% t "Verified trade buyers only" %}</span></div></div></footer>
 <script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"></script>
-{% if user.is_authenticated %}<script>let idle;const r=()=>{clearTimeout(idle);idle=setTimeout(()=>location.href="/login/",30*60*1000+5000)};["click","keydown","touchstart"].forEach(e=>document.addEventListener(e,r));r();</script>{% endif %}
+<script>
+document.querySelectorAll("[data-step]").forEach(b => b.addEventListener("click", () => { const i = document.getElementById(b.dataset.target); const v = (parseInt(i.value) || 0) + parseInt(b.dataset.step); i.value = Math.max(parseInt(i.min) || 1, Math.min(parseInt(i.max) || 99999, v)); }));
+{% if user.is_authenticated %}let idle;const r=()=>{clearTimeout(idle);idle=setTimeout(()=>location.href="/login/",30*60*1000+5000)};["click","keydown","touchstart"].forEach(e=>document.addEventListener(e,r));r();{% endif %}
+</script>
+{% block scripts %}{% endblock %}
 </body>
 </html>

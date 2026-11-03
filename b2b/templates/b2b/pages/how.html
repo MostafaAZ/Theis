@@ -1,0 +1,13 @@
+{% extends "b2b/base.html" %}{% load b2b %}
+{% block title %}{% t "How it works" %}{% endblock %}
+{% block content %}
+<h1 class="h3">{% t "How it works" %}</h1>
+<p class="lead text-muted">Kubbar sells batches that are within six months of expiry, after first offering them to existing customers. Every batch is registered for the Egyptian market and has at least 30 days of shelf life left.</p>
+<div class="row g-3 my-3">
+  <div class="col-md-6 col-lg-3"><div class="card h-100"><div class="card-body"><div class="how-step p-0 text-start"><div class="n mx-0">1</div></div><h2 class="h6">{% t "Register" %}</h2><p class="small text-muted mb-0">Create a company account with your commercial register, tax card, the owner's national ID and your licence to trade veterinary products.</p></div></div></div>
+  <div class="col-md-6 col-lg-3"><div class="card h-100"><div class="card-body"><div class="how-step p-0 text-start"><div class="n mx-0">2</div></div><h2 class="h6">{% t "Get verified" %}</h2><p class="small text-muted mb-0">Our Regulatory Affairs team checks the documents and sets the categories you may buy, and whether you can receive cold-chain products.</p></div></div></div>
+  <div class="col-md-6 col-lg-3"><div class="card h-100"><div class="card-body"><div class="how-step p-0 text-start"><div class="n mx-0">3</div></div><h2 class="h6">{% t "Order" %}</h2><p class="small text-muted mb-0">See prices, add batches to your cart and check out. Stock is reserved for you for 48 hours while you pay by bank transfer, or on invoice if you have credit terms.</p></div></div></div>
+  <div class="col-md-6 col-lg-3"><div class="card h-100"><div class="card-body"><div class="how-step p-0 text-start"><div class="n mx-0">4</div></div><h2 class="h6">{% t "Receive" %}</h2><p class="small text-muted mb-0">Once Finance confirms payment we pick the exact lot you bought and dispatch it. Follow every step in My Orders and download your invoice.</p></div></div></div>
+</div>
+<div class="card"><div class="card-body d-flex flex-wrap gap-3 align-items-center"><div class="me-auto"><strong>Ready to start?</strong><div class="text-muted small">Registration takes about 10 minutes.</div></div><a href="/register/" class="btn btn-b2b">{% t "Register your company" %}</a><a href="/catalogue/" class="btn btn-outline-b2b">{% t "Browse the catalogue" %}</a></div></div>
+{% endblock %}

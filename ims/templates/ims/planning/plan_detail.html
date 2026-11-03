@@ -2,6 +2,7 @@
 {% block title %}{{ plan.number }}{% endblock %}
 {% block content %}
 <h1 class="h4">Purchase plan {{ plan.number }} · {{ plan.period_label }} <span class="badge {{ plan.status|status_class }}">{{ plan.get_status_display }}</span></h1>
+{% if plan.status == 'approved' and 'procurement' in user.roles and not plan.purchase_orders.exists %}<form method="post" action="/purchase-orders/new/" class="alert alert-info d-flex align-items-center gap-2">{% csrf_token %}<i class="bi bi-cart-plus fs-5"></i><span class="me-auto">This plan is approved. Create the purchase orders (one per supplier).</span><button name="from_plan" value="{{ plan.pk }}" class="btn btn-sm btn-primary">Create purchase orders</button></form>{% elif plan.purchase_orders.exists %}<div class="alert alert-success">Purchase orders: {% for po in plan.purchase_orders.all %}<a href="/purchase-orders/{{ po.pk }}/">{{ po.number }}</a> {% endfor %}</div>{% endif %}
 <p class="text-muted small">From forecast {{ plan.forecast }} · prepared by {{ plan.prepared_by }}{% if plan.approved_by %} · approved by {{ plan.approved_by }} on {{ plan.approval_date|date:"d M Y" }}{% endif %}{% if plan.decision_comment %} · “{{ plan.decision_comment }}”{% endif %}</p>
 <div class="row g-3 mb-3">
 <div class="col-md-4"><div class="card kpi"><div class="card-body"><div class="kpi-label">Plan value at cost (EGP)</div><div class="kpi-value">{{ totals.value|egp }}</div></div></div></div>
@@ -22,5 +23,5 @@
 {% if editable %}<div class="d-flex gap-2"><button name="save" value="1" class="btn btn-outline-primary">Save</button><button name="submit" value="1" class="btn btn-primary">Submit for Approval</button></div>{% endif %}
 {% if deciding %}<div class="card card-body mt-2"><label class="form-label">Overall comment</label><input name="comment" class="form-control mb-2"><div class="d-flex gap-2"><button name="decide" value="lines" class="btn btn-success">Apply line decisions</button><button name="decide" value="reject_all" class="btn btn-outline-danger">Reject whole plan</button></div></div>{% endif %}
 </form>
-{% if write_offs %}<h2 class="h6 mt-4">Write-offs charged back to this plan (FR-40)</h2><ul class="small">{% for w in write_offs %}<li>{{ w }} · {{ w.batch.product.name }} lot {{ w.batch.lot_number }} · {{ w.write_off_value|egp }} EGP</li>{% endfor %}</ul>{% endif %}
+{% if write_offs %}<h2 class="h6 mt-4">Write-offs charged back to this plan</h2><ul class="small">{% for w in write_offs %}<li>{{ w }} · {{ w.batch.product.name }} lot {{ w.batch.lot_number }} · {{ w.write_off_value|egp }} EGP</li>{% endfor %}</ul>{% endif %}
 {% endblock %}

@@ -40,7 +40,7 @@ the SRS left something open.
 | 23 | `/imports/` | `planning.services.stage_import`, `confirm_import` |
 | 24 | `/forecasts/` | `generate_forecast`, `planning/forecasting.py` |
 | 25–26 | `/plans/<id>/` | `build_plan`, `plan_line_figures`, `decide_plan` |
-| 27–28 | `/analytics/` (six dashboards, PDF/Excel export) | `analytics/services.py`, `analytics/exports.py` |
+| 27–28 | `/analytics/` (Executive Briefing + seven dashboards, storytelling charts with analysis per perspective, PDF/Excel export with charts); `/analytics/ai/` AI analysis by Claude | `analytics/services.py`, `analytics/story.py`, `analytics/ai.py`, `analytics/exports.py` |
 | 29–30 | Platform `/register/`, `/account/` | `commerce.services.register_buyer`, `save_document` |
 | 31 | `/buyers/<id>/` | `review_document`, `verify_buyer` |
 | 32 | Platform `/login/`, `/password-reset/`, `/unlock/<token>/` | `b2b/views.py` |
@@ -52,6 +52,35 @@ the SRS left something open.
 | 39 | `/credit/` | `set_payment_terms` |
 | 40 | `/listings/<id>/` | `reprice_listing`, `change_listing_quantity` |
 | 41–44 | `/admin/users/`, `/admin/rules/`, `/admin/reference/`, `/admin/audit/` | `ims/views/admin.py` |
+| 45 | `/b2b/orders/<id>/` (Put on hold / Release hold); hold from `/dispatch/<order>/` | `commerce.orders.hold_order`, `release_hold` |
+| 46 | `/b2b/orders/<id>/` (Cancel selected quantities) | `cancel_lines` |
+| 47 | `/b2b/exceptions/` | `commerce.orders.exceptions` |
+| 48 | Platform `/orders/<id>/return/`, `/account/returns/` | `request_return` |
+| 49–51 | `/b2b/returns/`, `/b2b/returns/<id>/` (decide, receive, inspect) | `decide_return`, `receive_return`, `inspect_return` |
+| 52 | `/b2b/orders/<id>/` (Issue credit note), `/b2b/credit-notes/` (Refund paid) | `issue_credit_note`, `record_refund`, `commerce/documents.py` |
+| 53 | `/b2b/orders/<id>/packing-slip/`, platform `/orders/<id>/packing-slip/` | `packing_slip_pdf` |
+| 54 | `/` executive briefing, `/analytics/?d=executive` (FR-103 to FR-105, FR-107) | `analytics/story.py`, `ims/dashboard.briefing_for` |
+| 55 | `/analytics/ai/` Analyse with AI (FR-106, NFR-28) | `analytics/ai.py` |
+| 56 | `/reminders/` (open, Remind me later, Mark as done) and the dashboard Reminders cards | `ims/views/reminders.py` |
+| 57 | `manage.py run_daily_jobs`, *Check the data now* | `core/reminders.generate` (FR-108 to FR-114) |
+| FR-102 | `/analytics/?d=exceptions` (Order Exceptions dashboard) | `analytics.services.order_exceptions` |
+
+## Screens added beyond the use cases
+
+These make the system easier to use and close gaps found in user testing.
+
+| Screen | Where | Code |
+|---|---|---|
+| Role dashboard with "Your tasks", KPIs, quick actions, charts | IMS `/` | `ims/dashboard.py` |
+| Post to B2B (one guided flow; COO publishes, Sales requests) | IMS `/b2b/post/` | `inventory.services.post_to_b2b` |
+| Products (list, detail with batches/sales/registrations/listings, create, edit, image) | IMS `/products/` | `ims/views/catalog.py` |
+| Customers, suppliers | IMS `/customers/`, `/suppliers/` | `ims/views/catalog.py` |
+| Purchase orders (create, from approved plan, close) | IMS `/purchase-orders/` | `inventory.services.create_purchase_order`, `purchase_orders_from_plan` |
+| Platform orders overview | IMS `/b2b/orders/` | `ims/views/b2b.py` |
+| Buyer messages inbox and replies | IMS `/b2b/messages/` | `commerce.models.SupportMessage` |
+| Global search, My profile, Reports & exports | IMS `/search/`, `/profile/`, `/reports/` | `ims/views/misc.py` |
+| Page purpose, breadcrumbs and "How it works" help on every screen | IMS | `ims/nav.py` (`PAGES`) |
+| Storefront home, category browsing, product page, account area, contact, FAQ, terms, privacy | Platform | `b2b/shop.py` |
 
 ## Algorithms
 

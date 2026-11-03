@@ -1,0 +1,12 @@
+{% extends "ims/base.html" %}
+{% block content %}
+<h1 class="h4">Reports &amp; exports</h1>
+<p class="text-muted">Each report downloads as PDF (to print or attach) or Excel (to work with the numbers). Every file is stamped with your name and the time.{% if can_analytics %} For interactive charts and filters use <a href="/analytics/">Analytics dashboards</a>.{% endif %}</p>
+<div class="row g-3">{% for key, title, desc, icon in items %}
+<div class="col-md-6 col-xl-4"><div class="card h-100"><div class="card-body d-flex flex-column">
+  <div class="d-flex gap-3 align-items-start"><span class="kpi-icon"><i class="bi {{ icon }}"></i></span><div><div class="fw-semibold">{{ title }}</div><div class="small text-muted">{{ desc }}</div></div></div>
+  <div class="mt-auto pt-3 d-flex gap-2"><a href="/reports/{{ key }}.pdf" class="btn btn-sm btn-outline-danger"><i class="bi bi-filetype-pdf me-1"></i>PDF</a><a href="/reports/{{ key }}.xlsx" class="btn btn-sm btn-outline-success"><i class="bi bi-file-earmark-excel me-1"></i>Excel</a></div>
+</div></div></div>{% endfor %}
+{% if can_audit %}<div class="col-md-6 col-xl-4"><div class="card h-100"><div class="card-body d-flex flex-column"><div class="d-flex gap-3"><span class="kpi-icon info"><i class="bi bi-journal-text"></i></span><div><div class="fw-semibold">Audit trail</div><div class="small text-muted">Filter, then export from the audit trail screen.</div></div></div><div class="mt-auto pt-3"><a href="/admin/audit/" class="btn btn-sm btn-outline-primary">Open audit trail</a></div></div></div></div>{% endif %}
+</div>
+{% endblock %}

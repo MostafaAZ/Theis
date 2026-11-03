@@ -1,7 +1,7 @@
 {% extends "ims/base.html" %}{% load kubbar %}
 {% block title %}Batch inspection{% endblock %}
 {% block content %}
-<h1 class="h4 mb-3">Batch inspection <small class="text-muted fs-6">UC-04</small></h1>
+<h1 class="h4 mb-3">Batch inspection</h1>
 <div class="card mb-4"><div class="card-body">
 <form method="post">{% csrf_token %}
   {% include "ims/_fields.html" with col="col-md-4" %}

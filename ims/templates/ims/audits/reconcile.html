@@ -1,7 +1,7 @@
 {% extends "ims/base.html" %}{% load kubbar %}
 {% block title %}Reconcile {{ count.number }}{% endblock %}
 {% block content %}
-<h1 class="h4">Reconcile count variance · {{ count.number }} <small class="text-muted fs-6">UC-12</small></h1>
+<h1 class="h4">Reconcile count variance · {{ count.number }}</h1>
 <p class="text-muted">Variances within tolerance were posted automatically. Assign a reason code or request a blind recount for each flagged line. Adjustments of {{ threshold|egp }} EGP or more go to the General Manager.</p>
 {% if count.status != 'submitted' %}<div class="alert alert-info">This count is {{ count.get_status_display|lower }}.</div>{% endif %}
 <form method="post">{% csrf_token %}

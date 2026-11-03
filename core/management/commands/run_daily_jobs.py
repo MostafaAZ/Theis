@@ -4,6 +4,7 @@
 """
 from django.core.management.base import BaseCommand
 
+from core import reminders
 from inventory.services import run_expiry_scan
 
 
@@ -19,3 +20,5 @@ class Command(BaseCommand):
             f"Scan OK: {run.batches_scanned} batches, {run.new_near_expiry} new near-expiry, "
             f"{run.expired} expired, {run.listings_withdrawn} listings withdrawn, "
             f"{run.escalations} escalations, value at risk {run.value_at_risk} EGP."))
+        opened = reminders.generate()
+        self.stdout.write(self.style.SUCCESS(f"Reminders: {opened} opened or reopened."))
