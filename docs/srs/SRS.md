@@ -110,6 +110,8 @@ Planning](#demand-forecasting-and-purchase-planning-1)
 
 [10.4 E-Commerce Purchase](#e-commerce-purchase)
 
+[10.5 Order Exceptions and Returns](#order-exceptions-and-returns-1)
+
 [11. Data Models](#data-models)
 
 [11.1 Data Flow Diagram](#data-flow-diagram)
@@ -3144,12 +3146,12 @@ dropdowns the user works with.
 
 # 10. Activity Diagrams
 
-The four activity diagrams below follow a batch through its full life:
+The five activity diagrams below follow a batch through its full life:
 whether it should be bought, whether the record of it is true, what
-happens when it stops selling, and how a new buyer takes it. Each
-diagram uses swim lanes for the roles in Exhibit \#2, plus a System lane
-for automated steps, so that every hand-off between people and the
-proposed system is visible.
+happens when it stops selling, how a new buyer takes it, and what
+happens when it comes back. Each diagram uses swim lanes for the roles
+in Exhibit \#2, plus a System lane for automated steps, so that every
+hand-off between people and the proposed system is visible.
 
 ## 10.1 Demand Forecasting and Purchase Planning
 
@@ -3258,11 +3260,36 @@ approves them. Only a confirmed order reaches the Warehouse Officer, who
 picks by lot, and stock is deducted when the order is dispatched. The
 diagram supports FR-66 to FR-86 and UC-29 to UC-39.
 
-Taken together, Exhibits \#7 to \#10 show that the proposed solution
+## 10.5 Order Exceptions and Returns
+
+<img src="figures/activity-diagram-5-order-exceptions-returns.png" style="width:6.5in;height:2.26695in" />
+
+*Exhibit \#11: Activity Diagram, Order Exceptions and Returns*
+
+As shown in Exhibit \#11, a return passes through four hands before any
+value goes back to the buyer. The buyer asks within seven days of
+delivery, the Finance Officer decides, the Warehouse Officer records
+what physically arrived, and the QA Officer decides what the goods are
+still worth. Each role sees only its own step, so no single person can
+both accept the goods and release the money.
+
+The diagram also shows where a return stops. A request outside the
+window ends at once, and a rejected request ends with the reason sent to
+the buyer. A replacement is offered only while the listing still holds
+stock. Otherwise, the system turns it into a credit note rather than
+promising goods it does not have. After inspection, restocked units
+re-enter the same stock record the expiry scan reads, and damaged units
+go to the write-off route of Exhibit \#9. The credit note then settles
+against an unpaid invoice, or becomes a refund that the Finance Officer
+pays and records. The diagram supports FR-95 to FR-100 and UC-48 to
+UC-52.
+
+Taken together, Exhibits \#7 to \#11 show that the proposed solution
 places its controls where the Root Cause Analysis placed the causes. The
 forecast controls what is bought, the audit controls whether the record
 is true, the near-expiry route controls what happens to stock that stops
-selling, and verification controls who can buy it.
+selling, verification controls who can buy it, and inspection controls
+what comes back.
 
 # 11. Data Models
 
@@ -3270,9 +3297,9 @@ selling, and verification controls who can buy it.
 
 <img src="figures/image8.png" style="width:6.5in;height:6.80625in" />
 
-*Exhibit \#11: Data Flow Diagram (As-Is), Kubbar International*
+*Exhibit \#12: Data Flow Diagram (As-Is), Kubbar International*
 
-As shown in Exhibit \#11, Kubbar's current operation runs sixteen
+As shown in Exhibit \#12, Kubbar's current operation runs sixteen
 processes, ten data stores, and four external entities, and every
 transaction except the purchase plan is recorded in Odoo. The diagram
 established two absences, and the proposed system is designed around
@@ -3298,9 +3325,9 @@ these four changes as new processes and flows on the existing diagram.
 
 <img src="figures/image9.png" style="width:6.5in;height:4.07014in" />
 
-*Exhibit \#12: Entity Relationship Diagram, Kubbar International*
+*Exhibit \#13: Entity Relationship Diagram, Kubbar International*
 
-As shown in Exhibit \#12, the current ERD models Kubbar's existing
+As shown in Exhibit \#13, the current ERD models Kubbar's existing
 transactions in twenty-five entities: procurement (SUPPLIER,
 PURCHASE_FORECAST, PURCHASE_ORDER, PURCHASE_ORDER_LINE), receiving and
 quality (RECEIVING_NOTE, QUALITY_INSPECTION, REJECTED_STOCK,
@@ -3315,7 +3342,7 @@ Expiry is therefore modeled at the right level. What the model lacks is
 everything after a batch stops selling, and the two new user groups the
 proposed system introduces.
 
-Exhibit \#13 lists the entities the ERD must add to support the
+Exhibit \#14 lists the entities the ERD must add to support the
 requirements in Section 6. Existing entities also need a small number of
 new attributes: PRODUCT needs MOQ and Lead_Time_Days; BATCH needs
 Location_ID and Market_ID; CUSTOMER needs Commercial_Register_No so that
@@ -3355,9 +3382,9 @@ correction stays attached to the sale it corrects.
 | CREDIT_NOTE          | A credit against an invoice and its refund        | Credit_Note_ID, Invoice_ID, Buyer_ID, Return_ID, Amount, Reason, Status, Issued_By, Refund_Reference, Refund_Date                                                            | FR-93, FR-100         |
 | REMINDER             | A data-based reminder and its explanation         | Reminder_ID, Kind, Roles, Explanation, Impact, Recommendation, Basis, Priority, Status, Snoozed_Until, Done_By                                                               | FR-108 to FR-114      |
 
-*Exhibit \#13: Entities Required by the Proposed System*
+*Exhibit \#14: Entities Required by the Proposed System*
 
-As shown in Exhibit \#13, most of the new entities sit on the path from
+As shown in Exhibit \#14, most of the new entities sit on the path from
 BATCH to BUYER. EXPIRY_ALERT, CUSTOMER_OFFER, SURPLUS_RELEASE, LISTING,
 and PLATFORM_ORDER_LINE form a chain that records every decision a batch
 passes through between its first alert and its sale, which is exactly
