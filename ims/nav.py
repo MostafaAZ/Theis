@@ -15,6 +15,7 @@ MENU = [
     ("Home", "bi-house-door", [
         ("Dashboard", "/", None, None),
         ("Approvals", "/approvals/", (R.GM, R.QA), "approvals"),
+        ("Reminders", "/reminders/", None, "reminders"),
         ("Notifications", "/notifications/", None, "notifications"),
     ]),
     ("Inventory", "bi-box-seam", [
@@ -88,6 +89,12 @@ PAGES = {
     "approvals": ("Home", "Approvals", "Everything waiting for your decision in one place.",
                   ["Open an item, read the details, then approve or reject with a comment."]),
     "notifications": ("Home", "Notifications", "Every alert sent to you, newest first.", []),
+    "reminders": ("Home", "Reminders", "Recurring work the data says is due, with the reason "
+                  "and the evidence for each reminder.", [
+        "Each reminder explains what the data shows, how it affects the company and its "
+        "KPIs, what to do, and what the recommendation is based on.",
+        "Open the screen from the button, or choose Remind me later or Mark as done.",
+        "Reminders close themselves once the data no longer calls for them."]),
     "profile": ("Home", "My profile", "Your details and password.", []),
     "search": ("Home", "Search", "Find products, lots, orders, buyers and purchase orders.", []),
     "stock_search": ("Inventory", "Stock overview",
@@ -246,7 +253,10 @@ def badge_counts(user):
 
     from commerce.models import CreditNote, ReturnRequest
 
+    from core.reminders import visible_to
+
     c = {"notifications": user.notifications.filter(is_read=False).count(),
+         "reminders": len(visible_to(user)),
          "messages": SupportMessage.objects.filter(status=SupportMessage.OPEN).count()}
     mine = {R.FINANCE: ReturnRequest.REQUESTED, R.WAREHOUSE: ReturnRequest.APPROVED,
             R.QA: ReturnRequest.RECEIVED}

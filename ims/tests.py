@@ -354,7 +354,8 @@ class AnalyticsStoryTests(TestCase):
                 self.assertEqual(r.status_code, 200, (key, view))
                 self.assertEqual(r.context["data"]["analysis"]["perspective"], view)
                 for c in r.context["data"]["charts"]:
-                    self.assertTrue(c["headline"] and c["view"]["insight"], (key, c["id"]))
+                    self.assertTrue(c["headline"] and c["view"]["explain"] and c["view"]["basis"]
+                                    and "KPIs affected" in c["view"]["impact"], (key, c["id"]))
 
     def test_perspective_changes_the_story(self):
         from analytics.services import Filters, build
@@ -364,7 +365,8 @@ class AnalyticsStoryTests(TestCase):
         gm = build("executive", Filters({}, user), "gm")
         self.assertEqual(coo["charts"][0]["id"], "funnel")
         self.assertEqual(gm["charts"][0]["id"], "moq")
-        self.assertNotEqual(coo["analysis"]["actions"], gm["analysis"]["actions"])
+        self.assertNotEqual(coo["analysis"]["recommendations"], gm["analysis"]["recommendations"])
+        self.assertTrue(all(r["basis"] for r in gm["analysis"]["recommendations"]))
         self.assertEqual(coo["analysis"]["perspective"], "coo")
 
     def test_executive_report_pdf_has_charts_and_analysis(self):
@@ -395,10 +397,13 @@ class AnalyticsStoryTests(TestCase):
         from django.core.cache import cache
 
         cache.clear()
-        answer = {"summary": "Recovery lags write-offs.", "findings": ["F1"], "risks": ["R1"],
-                  "actions": ["A1"], "charts": [
-                      {"id": "outcomes", "insight": "I", "implication": "M", "action": "X"},
-                      {"id": "made_up", "insight": "?", "implication": "?", "action": "?"}]}
+        answer = {"summary": "Recovery lags write-offs.", "findings": ["F1"], "impacts": ["I1"],
+                  "recommendations": [{"text": "A1", "basis": "B1"}], "risks": ["R1"],
+                  "charts": [
+                      {"id": "outcomes", "explain": "E", "impact": "I", "recommendation": "R",
+                       "basis": "B"},
+                      {"id": "made_up", "explain": "?", "impact": "?", "recommendation": "?",
+                       "basis": "?"}]}
         self.login("cfo@kubbar.example")
         with mock.patch("analytics.ai.api_key", return_value="sk-test"), \
                 mock.patch("analytics.ai._call", return_value=answer) as call:
@@ -413,3 +418,69 @@ class AnalyticsStoryTests(TestCase):
             # A second request with the same data is served from the cache.
             self.client.post("/analytics/ai/", {"d": "executive", "view": "cfo"})
             self.assertEqual(call.call_count, 1)
+
+
+class ReminderTests(TestCase):
+    """Data-based reminders with their explanation (UC-56, UC-57)."""
+
+    @classmethod
+    def setUpTestData(cls):
+        from django.core.management import call_command
+
+        with override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend"):
+            call_command("seed_demo", verbosity=0)
+
+    def test_every_kind_is_raised_with_its_four_parts(self):
+        from core.models import Reminder
+
+        open_ = Reminder.objects.filter(status=Reminder.OPEN)
+        self.assertEqual({r.kind for r in open_}, {k for k, _ in Reminder.KINDS})
+        for r in open_:
+            self.assertTrue(r.explain and r.impact and r.recommendation and r.basis, r.key)
+            self.assertIn("KPIs affected", r.impact)
+
+    def test_roles_see_their_reminders_and_act_on_them(self):
+        from core.models import Reminder
+
+        self.client.force_login(User.objects.get(email="sales@kubbar.example"))
+        r = self.client.get("/reminders/")
+        self.assertContains(r, "What the data shows")
+        self.assertContains(r, "Based on")
+        kinds = {x.kind for x in r.context["items"]}
+        self.assertEqual(kinds, {Reminder.FOLLOW_UP})
+        self.assertContains(self.client.get("/"), "Reminders")
+        rem = r.context["items"][0]
+        self.client.post("/reminders/", {"reminder": rem.pk, "snooze": "1"})
+        rem.refresh_from_db()
+        self.assertEqual(rem.status, Reminder.SNOOZED)
+        # A role cannot act on another role's reminder.
+        audit_rem = Reminder.objects.get(kind=Reminder.AUDIT)
+        self.client.post("/reminders/", {"reminder": audit_rem.pk, "done": "1"})
+        audit_rem.refresh_from_db()
+        self.assertEqual(audit_rem.status, Reminder.OPEN)
+        self.client.force_login(User.objects.get(email="inventory@kubbar.example"))
+        self.client.post("/reminders/", {"reminder": audit_rem.pk, "done": "1"})
+        audit_rem.refresh_from_db()
+        self.assertEqual(audit_rem.status, Reminder.DONE)
+
+    def test_reminder_resolves_when_the_data_clears(self):
+        from core import reminders
+        from core.models import Reminder
+        from inventory.models import CustomerOffer
+
+        offer = CustomerOffer.objects.get(outcome=CustomerOffer.PENDING)
+        self.assertEqual(Reminder.objects.get(key=f"offer-{offer.pk}").status, Reminder.OPEN)
+        CustomerOffer.objects.filter(pk=offer.pk).update(outcome=CustomerOffer.DECLINED)
+        reminders.generate()
+        self.assertEqual(Reminder.objects.get(key=f"offer-{offer.pk}").status,
+                         Reminder.RESOLVED)
+
+    def test_new_reminder_notifies_the_role(self):
+        from core import reminders
+        from core.models import Notification, Reminder
+
+        Reminder.objects.filter(kind=Reminder.FORECAST).delete()
+        reminders.generate()
+        self.assertTrue(Notification.objects.filter(
+            user__email="procurement@kubbar.example",
+            message__startswith="Reminder: Refresh the demand forecast").exists())

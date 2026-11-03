@@ -10,11 +10,19 @@
         {% if can_ai %}{% if ai_ready %}<button type="button" class="btn btn-sm btn-dark" id="ai-btn"><i class="bi bi-stars me-1"></i>Analyse with AI</button>{% else %}<span class="small text-muted" title="Add an Anthropic API key to turn on AI analysis (see README)"><i class="bi bi-info-circle me-1"></i>AI analysis: add an API key</span>{% endif %}{% endif %}
       </div>
     </div>
-    <p class="summary mb-1" id="briefing-summary">{{ analysis.summary }}</p>
     <div class="row g-3">
-      <div class="col-lg-6"><h3>Key findings</h3><ul id="briefing-findings">{% for x in analysis.findings %}<li>{{ x }}</li>{% endfor %}</ul></div>
-      <div class="col-lg-6"><h3>Recommended actions</h3><ul id="briefing-actions">{% for x in analysis.actions %}<li>{{ x }}</li>{% empty %}<li>No action needed on these numbers.</li>{% endfor %}</ul>
-        <div id="briefing-risks-wrap" {% if not analysis.risks %}hidden{% endif %}><h3>Risks</h3><ul class="risk" id="briefing-risks">{% for x in analysis.risks %}<li>{{ x }}</li>{% endfor %}</ul></div></div>
+      <div class="col-lg-6">
+        <h3>1. What the dashboard shows</h3>
+        <p class="summary mb-1" id="briefing-summary">{{ analysis.summary }}</p>
+        <ul id="briefing-findings">{% for x in analysis.findings %}<li>{{ x }}</li>{% endfor %}</ul>
+        <h3>2. Impact on the company and KPIs</h3>
+        <ul id="briefing-impacts">{% for x in analysis.impacts %}<li>{{ x }}</li>{% endfor %}</ul>
+      </div>
+      <div class="col-lg-6">
+        <h3>3. Recommendations and 4. what they are based on</h3>
+        <ol class="recs" id="briefing-recs">{% for x in analysis.recommendations %}<li>{{ x.text }}<div class="small text-muted mt-1"><strong>Based on:</strong> {{ x.basis }}</div></li>{% empty %}<li>No action needed on these numbers.</li>{% endfor %}</ol>
+        <div id="briefing-risks-wrap" {% if not analysis.risks %}hidden{% endif %}><h3>Risks</h3><ul class="risk" id="briefing-risks">{% for x in analysis.risks %}<li>{{ x }}</li>{% endfor %}</ul></div>
+      </div>
     </div>
     <div class="small text-danger mt-2" id="ai-error" hidden></div>
   </div>

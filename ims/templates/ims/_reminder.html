@@ -1,0 +1,22 @@
+{# One reminder: what the data shows, impact, recommendation, basis. Needs: r, compact (bool) #}
+<div class="card reminder prio-{{ r.priority }} mb-3" id="reminder-{{ r.pk }}"><div class="card-body">
+  <div class="d-flex flex-wrap align-items-start gap-2">
+    <span class="badge rem-kind"><i class="bi {% if r.kind == 'purchase_plan' %}bi-cart-check{% elif r.kind == 'forecast' %}bi-graph-up{% elif r.kind == 'follow_up' %}bi-telephone{% elif r.kind == 'audit' %}bi-clipboard-check{% else %}bi-arrow-left-right{% endif %} me-1"></i>{{ r.get_kind_display }}</span>
+    <span class="badge {% if r.priority == 'high' %}text-bg-danger{% elif r.priority == 'medium' %}text-bg-warning{% else %}text-bg-secondary{% endif %}">{{ r.get_priority_display }} priority</span>
+    <span class="ms-auto small text-muted">Updated {{ r.updated_at|timesince }} ago</span>
+  </div>
+  <div class="rem-title mt-2">{{ r.title }}</div>
+  <dl class="rem-why mb-2">
+    <dt>What the data shows</dt><dd>{{ r.explain }}</dd>
+    {% if not compact %}<dt>Impact on the company and KPIs</dt><dd>{{ r.impact }}</dd>{% endif %}
+    <dt>Recommendation</dt><dd>{{ r.recommendation }}</dd>
+    {% if not compact %}<dt>Based on</dt><dd class="text-muted">{{ r.basis }}</dd>{% endif %}
+  </dl>
+  <div class="d-flex flex-wrap gap-2">
+    {% if r.url %}<a href="{{ r.url }}" class="btn btn-sm btn-primary">{{ r.action_label|default:"Open" }}</a>{% endif %}
+    {% if compact %}<a href="/reminders/#reminder-{{ r.pk }}" class="btn btn-sm btn-outline-secondary">Why?</a>{% else %}
+    <form method="post" action="/reminders/" class="d-inline">{% csrf_token %}<input type="hidden" name="reminder" value="{{ r.pk }}">
+      <button name="snooze" class="btn btn-sm btn-outline-secondary"><i class="bi bi-clock me-1"></i>Remind me later</button>
+      <button name="done" class="btn btn-sm btn-outline-success"><i class="bi bi-check2 me-1"></i>Mark as done</button></form>{% endif %}
+  </div>
+</div></div>

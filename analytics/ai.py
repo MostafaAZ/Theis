@@ -51,33 +51,47 @@ or causes; if the data cannot support a conclusion, say what is missing.
 - Quote the key numbers (money as "1.2M EGP" or "48,052 EGP").
 - Write in a consultant's voice: plain English, present tense, direct, about the company \
 ("Kubbar", "the company", "it"). No hedging filler, no markdown, no emojis.
-- Each sentence should state a finding, what it means for the reader, or what to do.
-- Keep every string short: a summary of two or three sentences, each other item one or \
-two sentences."""
+- Structure every analysis in four steps, in this order: (1) explain what the chart or \
+table shows; (2) how it affects the company and which KPIs move (name them: value at \
+risk, recovered value, recovered share, write-off value, MOQ surplus, forecast accuracy, \
+days of cover, audit accuracy, overdue receivables, sales value); (3) the recommendation; \
+(4) what the recommendation is based on: the specific figures, chart or table, and \
+business rule that support it, so the reader can check it.
+- Keep every string short: one to three sentences."""
 
 SCHEMA = {
     "type": "object",
     "properties": {
         "summary": {"type": "string"},
         "findings": {"type": "array", "items": {"type": "string"}},
+        "impacts": {"type": "array", "items": {"type": "string"}},
+        "recommendations": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {"text": {"type": "string"}, "basis": {"type": "string"}},
+                "required": ["text", "basis"],
+                "additionalProperties": False,
+            },
+        },
         "risks": {"type": "array", "items": {"type": "string"}},
-        "actions": {"type": "array", "items": {"type": "string"}},
         "charts": {
             "type": "array",
             "items": {
                 "type": "object",
                 "properties": {
                     "id": {"type": "string"},
-                    "insight": {"type": "string"},
-                    "implication": {"type": "string"},
-                    "action": {"type": "string"},
+                    "explain": {"type": "string"},
+                    "impact": {"type": "string"},
+                    "recommendation": {"type": "string"},
+                    "basis": {"type": "string"},
                 },
-                "required": ["id", "insight", "implication", "action"],
+                "required": ["id", "explain", "impact", "recommendation", "basis"],
                 "additionalProperties": False,
             },
         },
     },
-    "required": ["summary", "findings", "risks", "actions", "charts"],
+    "required": ["summary", "findings", "impacts", "recommendations", "risks", "charts"],
     "additionalProperties": False,
 }
 
@@ -116,7 +130,8 @@ def payload(data, filters_text):
 
 
 def analyse(data, filters_text, perspective):
-    """Return {"summary", "findings", "risks", "actions", "charts": {id: {...}}}."""
+    """Return {"summary", "findings", "impacts", "recommendations", "risks",
+    "charts": {id: {"explain", "impact", "recommendation", "basis"}}}."""
     if not available():
         raise AIUnavailable("AI analysis is not set up: add an Anthropic API key.")
     body = payload(data, filters_text)
@@ -128,15 +143,18 @@ def analyse(data, filters_text, perspective):
         return cached
     prompt = (f"Write the analysis for the {label} of Kubbar International. The {label} "
               f"cares most about {PERSPECTIVE_FOCUS[perspective]}.\n\n"
-              f"Return: a summary of the whole dashboard; three to five findings in order "
-              f"of importance to the {label}; one to three risks; two to four concrete "
-              f"actions the {label} can take or ask for in the system; and, for every chart id "
-              f"in the data, an insight (what the chart shows), an implication (what it "
-              f"means for the {label}) and an action.\n\n"
+              f"Return, in this order: (1) a summary that explains what the dashboard shows "
+              f"and three to five findings in order of importance to the {label}; (2) two "
+              f"to four impacts on the company, each naming the KPIs it moves; (3) two to "
+              f"four recommendations the {label} can act on in the system, each with (4) "
+              f"its basis: the figures, chart or table and business rule it rests on; one "
+              f"to three risks; and, for every chart id in the data, the same four steps: "
+              f"explain, impact, recommendation and basis.\n\n"
               f"Dashboard data (JSON):\n{json.dumps(body, ensure_ascii=False)}")
     result = _call(prompt)
     ids = {c["id"] for c in data["charts"]}
-    result["charts"] = {c["id"]: {k: c[k] for k in ("insight", "implication", "action")}
+    result["charts"] = {c["id"]: {k: c[k] for k in ("explain", "impact", "recommendation",
+                                                    "basis")}
                         for c in result.get("charts", []) if c.get("id") in ids}
     result.update(source="ai", model=MODEL, perspective=perspective)
     cache.set(key, result, CACHE_SECONDS)

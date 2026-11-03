@@ -9,8 +9,11 @@
   </details>
   <div class="story-analysis" data-chart="{{ c.id }}">
     <div class="analysis-src"><i class="bi bi-stars"></i><span class="src-label">Automated analysis</span></div>
-    <p class="a-insight">{{ c.view.insight }}</p>
-    <p {% if not c.view.implication %}hidden{% endif %}><strong>For the {{ perspective_label }}:</strong> <span class="a-implication">{{ c.view.implication }}</span></p>
-    <p {% if not c.view.action %}hidden{% endif %}><strong>Next step:</strong> <span class="a-action">{{ c.view.action }}</span></p>
+    <dl class="rem-why mb-0">
+      <dt>What the chart shows</dt><dd class="a-explain">{{ c.view.explain }}</dd>
+      <dt>Impact on the company and KPIs</dt><dd class="a-impact">{{ c.view.impact }}</dd>
+      <dt>Recommendation{% if perspective_label %} for the {{ perspective_label }}{% endif %}</dt><dd class="a-recommendation">{{ c.view.recommendation|default:"No action needed on these numbers." }}</dd>
+      <dt>Based on</dt><dd class="a-basis text-muted">{{ c.view.basis }}</dd>
+    </dl>
   </div>
 </div></div>

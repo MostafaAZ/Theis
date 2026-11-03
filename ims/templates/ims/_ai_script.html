@@ -11,7 +11,6 @@
     const el = root.querySelector(sel);
     if (!el) return;
     el.textContent = text || "";
-    if (el.parentElement.tagName === "P" && el.parentElement !== el) el.parentElement.hidden = !text;
   }
   btn.addEventListener("click", async () => {
     const panel = document.getElementById("briefing"), err = document.getElementById("ai-error");
@@ -27,7 +26,12 @@
       if (!r.ok) throw new Error(data.error || "AI analysis failed.");
       document.getElementById("briefing-summary").textContent = data.summary;
       list("briefing-findings", data.findings);
-      list("briefing-actions", data.actions);
+      list("briefing-impacts", data.impacts);
+      const recs = document.getElementById("briefing-recs");
+      recs.replaceChildren(...data.recommendations.map(r => {
+        const li = document.createElement("li"), d = document.createElement("div"), b = document.createElement("strong");
+        li.textContent = r.text; d.className = "small text-muted mt-1"; b.textContent = "Based on: ";
+        d.append(b, r.basis); li.append(d); return li; }));
       list("briefing-risks", data.risks);
       document.getElementById("briefing-risks-wrap").hidden = !data.risks.length;
       const src = document.getElementById("briefing-src");
@@ -36,9 +40,10 @@
       Object.entries(data.charts || {}).forEach(([id, a]) => {
         const box = document.querySelector('.story-analysis[data-chart="' + id + '"]');
         if (!box) return;
-        setText(box, ".a-insight", a.insight);
-        setText(box, ".a-implication", a.implication);
-        setText(box, ".a-action", a.action);
+        setText(box, ".a-explain", a.explain);
+        setText(box, ".a-impact", a.impact);
+        setText(box, ".a-recommendation", a.recommendation);
+        setText(box, ".a-basis", a.basis);
         const s = box.querySelector(".analysis-src");
         s.classList.add("ai");
         s.querySelector(".src-label").textContent = "AI analysis · Claude";

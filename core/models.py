@@ -354,3 +354,50 @@ class LoginCode(models.Model):
 
     def is_valid(self, minutes=10):
         return not self.used and timezone.now() - self.created_at < timedelta(minutes=minutes)
+
+
+class Reminder(models.Model):
+    """A data-based reminder to plan, forecast, follow up, audit or transfer.
+
+    Each reminder explains itself in four parts: what the data shows, its
+    impact on the company and its KPIs, the recommendation, and what the
+    recommendation is based on."""
+
+    PURCHASE_PLAN = "purchase_plan"
+    FORECAST = "forecast"
+    FOLLOW_UP = "follow_up"
+    AUDIT = "audit"
+    TRANSFER = "transfer"
+    KINDS = [(PURCHASE_PLAN, "Purchase plan"), (FORECAST, "Demand forecast"),
+             (FOLLOW_UP, "Customer follow-up"), (AUDIT, "Inventory audit"),
+             (TRANSFER, "Warehouse transfer")]
+    HIGH, MEDIUM, LOW = "high", "medium", "low"
+    PRIORITIES = [(HIGH, "High"), (MEDIUM, "Medium"), (LOW, "Low")]
+    OPEN, SNOOZED, DONE, RESOLVED = "open", "snoozed", "done", "resolved"
+    STATUSES = [(OPEN, "Open"), (SNOOZED, "Snoozed"), (DONE, "Done"),
+                (RESOLVED, "Resolved by the system")]
+
+    key = models.CharField(max_length=120, unique=True)
+    kind = models.CharField(max_length=15, choices=KINDS)
+    roles = models.JSONField(default=list)
+    title = models.CharField(max_length=200)
+    explain = models.TextField(help_text="What the data shows")
+    impact = models.TextField(help_text="Impact on the company and its KPIs")
+    recommendation = models.TextField()
+    basis = models.TextField(help_text="What the recommendation is based on")
+    url = models.CharField(max_length=255, blank=True)
+    action_label = models.CharField(max_length=60, blank=True)
+    priority = models.CharField(max_length=6, choices=PRIORITIES, default=MEDIUM)
+    status = models.CharField(max_length=10, choices=STATUSES, default=OPEN, db_index=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(default=timezone.now)
+    snoozed_until = models.DateField(null=True, blank=True)
+    done_at = models.DateTimeField(null=True, blank=True)
+    done_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL,
+                                related_name="+")
+
+    class Meta:
+        ordering = ["status", "-updated_at"]
+
+    def __str__(self):
+        return self.title

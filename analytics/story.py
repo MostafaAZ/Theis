@@ -174,7 +174,7 @@ def at_risk_outcomes(f):
         labels, [{"name": "Value", "data": [float(v) for v in values],
                   "colors": [GOOD, GOOD, WARNING, CRITICAL]}], "EGP", insight,
         implication=_per(
-            ceo=f"Every pound in the last two bars is the cost of the forecast-to-MOQ error. "
+            ceo=f"Every pound still at risk or written off is the cost of the forecast-to-MOQ error. "
                 f"The share recovered ({share_saved:.0f}%) is the single best measure of "
                 f"whether the clearance channel is working.",
             cfo=f"{money(at_risk)} at cost is exposed to a write-off if it does not sell "
@@ -410,7 +410,7 @@ def recovered_vs_written_off(f):
         [{"name": "Recovered (B2B sales)", "data": rec, "color": BLUE},
          {"name": "Written off (at cost)", "data": wo, "color": ORANGE}], "EGP", insight,
         implication=_per(
-            ceo="The gap between the two bars is the value the proposed solution saves.",
+            ceo="The gap between recovered and written-off value is what the proposed solution saves.",
             cfo="Write-offs hit profit directly; recovered sales convert stock back to cash.",
             coo="Months with write-offs and no recovery show where the release route was "
                 "too late.",
@@ -529,22 +529,28 @@ def executive_kpis(charts):
 
 
 def summarise(charts, perspective, title="this dashboard"):
-    """Dashboard-level built-in analysis for one perspective."""
+    """Dashboard-level built-in analysis for one perspective, in four steps: what the
+    dashboard shows, its impact on the company and KPIs, the recommendations, and
+    what each recommendation is based on."""
     charts = order_for(charts, perspective)
+    prepare(charts, perspective)
     findings = [c["headline"] + "." for c in charts[:4]]
-    actions = []
+    impacts, recs, seen = [], [], set()
+    for c in charts[:4]:
+        if c["view"]["impact"]:
+            impacts.append(c["view"]["impact"])
     for c in charts:
-        a = c["analysis"]["action"].get(perspective)
-        if a and a not in actions:
-            actions.append(a)
+        text = c["view"]["recommendation"]
+        if text and text not in seen:
+            seen.add(text)
+            recs.append({"text": text, "basis": c["view"]["basis"]})
     lead = charts[0] if charts else None
-    if lead:
-        summary = (f"{lead['headline']}. "
-                   + (lead["analysis"]["implication"].get(perspective) or ""))
-    else:
-        summary = "There is not enough data for these filters."
-    return {"source": "builtin", "perspective": perspective, "summary": summary.strip(),
-            "findings": findings, "actions": actions[:4], "risks": []}
+    summary = (f"This dashboard shows {len(charts)} views of the data. The most important for "
+               f"the {dict(PERSPECTIVES).get(perspective, 'reader')}: {lead['headline']}."
+               if lead else "There is not enough data for these filters.")
+    return {"source": "builtin", "perspective": perspective, "summary": summary,
+            "findings": findings, "impacts": impacts, "recommendations": recs[:4],
+            "risks": []}
 
 
 def default_perspective(user):
@@ -572,13 +578,68 @@ def fmt(v, unit):
     return f"{float(v or 0):,.0f} {unit}".strip()
 
 
+# What each chart's numbers move and where they come from (the "based on" step).
+def _meta(cid):
+    from core.rules import rule_int
+
+    ne, lo, hi = (rule_int("near_expiry_days"), rule_int("price_band_min_pct"),
+                  rule_int("price_band_max_pct"))
+    meta = {
+        "outcomes": (["Recovered share", "Recovered value", "Value at risk", "Write-off value"],
+                     "B2B order lines that were confirmed, dispatched or delivered (at sale "
+                     "value); offers accepted by existing customers (at original price); "
+                     "batches now near expiry, flagged surplus or released (at cost); "
+                     f"write-offs posted in the period (at cost). Near-expiry window: {ne} days."),
+        "expiry": (["Value at risk", "Write-off value"],
+                   "Every batch in stock by expiry month, valued at unit cost; the first six "
+                   f"months fall inside the {ne}-day near-expiry window."),
+        "var_cat": (["Value at risk"], "Near-expiry, surplus and released batches at cost, "
+                    "grouped by product category."),
+        "funnel": (["Recovered share", "Days from near-expiry to action"],
+                   "Expiry alerts, customer offers, surplus flags, COO release decisions and "
+                   f"platform sales recorded per batch; release price band {lo}% to {hi}%."),
+        "moq": (["MOQ surplus (EGP)", "Value at risk", "Plan value"],
+                "Purchase plan lines: recommended quantity from the forecast compared with "
+                "the quantity rounded up to the supplier minimum order quantity (FR-45 to "
+                "FR-47), valued at unit cost."),
+        "rec_wo": (["Recovered value", "Write-off value"],
+                   "Platform sales by order month and write-offs by posting month, last 12 "
+                   "months."),
+        "sales": (["Sales value", "Sell-through", "Forecast accuracy"],
+                  "Imported sales history by month; the trend line is a three-month moving "
+                  "average and the comparison uses the same three months a year earlier."),
+        "receivables": (["Overdue receivables", "Cash recovered"],
+                        "Unpaid platform invoices by days past due date, and credit notes "
+                        "with a refund still due."),
+        "mape": (["Forecast accuracy (MAPE)", "MOQ surplus"],
+                 "Back-tested mean absolute percentage error of each product's forecast; "
+                 f"above {rule_int('mape_low_confidence_pct')}% is flagged low confidence."),
+        "ageing": (["Value at risk", "Write-off value"],
+                   "Stock on hand at cost by remaining shelf life band; under "
+                   f"{rule_int('min_sellable_days')} days stock can no longer be sold."),
+        "accuracy": (["Audit accuracy", "Adjustment value"],
+                     "Closed stock counts: share of lines within the "
+                     f"{rule_int('variance_tolerance_pct')}% variance tolerance."),
+    }
+    return meta.get(cid, (["Sales value"], "The figures in the table under this chart."))
+
+
 def prepare(charts, perspective):
-    """Add what the page needs: the analysis for one perspective and a data table."""
+    """Add what the page needs: the four-step analysis for one perspective and a data
+    table. The steps are: explain the chart, its impact on the company and KPIs, the
+    recommendation, and what the recommendation is based on."""
     for c in charts:
+        if "view" in c and c["view"].get("perspective") == perspective:
+            continue
         a = c["analysis"]
-        c["view"] = {"insight": a["insight"],
-                     "implication": a["implication"].get(perspective, ""),
-                     "action": a["action"].get(perspective, "")}
+        kpis, basis = _meta(c["id"])
+        impact = a["implication"].get(perspective, "")
+        c["kpis"] = kpis
+        c["view"] = {"perspective": perspective, "explain": a["insight"],
+                     "impact": (impact + " " if impact else "")
+                     + "KPIs affected: " + ", ".join(kpis) + ".",
+                     "recommendation": a["action"].get(perspective, ""),
+                     "basis": basis}
         c["rows"] = [[label] + [fmt(s["data"][i], c["unit"]) for s in c["series"]]
                      for i, label in enumerate(c["labels"])]
     return charts

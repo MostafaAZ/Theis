@@ -119,10 +119,15 @@ def dashboard(request):
     user = request.user
     hour = timezone.localtime().hour
     greeting = "Good morning" if hour < 12 else "Good afternoon" if hour < 18 else "Good evening"
+    from core import reminders as rem
+
+    rem.refresh_if_stale()
+    my_reminders = sorted(rem.visible_to(user), key=rem.sort_key)
     briefing = dash.briefing_for(user)
     charts = briefing["charts"] if briefing else dash.charts_for(user)
     return render(request, "ims/dashboard.html", {
-        "briefing": briefing, "analysis": briefing["analysis"] if briefing else None,
+        "briefing": briefing, "reminders": my_reminders[:3],
+        "reminder_count": len(my_reminders), "analysis": briefing["analysis"] if briefing else None,
         "perspective_label": (dict(PERSPECTIVES)[briefing["perspective"]] if briefing
                               else ""),
         "greeting": greeting, "tasks": dash.tasks_for(user), "kpis": dash.kpis_for(user),

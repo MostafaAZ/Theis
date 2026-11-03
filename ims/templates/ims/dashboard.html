@@ -18,9 +18,9 @@
 <div class="card briefing mb-4"><div class="card-body">
   <div class="d-flex flex-wrap align-items-center gap-2 mb-2"><span class="analysis-src"><i class="bi bi-stars"></i>Executive briefing · written for the {{ perspective_label }}</span>
   <a href="/analytics/?d=executive" class="ms-auto btn btn-sm btn-primary"><i class="bi bi-bar-chart-line me-1"></i>Open the full briefing</a></div>
-  <p class="summary mb-2">{{ analysis.summary }}</p>
-  <div class="row g-3"><div class="col-lg-6"><h3>Key findings</h3><ul>{% for x in analysis.findings|slice:":3" %}<li>{{ x }}</li>{% endfor %}</ul></div>
-  <div class="col-lg-6"><h3>Recommended actions</h3><ul>{% for x in analysis.actions|slice:":3" %}<li>{{ x }}</li>{% endfor %}</ul></div></div>
+  <div class="row g-3"><div class="col-lg-6"><h3>What the data shows</h3><p class="summary mb-1">{{ analysis.summary }}</p><ul>{% for x in analysis.findings|slice:":3" %}<li>{{ x }}</li>{% endfor %}</ul>
+  <h3>Impact on the company and KPIs</h3><ul>{% for x in analysis.impacts|slice:":2" %}<li>{{ x }}</li>{% endfor %}</ul></div>
+  <div class="col-lg-6"><h3>Recommendations and what they are based on</h3><ol class="recs">{% for x in analysis.recommendations|slice:":3" %}<li>{{ x.text }}<div class="small text-muted mt-1"><strong>Based on:</strong> {{ x.basis }}</div></li>{% endfor %}</ol></div></div>
 </div></div>
 {% endif %}
 <div class="row g-3">
@@ -44,6 +44,10 @@
   </div>
 </div>
 
+{% if reminders %}
+<div class="section-title d-flex align-items-center">Reminders<a href="/reminders/" class="ms-auto small fw-normal text-none">See all {{ reminder_count }}</a></div>
+<div class="row g-3">{% for r in reminders %}<div class="col-xl-4">{% include "ims/_reminder.html" with compact=True %}</div>{% endfor %}</div>
+{% endif %}
 <div class="section-title">Quick actions</div>
 <div class="row g-3">
 {% for label, desc, icon, url, roles in quick %}

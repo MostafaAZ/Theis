@@ -43,6 +43,22 @@ DEFAULT_RULES = {
     "exception_reservation_hours": ("Expiring reservation alert", 12, "hours", 1, 48,
                                     "Orders whose stock hold ends sooner join the exception "
                                     "queue."),
+    "plan_cycle_days": ("Purchase plan cycle", 30, "days", 7, 180,
+                        "Procurement is reminded when no purchase plan was prepared in this "
+                        "many days."),
+    "forecast_cycle_days": ("Forecast refresh cycle", 30, "days", 7, 180,
+                            "Procurement is reminded when the latest forecast is older."),
+    "offer_followup_days": ("Customer offer follow-up", 5, "days", 1, 60,
+                            "Offers to existing customers still pending after this many days "
+                            "trigger a follow-up reminder."),
+    "lapsed_customer_days": ("Lapsed customer follow-up", 90, "days", 30, 365,
+                             "Regular customers who have not bought for this long trigger a "
+                             "follow-up reminder."),
+    "audit_interval_days": ("Warehouse audit interval", 90, "days", 7, 365,
+                            "A warehouse not counted for this long triggers an audit "
+                            "reminder."),
+    "reminder_snooze_days": ("Reminder snooze", 7, "days", 1, 60,
+                             "How long 'Remind me later' hides a reminder."),
     "max_failed_logins": ("Failed logins before lock", 5, "attempts", 3, 10,
                           "Accounts lock after this many consecutive failures."),
 }

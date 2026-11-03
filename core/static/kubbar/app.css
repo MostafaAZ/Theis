@@ -215,3 +215,14 @@ a.kpi:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(16,24,40,
 .briefing .risk li::marker { color: var(--bad); }
 .perspective-switch .btn { font-size: .82rem; }
 .ai-loading { opacity: .55; pointer-events: none; }
+
+/* ---- Reminders ----------------------------------------------------------- */
+.reminder { border: 1px solid var(--line); box-shadow: var(--shadow); border-left: 4px solid var(--info); }
+.reminder.prio-high { border-left-color: var(--bad); }
+.reminder.prio-medium { border-left-color: var(--warn); }
+.rem-kind { background: var(--brand-soft); color: var(--brand); font-weight: 600; }
+.rem-title { font-weight: 650; font-size: 1.02rem; color: var(--ink); margin-bottom: .5rem; }
+.rem-why dt { font-size: .74rem; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-3); font-weight: 650; margin-top: .45rem; }
+.rem-why dd { margin: 0; color: var(--ink-2); font-size: .9rem; line-height: 1.5; }
+.briefing ol.recs { padding-left: 1.2rem; margin: 0; }
+.briefing ol.recs li { margin-bottom: .6rem; color: var(--ink-2); }

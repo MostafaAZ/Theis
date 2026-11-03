@@ -111,16 +111,27 @@ def _excel_analysis(ws, row, analysis, charts):
         row += 1
 
     line(f"{_source(analysis)} ({analysis.get('perspective', '').upper()})", bold=True)
+    line("1. What the dashboard shows", bold=True)
     line(analysis["summary"])
-    for head, key in (("Key findings", "findings"), ("Risks", "risks"),
-                      ("Recommended actions", "actions")):
-        if analysis.get(key):
-            line(head, bold=True)
-            for x in analysis[key]:
-                line(f"• {x}")
+    for x in analysis.get("findings", []):
+        line(f"• {x}")
+    line("2. Impact on the company and KPIs", bold=True)
+    for x in analysis.get("impacts", []):
+        line(f"• {x}")
+    line("3. Recommendations and 4. what they are based on", bold=True)
+    for x in analysis.get("recommendations", []):
+        line(f"• {x['text']} Based on: {x['basis']}")
+    if analysis.get("risks"):
+        line("Risks", bold=True)
+        for x in analysis["risks"]:
+            line(f"• {x}")
     for c in charts:
         line(c["headline"], bold=True)
-        line(c["view"]["insight"])
+        v = c["view"]
+        line(f"What the chart shows: {v['explain']}")
+        line(f"Impact on the company and KPIs: {v['impact']}")
+        line(f"Recommendation: {v['recommendation']}")
+        line(f"Based on: {v['basis']}")
     return row
 
 
@@ -128,13 +139,20 @@ def _pdf_analysis(analysis, styles):
     from reportlab.lib.units import mm
     from reportlab.platypus import Paragraph, Spacer
 
+    body = styles["BodyText"]
     out = [Paragraph(f"{_source(analysis)}", styles["Heading2"]),
-           Paragraph(_esc(analysis["summary"]), styles["BodyText"])]
-    for head, key in (("Key findings", "findings"), ("Risks", "risks"),
-                      ("Recommended actions", "actions")):
-        if analysis.get(key):
-            out.append(Paragraph(head, styles["Heading4"]))
-            out += [Paragraph("• " + _esc(x), styles["BodyText"]) for x in analysis[key]]
+           Paragraph("1. What the dashboard shows", styles["Heading4"]),
+           Paragraph(_esc(analysis["summary"]), body)]
+    out += [Paragraph("• " + _esc(x), body) for x in analysis.get("findings", [])]
+    out.append(Paragraph("2. Impact on the company and KPIs", styles["Heading4"]))
+    out += [Paragraph("• " + _esc(x), body) for x in analysis.get("impacts", [])]
+    out.append(Paragraph("3. Recommendations and 4. what they are based on",
+                         styles["Heading4"]))
+    out += [Paragraph(f"• {_esc(x['text'])} <i>Based on: {_esc(x['basis'])}</i>", body)
+            for x in analysis.get("recommendations", [])]
+    if analysis.get("risks"):
+        out.append(Paragraph("Risks", styles["Heading4"]))
+        out += [Paragraph("• " + _esc(x), body) for x in analysis["risks"]]
     out.append(Spacer(1, 5 * mm))
     return out
 
@@ -215,9 +233,11 @@ def _pdf_chart(c, styles):
     body = styles["BodyText"]
     parts = [Paragraph(_esc(c["headline"]), styles["Heading3"]),
              Paragraph(_esc(c["subtitle"]), styles["Italic"]), d,
-             Paragraph(_esc(c["view"]["insight"]), body)]
-    if c["view"].get("implication"):
-        parts.append(Paragraph("<b>What it means:</b> " + _esc(c["view"]["implication"]), body))
-    if c["view"].get("action"):
-        parts.append(Paragraph("<b>Next step:</b> " + _esc(c["view"]["action"]), body))
+             Paragraph("<b>What the chart shows:</b> " + _esc(c["view"]["explain"]), body),
+             Paragraph("<b>Impact on the company and KPIs:</b> " + _esc(c["view"]["impact"]),
+                       body)]
+    if c["view"].get("recommendation"):
+        parts.append(Paragraph("<b>Recommendation:</b> " + _esc(c["view"]["recommendation"]),
+                               body))
+    parts.append(Paragraph("<b>Based on:</b> " + _esc(c["view"]["basis"]), body))
     return [KeepTogether(parts), Spacer(1, 6 * mm)]

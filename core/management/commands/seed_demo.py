@@ -144,6 +144,8 @@ class Command(BaseCommand):
         with transaction.atomic():
             self.history_for_analytics()
         inv.run_expiry_scan(triggered_by="seed")
+        from core import reminders
+        reminders.generate()
         self.stdout.write(self.style.SUCCESS(
             f"Demo data loaded. Internal users and buyers share the password '{PASSWORD}'."))
 
@@ -178,6 +180,29 @@ class Command(BaseCommand):
                 write_off_value=p.unit_cost * qty, disposal_cost=Decimal("1500.00") + qty,
                 disposal_date=(posted + timedelta(days=7)).date(),
                 certificate_ref=f"EEAA-DC-{lot[-3:]}")
+        # Recurring work that is now due, so the reminders have something to say.
+        from core.models import BinLocation
+        from inventory.models import CustomerOffer
+        from planning.models import Forecast, PurchasePlan, SalesRecord
+
+        Forecast.objects.update(created_at=now - timedelta(days=34))
+        PurchasePlan.objects.filter(status=PurchasePlan.APPROVED).update(
+            created_at=now - timedelta(days=33))
+        CustomerOffer.objects.filter(outcome=CustomerOffer.PENDING).update(
+            offered_at=now - timedelta(days=8))
+        latest = SalesRecord.objects.order_by("-period").values_list("period", flat=True)[0]
+        SalesRecord.objects.filter(customer_name="Misr Vet Distributors",
+                                   period__gt=latest - timedelta(days=125)).delete()
+        released = Batch.objects.filter(status=BatchStatus.RELEASED,
+                                        storage_condition="ambient").first()
+        alex = BinLocation.objects.filter(warehouse__name="Alexandria Warehouse",
+                                          storage_type="ambient").first()
+        if released and alex:
+            src = released.stock.filter(quantity__gt=60).first()
+            if src:
+                src.quantity -= 40
+                src.save()
+                BatchStock.objects.create(batch=released, location=alex, quantity=40)
         # Spread the earlier platform sales over the last few months.
         for i, order in enumerate(PlatformOrder.objects.filter(
                 status__in=[PlatformOrder.DELIVERED, PlatformOrder.DISPATCHED]).order_by("pk")):
