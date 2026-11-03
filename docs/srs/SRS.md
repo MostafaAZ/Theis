@@ -984,20 +984,21 @@ requirements carry the most weight here.
 # 8. Use Case Diagram
 
 Exhibit \#5 presents the use case diagram for the proposed solution. It
-shows forty-three of the forty-four use cases of Modules 1 to 10 across
-two system boundaries. The IMS boundary holds eight zones, arranged as
-horizontal bands: Shared Access, Demand Forecasting and Purchase
-Planning, Sales and Inventory Analytics, Expiry Monitoring and Surplus
-Release, Inventory and Batch Control, Warehouse Audit, Disposal and
-Write-Off, and System Administration. The E-Commerce Platform boundary
-holds three: Buyer Registration and Verification, Catalogue and
-Ordering, and Payment and Fulfilment. The eleven roles from Exhibit \#2
-sit outside the boundaries. Two further actors complete the diagram. The
-System Scheduler runs the daily expiry scan, and Internal User stands
-for any of the ten internal roles, which keeps UC-01, UC-03, and UC-06
-from carrying ten association lines each.
+shows fifty-six of the fifty-seven use cases across two system
+boundaries. The IMS boundary holds eight zones, arranged as horizontal
+bands: Shared Access, Demand Forecasting and Purchase Planning, Sales
+and Inventory Analytics, Expiry Monitoring and Surplus Release,
+Inventory and Batch Control, Warehouse Audit, Disposal and Write-Off,
+and System Administration. The E-Commerce Platform boundary holds four:
+Buyer Registration and Verification, Catalogue and Ordering, Payment and
+Fulfilment, and Order Exceptions and Returns. The eleven roles from
+Exhibit \#2 sit outside the boundaries. Two further actors complete the
+diagram. The System Scheduler runs the daily expiry scan and generates
+reminders, and Internal User stands for any of the ten internal roles,
+which keeps UC-01, UC-03, UC-06, and UC-56 from carrying ten association
+lines each.
 
-<img src="figures/image3.png" style="width:6.5in;height:8.35903in" />
+<img src="figures/image3.png" style="width:6.5in;height:7.93798in" />
 
 *Exhibit \#5: Use Case Diagram - IMS and B2B E-Commerce Platform*
 
@@ -1026,21 +1027,22 @@ published to the platform (UC-18), and ordered by a verified buyer
 (UC-34). Disposal (UC-21 and UC-22) is still present, but it becomes the
 last route rather than the only one.
 
-The nine use cases of Module 11 (UC-45 to UC-53) were specified after
-Exhibit \#5 was drawn, and Section 9 covers them in full. They form a
-fourth zone inside the E-Commerce Platform boundary, Order Exceptions
-and Returns, with three relationships. UC-46 (Cancel Order Lines) and
-UC-51 (Inspect Returned Stock) each include UC-52 (Issue Credit Note and
-Record Refund) when value is returned to a buyer, and UC-53 (Print
-Packing Slip) extends UC-08 (Dispatch Order). UC-54 (View Executive
-Briefing) and UC-55 (Request AI Analysis) were added to the Sales and
-Inventory Analytics zone on the same basis: UC-28 (Export Report) and
-UC-55 both extend UC-54. UC-56 (Review and Act on Reminders) sits in the
-Shared Access zone with Internal User, because every internal role
-receives reminders, and UC-57 (Generate Reminders) with the System
-Scheduler. The new zone does not change the main path. It adds the route
-back along it, so that a batch sold through the platform can still be
-traced if it returns.
+The nine use cases of Module 11 (UC-45 to UC-53) form the fourth
+platform zone, Order Exceptions and Returns. Inside it, UC-46 (Cancel
+Order Lines) and UC-51 (Inspect Returned Stock) each include UC-52
+(Issue Credit Note and Record Refund) when value is returned to a buyer.
+Two further relationships cross the system boundaries: UC-53 (Print
+Packing Slip) extends UC-08 (Dispatch Order), and UC-51 includes UC-21
+(Request Write-Off and Disposal). The diagram records these two in its
+notes rather than as lines, so that they do not cut across every IMS
+zone. UC-54 (View Executive Briefing) and UC-55 (Request AI Analysis)
+sit in the Sales and Inventory Analytics zone, where UC-28 (Export
+Report) and UC-55 both extend UC-54. UC-56 (Review and Act on Reminders)
+sits in the Shared Access zone with Internal User, because every
+internal role receives reminders, and UC-57 (Generate Reminders) with
+the System Scheduler. The new zone does not change the main path. It
+adds the route back along it, so that a batch sold through the platform
+can still be traced if it returns.
 
 ## 9. Use Cases
 
@@ -3155,7 +3157,7 @@ hand-off between people and the proposed system is visible.
 
 ## 10.1 Demand Forecasting and Purchase Planning
 
-<img src="figures/image4.png" style="width:6.5in;height:1.45694in" />
+<img src="figures/image4.png" style="width:6.5in;height:1.141in" />
 
 *Exhibit \#7: Activity Diagram, Demand Forecasting and Purchase
 Planning*
@@ -3179,9 +3181,17 @@ General Manager approves it. The General Manager can approve, return, or
 reject the plan. Only an approved plan becomes a purchase order in Odoo.
 The diagram supports FR-41 to FR-49 and UC-23 to UC-26.
 
+The flow no longer waits for someone to remember it. It starts with the
+daily check (UC-57): when the purchase plan cycle is due, a product's
+stock cover falls below its lead time plus safety stock, or the forecast
+is out of date, the system raises a reminder that states its basis, and
+the Procurement Officer starts from that evidence. A plan the General
+Manager returns raises its own reminder, so a returned plan cannot sit
+unrevised while stock runs down. These steps support FR-108 to FR-110.
+
 ## 10.2 Warehouse Audit
 
-<img src="figures/image5.png" style="width:6.5in;height:2.43472in" />
+<img src="figures/image5.png" style="width:6.5in;height:1.81031in" />
 
 *Exhibit \#8: Activity Diagram, Warehouse Audit*
 
@@ -3204,9 +3214,15 @@ forced correction. The count closes only once every variance is
 explained, and the accuracy rate feeds the Audit Accuracy dashboard. The
 diagram supports FR-18 to FR-23 and UC-10 to UC-13.
 
+The count itself now has a trigger. The daily check raises an audit
+reminder when a warehouse has not been counted within 90 days or its
+last count fell below 95% accuracy, so the record is tested before it
+drifts rather than after an alert proves it wrong. This step supports
+FR-112.
+
 ## 10.3 Near-Expiry Products
 
-<img src="figures/image6.png" style="width:6.5in;height:1.98472in" />
+<img src="figures/image6.png" style="width:6.5in;height:1.81908in" />
 
 *Exhibit \#9: Activity Diagram, Near-Expiry Products*
 
@@ -3225,6 +3241,13 @@ of the original, and the system rejects any price outside that band.
 Before publishing, the system confirms that the product is registered in
 the market and has more than 30 days of shelf life left, which is the
 condition the Legal Feasibility assessment set for selling online.
+
+An offer to existing customers is no longer open-ended. If a customer
+has not answered within five days, the system raises a follow-up
+reminder, and the Sales Representative records the answer before the
+route continues. Every day of silence uses shelf life the clearance
+channel needs, so the reminder protects the 30-day margin on which
+listing depends. This step supports FR-111.
 
 Disposal remains in the diagram, but as the last branch rather than the
 only one. A listing that does not sell before 30 days remain is
