@@ -91,6 +91,8 @@ Verification](#buyer-registration-and-verification)
 
 [7.6 Security](#security)
 
+[7.7 Compatibility](#compatibility)
+
 [8. Use Case Diagram](#use-case-diagram)
 
 [9. Use Cases](#use-cases)
@@ -526,6 +528,14 @@ Section 4.
 - Credit notes against the original invoice, set off or refunded by bank
   transfer, and lot-level packing slips.
 
+**Training and Documentation**
+
+- A user guide for each role, covering the screens and the use cases in
+  Section 9 that the role performs.
+
+- A 2-hour orientation for each internal role before go-live, consistent
+  with NFR-07, and help pages on the platform for buyers.
+
 ## 5.2 Out of Scope
 
 Explicit exclusions protect the 12-week schedule and keep the system
@@ -578,6 +588,16 @@ from drifting into functions that Odoo already performs.
   the plan the General Manager approves, and the system reminds
   Procurement when the data shows that the plan is due.
 
+- **Native Mobile Apps.** The platform is a responsive web application
+  that works on a phone screen (NFR-08). Native iOS and Android apps are
+  excluded: buyers reach the same features through the phone's browser,
+  with no app to install or maintain.
+
+- **Offline Operation.** Both applications need an internet connection,
+  and an offline mode is excluded. A batch reserved or sold offline
+  could be sold twice before the record catches up, which NFR-09
+  forbids.
+
 ## 5.3 Release Phasing
 
 The proposed solution is delivered in two releases. The prototype proves
@@ -615,6 +635,14 @@ release connects it to Odoo.
 
 - Trade buyers in Egypt can provide the owner's national ID, commercial
   register, tax card, and trading licence in digital form.
+
+- Kubbar's team exports the data from Odoo and checks it before import.
+  The system imports and validates those files (FR-41, FR-42), but
+  manual entry of history that Odoo does not hold remains Kubbar's
+  responsibility.
+
+- Kubbar provides the domain names and the TLS certificates for both
+  applications through its hosting provider, as NFR-22 requires.
 
 ### 5.5 Dependencies
 
@@ -918,10 +946,10 @@ Each leaves the work with the role that holds the authority in Exhibit
 
 The non-functional requirements are set for Kubbar's scale and risk
 profile, and each one carries a measurable target. They are organized
-under the FURPS framework, with Security as an additional category. The
-Risk Assessment found that the highest risks cluster around data
-integrity rather than technology, so the reliability and security
-requirements carry the most weight here.
+under the FURPS framework, with Security and Compatibility as additional
+categories. The Risk Assessment found that the highest risks cluster
+around data integrity rather than technology, so the reliability and
+security requirements carry the most weight here.
 
 ## 7.1 Functionality
 
@@ -980,6 +1008,14 @@ requirements carry the most weight here.
 | NFR-26 | Buyer data processing shall comply with the PDPL: consent recorded at registration, a stated purpose, and deletion of documents for rejected applications after 90 days.                                                                                                                     |
 | NFR-27 | Approvals, price changes, verification decisions, adjustments, and write-offs shall be logged with user, time, old value, and new value, and the log shall not be editable by any role.                                                                                                      |
 | NFR-28 | AI analysis shall send only aggregated dashboard figures (totals, chart series, and short table extracts) to the external AI service, never buyer documents or personal data. The service key shall be stored outside the source code, and every request shall be logged in the audit trail. |
+| NFR-29 | Before go-live, both applications shall pass a vulnerability scan and a test against the OWASP Top 10, and every high or critical finding shall be fixed and retested before release.                                                                                                        |
+
+## 7.7 Compatibility
+
+| ID     | Requirement                                                                                                                                                                                                                |
+|--------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| NFR-30 | Both applications shall work on the current and previous major versions of Google Chrome, Microsoft Edge, Apple Safari, and Mozilla Firefox. Other browsers are not supported.                                             |
+| NFR-31 | Both applications shall run on any desktop, laptop, tablet, or phone with a supported browser and an internet connection, with no software to install on the client side and no change to Kubbar's own servers or network. |
 
 # 8. Use Case Diagram
 
@@ -3446,7 +3482,7 @@ request but no decision delegated to it.
 
 The specification is deliberately bounded. It covers fifty-seven use
 cases for eleven user roles, one hundred and fourteen functional
-requirements, and twenty-eight non-functional requirements, and it stops
+requirements, and thirty-one non-functional requirements, and it stops
 short of accounting, field sales, card payments, and machine learning.
 Authority stays where the organization already places it: the General
 Manager approves purchasing and disposal, the COO controls release and
