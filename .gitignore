@@ -1,7 +1,10 @@
 .venv/
 __pycache__/
 *.pyc
-db.sqlite3
+*.sqlite3
 media/
 staticfiles/
 .env
+
+# Anthropic API key for AI analysis (never commit it)
+anthropic_api_key.txt

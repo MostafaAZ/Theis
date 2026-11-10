@@ -1,0 +1,9 @@
+{% extends "b2b/account/_layout.html" %}{% load b2b %}
+{% block account %}
+<div class="d-flex mb-3"><h1 class="h4">{% t "Messages" %}</h1><a href="/contact/" class="btn btn-b2b ms-auto"><i class="bi bi-plus-lg me-1"></i>{% t "Contact us" %}</a></div>
+{% for m in items %}<div class="card mb-3"><div class="card-body">
+  <div class="d-flex"><strong>{{ m.get_topic_display }}</strong><span class="ms-auto small text-muted">{{ m.created_at|date:"d M Y H:i" }}</span></div>
+  <p class="mb-2" style="white-space:pre-line">{{ m.message }}</p>
+  {% if m.reply %}<div class="p-3 rounded-3" style="background:var(--b2b-soft)"><div class="small fw-semibold text-b2b mb-1"><i class="bi bi-reply me-1"></i>Kubbar · {{ m.replied_at|date:"d M Y H:i" }}</div><div style="white-space:pre-line">{{ m.reply }}</div></div>{% else %}<span class="badge text-bg-warning">Waiting for reply</span>{% endif %}
+</div></div>{% empty %}<div class="empty-state bg-white border rounded-3"><i class="bi bi-chat-dots"></i>—</div>{% endfor %}
+{% endblock %}

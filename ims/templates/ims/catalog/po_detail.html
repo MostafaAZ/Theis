@@ -1,0 +1,14 @@
+{% extends "ims/base.html" %}{% load kubbar %}
+{% block content %}
+<div class="page-actions"><div><h1 class="h4 mb-0">{{ po.number }} <span class="badge {{ po.status|status_class }} align-middle">{{ po.get_status_display }}</span></h1>
+<div class="text-muted small">{{ po.supplier }} · ordered {{ po.order_date }} · expected {{ po.expected_date|default:"–" }}{% if po.plan %} · from plan <a href="/plans/{{ po.plan.pk }}/">{{ po.plan }}</a>{% endif %}</div></div>
+<div class="ms-auto d-flex gap-2">{% if can_inspect and po.status == 'open' %}<a href="/inspections/?purchase_order={{ po.pk }}" class="btn btn-primary"><i class="bi bi-clipboard-plus me-1"></i>Inspect delivery</a>{% endif %}
+{% if can_edit and po.status != 'closed' %}<form method="post">{% csrf_token %}<button name="close" value="1" class="btn btn-outline-secondary" onclick="return confirm('Close this purchase order?')">Close PO</button></form>{% endif %}</div></div>
+<div class="table-wrap"><table class="table"><thead><tr><th>Product</th><th class="num">Ordered</th><th class="num">Received</th><th class="num">Open</th><th class="num">Value at cost (EGP)</th></tr></thead><tbody>
+{% for l in lines %}<tr><td><a href="/products/{{ l.product.pk }}/">{{ l.product.name }}</a></td><td class="num">{{ l.quantity }}</td><td class="num">{{ l.quantity_received }}</td><td class="num">{{ l.open_quantity }}</td><td class="num">{{ l.value|egp }}</td></tr>{% endfor %}
+<tr class="fw-semibold"><td colspan="4">Total</td><td class="num">{{ total|egp }}</td></tr></tbody></table></div>
+<div class="section-title">Batches received against this order</div>
+<div class="table-wrap"><table class="table"><thead><tr><th>Product</th><th>Lot</th><th>Expiry</th><th class="num">Approved</th><th class="num">Rejected</th><th>Status</th></tr></thead><tbody>
+{% for b in batches %}<tr><td>{{ b.product.name }}</td><td><a href="/stock/batch/{{ b.pk }}/">{{ b.lot_number }}</a></td><td>{{ b.expiry_date }}</td><td class="num">{{ b.quantity_approved }}</td><td class="num">{{ b.quantity_rejected }}</td><td><span class="badge {{ b.status|status_class }}">{{ b.get_status_display }}</span></td></tr>
+{% empty %}<tr><td colspan="6" class="text-muted">Nothing received yet.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

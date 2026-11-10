@@ -1,0 +1,10 @@
+{% extends "ims/base.html" %}
+{% block title %}Reminders{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3"><h1 class="h4 mb-0">Reminders</h1>
+<form method="post" class="ms-auto">{% csrf_token %}<button name="refresh" class="btn btn-sm btn-outline-primary"><i class="bi bi-arrow-clockwise me-1"></i>Check the data now</button></form></div>
+<p class="text-muted">The system checks the data every day and reminds you of recurring work that is due: the purchase plan, the demand forecast, customer follow-up, warehouse audits and transfers. Each reminder says what it is based on.</p>
+<ul class="nav nav-pills mb-3 small"><li class="nav-item"><a class="nav-link {% if not kind %}active{% endif %}" href="?">All</a></li>{% for code, label in kinds %}<li class="nav-item"><a class="nav-link {% if kind == code %}active{% endif %}" href="?kind={{ code }}">{{ label }}</a></li>{% endfor %}</ul>
+{% for r in items %}{% include "ims/_reminder.html" with compact=False %}{% empty %}
+<div class="card"><div class="empty-state"><i class="bi bi-check2-circle"></i>Nothing is due. The data does not call for any reminder right now.</div></div>{% endfor %}
+{% endblock %}

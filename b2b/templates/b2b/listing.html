@@ -1,24 +1,39 @@
 {% extends "b2b/base.html" %}{% load b2b kubbar %}
 {% block title %}{{ listing.batch.product.name }}{% endblock %}
 {% block content %}
-<a href="/catalogue/" class="small">← {% t "Catalogue" %}</a>
-<div class="row g-4 mt-1"><div class="col-lg-7"><div class="card"><div class="card-body">
-<div class="small text-muted">{{ listing.batch.product.category }}</div>
-<h1 class="h4">{% if LANG == 'ar' and listing.batch.product.name_ar %}{{ listing.batch.product.name_ar }}{% else %}{{ listing.batch.product.name }}{% endif %}</h1>
-<table class="table table-sm mb-0"><tbody>
-<tr><th>{% t "Product" %}</th><td>{{ listing.batch.product.name }} ({{ listing.batch.product.sku }})</td></tr>
-<tr><th>{% t "Lot number" %}</th><td>{{ listing.batch.lot_number }}</td></tr>
-<tr><th>{% t "Expiry date" %}</th><td>{{ listing.batch.expiry_date }}</td></tr>
-<tr><th>{% t "Remaining shelf life" %}</th><td><span class="badge {{ listing.batch.days_to_expiry|expiry_class }}">{{ listing.batch.days_to_expiry }} {% t "days" %}</span></td></tr>
-<tr><th>{% t "Storage" %}</th><td>{% t listing.batch.get_storage_condition_display %}</td></tr>
-<tr><th>{% t "Available" %}</th><td>{{ listing.available_qty }} {{ listing.batch.product.unit }}</td></tr>
-<tr><th>{% t "Unit" %}</th><td>{{ listing.batch.product.unit }}</td></tr>
-{% if show_prices %}<tr><th>{% t "Original price" %}</th><td class="was">{{ listing.original_price|egp }} EGP</td></tr>
-<tr><th>{% t "Clearance price" %}</th><td class="fw-bold text-b2b fs-5">{{ listing.clearance_price|egp }} EGP <span class="badge text-bg-success">−{{ listing.discount_pct }}%</span></td></tr>{% endif %}
-</tbody></table></div></div></div>
-<div class="col-lg-5">{% if not show_prices %}<div class="alert alert-info">{% t "Prices and ordering are available to verified buyers only." %}</div>
-{% elif reason %}<div class="alert alert-warning">{% t reason %}</div>
-{% else %}<div class="card"><div class="card-body"><form method="post">{% csrf_token %}<label class="form-label">{% t "Quantity" %}</label>
-<input type="number" name="quantity" min="1" max="{{ listing.available_qty }}" value="1" class="form-control mb-3" required>
-<button class="btn btn-b2b w-100">{% t "Add to Cart" %}</button></form></div></div>{% endif %}</div></div>
+<nav class="small mb-3"><a href="/catalogue/">{% t "Catalogue" %}</a> / <a href="/catalogue/?category={{ listing.batch.product.category.pk }}">{% t listing.batch.product.category.name %}</a> / <span class="text-muted">{{ listing.batch.product.name }}</span></nav>
+<div class="row g-4">
+  <div class="col-lg-5"><div class="bg-white border rounded-4 p-3 position-relative"><img src="/products/{{ listing.batch.product.pk }}/image/" class="prod-img" alt="{{ listing.batch.product.name }}">{% if listing.batch.is_cold_chain %}<span class="badge text-bg-info position-absolute top-0 m-3"><i class="bi bi-snow"></i> {% t "Cold chain" %}</span>{% endif %}</div></div>
+  <div class="col-lg-4">
+    <div class="text-muted small">{% t listing.batch.product.category.name %} · {{ listing.batch.product.sku }}</div>
+    <h1 class="h3">{% if LANG == 'ar' and listing.batch.product.name_ar %}{{ listing.batch.product.name_ar }}{% else %}{{ listing.batch.product.name }}{% endif %}</h1>
+    {% if listing.batch.product.description %}<p>{{ listing.batch.product.description }}</p>{% endif %}
+    <div class="shelf mb-3"><div class="d-flex small"><strong>{% t "Expires in" %} {{ listing.batch.days_to_expiry }} {% t "days" %}</strong><span class="ms-auto text-muted">{{ listing.batch.expiry_date|date:"d M Y" }}</span></div><div class="bar"><span style="width:{{ listing.shelf_pct }}%;background:{{ listing.shelf_colour }}"></span></div></div>
+    <table class="w-100 spec"><tbody>
+      <tr><td>{% t "Lot number" %}</td><td class="fw-semibold">{{ listing.batch.lot_number }}</td></tr>
+      <tr><td>{% t "Expiry date" %}</td><td>{{ listing.batch.expiry_date }}</td></tr>
+      <tr><td>{% t "Storage" %}</td><td>{% t listing.batch.get_storage_condition_display %}</td></tr>
+      <tr><td>{% t "Available" %}</td><td>{{ listing.available_qty }} {{ listing.batch.product.unit }}</td></tr>
+      <tr><td>{% t "Market" %}</td><td>{{ listing.market }} · {{ listing.batch.product.category.authority }}</td></tr>
+    </tbody></table>
+  </div>
+  <div class="col-lg-3"><div class="buy-box">
+    {% if show_prices %}
+      <div class="was">{{ listing.original_price|egp }} EGP</div>
+      <div class="price fs-2">{{ listing.clearance_price|egp }} <small class="fs-6 text-muted">EGP / {{ listing.batch.product.unit }}</small></div>
+      <div class="save mb-3">{% t "You save" %} {{ listing.saving|egp }} EGP (−{{ listing.discount_pct }}%)</div>
+      {% if reason %}<div class="alert alert-warning small mb-0">{% t reason %}</div>
+      {% else %}<form method="post">{% csrf_token %}
+        <label class="form-label">{% t "Quantity" %}</label>
+        <div class="qty-stepper mb-3"><button type="button" data-step="-1" data-target="qty">−</button><input id="qty" name="quantity" type="number" min="1" max="{{ listing.available_qty }}" value="1"><button type="button" data-step="1" data-target="qty">+</button></div>
+        <button class="btn btn-b2b w-100 mb-2" name="go_cart" value="1"><i class="bi bi-cart-plus me-1"></i>{% t "Add to Cart" %}</button>
+        {% if in_cart %}<a href="/cart/" class="btn btn-outline-b2b w-100 btn-sm">{% t "Cart" %} ({{ in_cart }})</a>{% endif %}
+      </form>{% endif %}
+    {% else %}<div class="lock-price mb-3"><i class="bi bi-lock me-1"></i>{% t "Prices and ordering are available to verified buyers only." %}</div>
+      {% if not user.is_authenticated %}<a href="/login/?next={{ request.path }}" class="btn btn-b2b w-100 mb-2">{% t "Log In" %}</a><a href="/register/" class="btn btn-outline-b2b w-100">{% t "Register" %}</a>{% endif %}{% endif %}
+    <hr><div class="small text-muted"><i class="bi bi-shield-check me-1 text-success"></i>{% t "Registered products" %}<br><i class="bi bi-upc-scan me-1"></i>{% t "Full batch traceability" %}</div>
+  </div></div>
+</div>
+{% if similar %}<div class="section-head"><h2>{% t "Similar offers" %}</h2></div>
+<div class="row g-3">{% for l in similar %}<div class="col-6 col-md-3">{% include "b2b/_card.html" %}</div>{% endfor %}</div>{% endif %}
 {% endblock %}

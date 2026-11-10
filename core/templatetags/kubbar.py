@@ -58,6 +58,9 @@ def status_class(status):
         "returned": "text-bg-info", "disposed": "text-bg-dark", "draft": "text-bg-light",
         "suspended": "text-bg-danger", "resubmission": "text-bg-info",
         "pending_email": "text-bg-light", "resubmit": "text-bg-info",
+        "requested": "text-bg-warning", "received": "text-bg-info", "completed": "text-bg-success",
+        "settled": "text-bg-success", "refund_due": "text-bg-warning",
+        "refunded": "text-bg-success",
     }.get(str(status), "text-bg-light")
 
 

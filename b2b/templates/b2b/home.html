@@ -1,19 +1,44 @@
-{% extends "b2b/base.html" %}{% load b2b %}
+{% extends "b2b/base.html" %}{% load b2b kubbar %}
 {% block content %}
-<div class="p-4 p-md-5 mb-4 bg-white rounded-3 border">
-  <h1 class="display-6 fw-bold text-b2b">{% t "Kubbar B2B Clearance" %}</h1>
-  <p class="lead">{% t "Licensed veterinary products at 30-35% below list price, with full batch traceability." %}</p>
-  <p class="text-muted">{% t "Verified trade buyers only" %}</p>
-  <a href="/register/" class="btn btn-b2b btn-lg">{% t "Register your company" %}</a>
-  <a href="/login/" class="btn btn-outline-secondary btn-lg">{% t "Log In" %}</a>
+<section class="hero mb-4"><div class="row align-items-center g-4 position-relative" style="z-index:1">
+  <div class="col-lg-7">
+    <span class="badge bg-light text-dark mb-3"><i class="bi bi-patch-check-fill text-success me-1"></i>{% t "Verified trade buyers only" %}</span>
+    <h1>{% t "Clearance stock for licensed trade buyers" %}</h1>
+    <p class="mb-4">{% t "Genuine veterinary products from Kubbar International, batch-traceable and registered in Egypt, at 30–35% below list price." %}</p>
+    <div class="d-flex flex-wrap gap-2">
+      <a href="/catalogue/" class="btn btn-light btn-lg"><i class="bi bi-grid me-1"></i>{% t "Browse the catalogue" %}</a>
+      {% if not user.is_authenticated %}<a href="/register/" class="btn btn-outline-light btn-lg">{% t "Register your company" %}</a>{% endif %}
+    </div>
+  </div>
+  <div class="col-lg-5"><div class="row g-2 text-center">
+    <div class="col-4"><div class="hero-stat"><b>{{ stats.live }}</b>{% t "Live offers" %}</div></div>
+    <div class="col-4"><div class="hero-stat"><b>{{ stats.saving }}%</b>{% t "Average saving" %}</div></div>
+    <div class="col-4"><div class="hero-stat"><b>{{ stats.cats }}</b>{% t "Categories" %}</div></div>
+  </div></div>
+</div></section>
+
+<div class="section-head"><h2>{% t "Shop by category" %}</h2></div>
+<div class="row g-3">{% for c in cats %}
+  <div class="col-6 col-lg-3"><a href="/catalogue/?category={{ c.cat.pk }}" class="cat-tile"><span class="ic" style="background:{{ c.bg }};color:{{ c.fg }}"><i class="bi {{ c.icon }}"></i></span><span><strong class="d-block">{% t c.cat.name %}</strong><span class="small text-muted">{{ c.count }} {% t "Live offers" %}</span></span></a></div>
+{% endfor %}</div>
+
+<div class="section-head"><h2>{% t "Best deals expiring soon" %}</h2><a href="/catalogue/?sort=discount">{% t "View all" %} <i class="bi bi-arrow-right"></i></a></div>
+<div class="row g-3">{% for l in deals %}<div class="col-6 col-md-4 col-lg-3">{% include "b2b/_card.html" %}</div>{% empty %}<div class="col-12"><div class="empty-state bg-white rounded-3 border"><i class="bi bi-inbox"></i>{% t "No listings match your filters." %}</div></div>{% endfor %}</div>
+
+<div class="section-head"><h2>{% t "How it works" %}</h2><a href="/how-it-works/">{% t "Help" %} <i class="bi bi-arrow-right"></i></a></div>
+<div class="row g-3 bg-white border rounded-4 mx-0 py-2">
+  <div class="col-6 col-lg-3 how-step"><div class="n">1</div><strong>{% t "Register" %}</strong><p class="small text-muted mb-0">{% t "Create a company account and upload your licence." %}</p></div>
+  <div class="col-6 col-lg-3 how-step"><div class="n">2</div><strong>{% t "Get verified" %}</strong><p class="small text-muted mb-0">{% t "Our team checks your documents, usually within 2 working days." %}</p></div>
+  <div class="col-6 col-lg-3 how-step"><div class="n">3</div><strong>{% t "Order" %}</strong><p class="small text-muted mb-0">{% t "Add batches to your cart and pay by transfer or invoice." %}</p></div>
+  <div class="col-6 col-lg-3 how-step"><div class="n">4</div><strong>{% t "Receive" %}</strong><p class="small text-muted mb-0">{% t "We pick your lot and deliver; track it in My Orders." %}</p></div>
 </div>
-<h2 class="h5">{% t "How it works" %}</h2>
-<div class="row g-3 mb-4">
-  <div class="col-md-4"><div class="card h-100"><div class="card-body"><i class="bi bi-building-check fs-3 text-b2b"></i><p class="mt-2 mb-0">{% t "Register your company and upload your licence." %}</p></div></div></div>
-  <div class="col-md-4"><div class="card h-100"><div class="card-body"><i class="bi bi-shield-check fs-3 text-b2b"></i><p class="mt-2 mb-0">{% t "Our Regulatory Affairs team verifies your documents." %}</p></div></div></div>
-  <div class="col-md-4"><div class="card h-100"><div class="card-body"><i class="bi bi-truck fs-3 text-b2b"></i><p class="mt-2 mb-0">{% t "Browse released batches, order and pay by bank transfer or on invoice." %}</p></div></div></div>
+
+<div class="section-head"><h2>{% t "Why buy from Kubbar" %}</h2></div>
+<div class="row g-4">
+  <div class="col-md-6 col-lg-3 trust"><i class="bi bi-shield-check"></i><div><strong>{% t "Registered products" %}</strong><p class="small text-muted mb-0">{% t "Every listing is registered with EDA or GOVS for the Egyptian market." %}</p></div></div>
+  <div class="col-md-6 col-lg-3 trust"><i class="bi bi-upc-scan"></i><div><strong>{% t "Full batch traceability" %}</strong><p class="small text-muted mb-0">{% t "Lot number, expiry date and storage condition on every product." %}</p></div></div>
+  <div class="col-md-6 col-lg-3 trust"><i class="bi bi-snow"></i><div><strong>{% t "Cold-chain handled" %}</strong><p class="small text-muted mb-0">{% t "Vaccines ship refrigerated to buyers who can store them." %}</p></div></div>
+  <div class="col-md-6 col-lg-3 trust"><i class="bi bi-credit-card-2-front"></i><div><strong>{% t "Pay by transfer or invoice" %}</strong><p class="small text-muted mb-0">{% t "Bank transfer for everyone; 15–45 day terms for approved accounts." %}</p></div></div>
 </div>
-{% if teaser %}<h2 class="h5">{% t "Catalogue" %}</h2>
-<div class="row g-3">{% for l in teaser %}<div class="col-6 col-md-4"><div class="card h-100"><div class="card-body"><div class="small text-muted">{{ l.batch.product.category }}</div><div class="fw-semibold">{% if LANG == 'ar' and l.batch.product.name_ar %}{{ l.batch.product.name_ar }}{% else %}{{ l.batch.product.name }}{% endif %}</div><div class="small">{% t "Remaining shelf life" %}: {{ l.batch.days_to_expiry }} {% t "days" %}</div></div></div></div>{% endfor %}</div>
-<p class="text-muted small mt-2">{% t "Prices and ordering are available to verified buyers only." %}</p>{% endif %}
+{% if not user.is_authenticated %}<div class="card mt-5 border-0" style="background:var(--b2b-soft)"><div class="card-body p-4 d-flex flex-wrap align-items-center gap-3"><div><h3 class="h5 mb-1">{% t "Register your company" %}</h3><div class="text-muted">{% t "Prices and ordering are available to verified buyers only." %}</div></div><a href="/register/" class="btn btn-b2b btn-lg ms-auto">{% t "Register" %}</a></div></div>{% endif %}
 {% endblock %}

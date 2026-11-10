@@ -1,0 +1,15 @@
+{% extends "b2b/account/_layout.html" %}{% load b2b kubbar %}
+{% block account %}
+<h1 class="h4 mb-3">{% t "Returns & credits" %}</h1>
+<p class="text-muted small">{% t "To return something, open the delivered order and choose Request a return." %}</p>
+<div class="section-title">{% t "Returns" %}</div>
+{% for r in returns %}<div class="card mb-2"><div class="card-body d-flex flex-wrap gap-3 align-items-center">
+  <div><div class="fw-semibold">{{ r.number }} · <a href="/orders/{{ r.order.pk }}/">{{ r.order.reference }}</a></div><div class="small text-muted">{{ r.requested_at|date:"d M Y" }} · {% for l in r.lines.all %}{{ l.batch.product.name }} × {{ l.qty_requested }}{% if not forloop.last %}, {% endif %}{% endfor %}</div>
+  {% if r.decision_comment %}<div class="small">“{{ r.decision_comment }}”</div>{% endif %}{% if r.replacement_order %}<div class="small">{% t "Replacement order" %}: <a href="/orders/{{ r.replacement_order.pk }}/">{{ r.replacement_order.reference }}</a></div>{% endif %}</div>
+  <div class="ms-auto text-end"><span class="badge {{ r.status|status_class }}">{{ r.get_status_display }}</span>{% if r.resolution %}<div class="small text-muted mt-1">{{ r.get_resolution_display }}</div>{% endif %}</div>
+</div></div>{% empty %}<div class="empty-state bg-white border rounded-3 mb-3"><i class="bi bi-arrow-return-left"></i>—</div>{% endfor %}
+<div class="section-title">{% t "Credit notes" %}</div>
+<div class="table-wrap"><table class="table align-middle"><thead><tr><th>{% t "Credit note" %}</th><th>{% t "Order" %}</th><th>{% t "Reason" %}</th><th class="num">{% t "Amount" %}</th><th>{% t "Status" %}</th><th></th></tr></thead><tbody>
+{% for c in credit_notes %}<tr><td class="fw-semibold">{{ c.number }}<div class="small text-muted">{{ c.issued_at|date:"d M Y" }}</div></td><td>{{ c.order.reference }}</td><td class="small">{{ c.reason }}</td><td class="num">{{ c.amount|egp }} EGP</td><td><span class="badge {{ c.status|status_class }}">{{ c.get_status_display }}</span></td><td class="text-end"><a href="/credit-notes/{{ c.pk }}/" target="_blank" class="btn btn-sm btn-outline-b2b"><i class="bi bi-download"></i></a></td></tr>
+{% empty %}<tr><td colspan="6" class="text-muted">—</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

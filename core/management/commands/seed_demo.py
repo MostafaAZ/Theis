@@ -45,7 +45,8 @@ USERS = [
     ("finance@kubbar.example", "Tarek", "Nabil", [Role.FINANCE], "Finance"),
     ("gm@kubbar.example", "Ahmed", "Rashad", [Role.GM], "Management"),
     ("coo@kubbar.example", "Laila", "Mansour", [Role.COO], "Management"),
-    ("ceo@kubbar.example", "Hany", "Zaki", [Role.MANAGEMENT], "Management"),
+    ("ceo@kubbar.example", "Hany", "Zaki", [Role.MANAGEMENT], "Chief Executive Officer"),
+    ("cfo@kubbar.example", "Nadia", "Fawzy", [Role.MANAGEMENT], "Group CFO"),
     ("admin@kubbar.example", "System", "Administrator", [Role.ADMIN], "IT"),
 ]
 
@@ -136,9 +137,81 @@ class Command(BaseCommand):
             self.clearance()
             self.buyers_and_orders()
             self.audits()
+        with transaction.atomic():
+            self.extras()
+        with transaction.atomic():
+            self.after_sales()
+        with transaction.atomic():
+            self.history_for_analytics()
         inv.run_expiry_scan(triggered_by="seed")
+        from core import reminders
+        reminders.generate()
         self.stdout.write(self.style.SUCCESS(
             f"Demo data loaded. Internal users and buyers share the password '{PASSWORD}'."))
+
+    # ------------------------------------------------------------------
+    def history_for_analytics(self):
+        """A year of past write-offs and earlier platform sales, so the management
+        charts show trends rather than a single month."""
+        from commerce.models import PlatformOrder
+        from inventory.models import WriteOff
+
+        now = timezone.now()
+        P = {p.sku: p for p in self.products_}
+        past = [("MED-ENR-1L", "ENR23X044", 300, 320), ("VAC-ND-1000", "NDV23X117", 260, 1800),
+                ("NUT-AD3E-1L", "AD3E23X209", 200, 950), ("FAD-MYC-25", "MYC23X031", 140, 120),
+                ("MED-OTC-100", "OTC24X012", 75, 400)]
+        for sku, lot, days_ago, qty in past:
+            p = P[sku]
+            expiry = timezone.localdate() - timedelta(days=days_ago + 10)
+            b = Batch.objects.create(
+                product=p, lot_number=lot, manufacture_date=expiry - timedelta(
+                    days=int(p.shelf_life_months * 30.4)), expiry_date=expiry,
+                storage_condition=p.storage_condition, market=self.egypt,
+                quantity_received=qty, quantity_approved=qty, inspected_by=self.u["qa"],
+                inspection_date=expiry - timedelta(days=500), received_by=self.u["inventory"],
+                received_at=now - timedelta(days=600), status=BatchStatus.DEPLETED)
+            posted = now - timedelta(days=days_ago)
+            WriteOff.objects.create(
+                batch=b, quantity=qty, reason="expired", disposal_method="destruction",
+                requested_by=self.u["inventory"], requested_at=posted - timedelta(days=3),
+                status=WriteOff.DISPOSED, gm_approved_by=self.u["gm"], gm_approved_at=posted,
+                qa_approved_by=self.u["qa"], qa_approved_at=posted, posted_at=posted,
+                write_off_value=p.unit_cost * qty, disposal_cost=Decimal("1500.00") + qty,
+                disposal_date=(posted + timedelta(days=7)).date(),
+                certificate_ref=f"EEAA-DC-{lot[-3:]}")
+        # Recurring work that is now due, so the reminders have something to say.
+        from core.models import BinLocation
+        from inventory.models import CustomerOffer
+        from planning.models import Forecast, PurchasePlan, SalesRecord
+
+        Forecast.objects.update(created_at=now - timedelta(days=34))
+        PurchasePlan.objects.filter(status=PurchasePlan.APPROVED).update(
+            created_at=now - timedelta(days=33))
+        CustomerOffer.objects.filter(outcome=CustomerOffer.PENDING).update(
+            offered_at=now - timedelta(days=8))
+        latest = SalesRecord.objects.order_by("-period").values_list("period", flat=True)[0]
+        SalesRecord.objects.filter(customer_name="Misr Vet Distributors",
+                                   period__gt=latest - timedelta(days=125)).delete()
+        released = Batch.objects.filter(status=BatchStatus.RELEASED,
+                                        storage_condition="ambient").first()
+        alex = BinLocation.objects.filter(warehouse__name="Alexandria Warehouse",
+                                          storage_type="ambient").first()
+        if released and alex:
+            src = released.stock.filter(quantity__gt=60).first()
+            if src:
+                src.quantity -= 40
+                src.save()
+                BatchStock.objects.create(batch=released, location=alex, quantity=40)
+        # Spread the earlier platform sales over the last few months.
+        for i, order in enumerate(PlatformOrder.objects.filter(
+                status__in=[PlatformOrder.DELIVERED, PlatformOrder.DISPATCHED]).order_by("pk")):
+            created = now - timedelta(days=40 + 30 * i)
+            PlatformOrder.objects.filter(pk=order.pk).update(created_at=created)
+            for line in order.lines.select_related("listing"):
+                if line.listing.published_at > created:
+                    type(line.listing).objects.filter(pk=line.listing_id).update(
+                        published_at=created - timedelta(days=9))
 
     # ------------------------------------------------------------------
     def reference(self):
@@ -332,7 +405,12 @@ class Command(BaseCommand):
         inv.record_offer(sales, amx, self.customers[7], 300, "pending")
         inv.flag_surplus(sales, amx, 800, "no_demand", "Projected unsold at expiry")
         ad3e = Batch.objects.get(product__sku="NUT-AD3E-1L", status=BatchStatus.NEAR_EXPIRY)
-        inv.flag_surplus(self.u["sales2"], ad3e, 1200, "seasonal", "Summer demand passed")
+        rel3 = inv.flag_surplus(self.u["sales2"], ad3e, 1200, "seasonal", "Summer demand passed")
+        inv.approve_release(coo, rel3, 1200, inv.price_band(ad3e.product.original_price)[1])
+        # The COO can also post straight to B2B.
+        for sku, qty in (("VAC-IB-1000", 600), ("FAD-MYC-25", 250)):
+            b = Batch.objects.get(product__sku=sku, status=BatchStatus.NEAR_EXPIRY)
+            inv.post_to_b2b(coo, b, qty, "no_demand", "Posted from the near-expiry review")
 
     def _register(self, email, company, btype, cr):
         files = {t: SimpleUploadedFile(f"{t}.pdf", TINY_PDF, content_type="application/pdf")
@@ -397,3 +475,141 @@ class Command(BaseCommand):
                            scheduled_date=timezone.localdate() + timedelta(days=3),
                            assigned_to=wo)
 
+
+    def extras(self):
+        """Give every role something waiting on its dashboard."""
+        from commerce.models import Invoice, SupportMessage
+        from planning import services as plan_svc
+        from planning.models import PurchasePlanLine
+
+        today = timezone.localdate()
+        blurbs = {
+            "Vaccines": "Live attenuated poultry vaccine. Store at 2–8°C; do not freeze. "
+                        "Registered with EDA.",
+            "Veterinary Medicaments": "Broad-spectrum veterinary medicine for poultry and "
+                                      "livestock. Registered with EDA.",
+            "Feed Additives": "Feed additive for compound feed and premixes. Registered with "
+                              "GOVS.",
+            "Nutritional Products": "Nutritional supplement for drinking water. Registered with "
+                                    "GOVS.",
+            "Capital Equipment": "Poultry house equipment.",
+        }
+        for p in Product.objects.select_related("category"):
+            p.description = blurbs.get(p.category.name, "")
+            p.save(update_fields=["description"])
+
+        # Purchase planning: one approved plan with POs, one waiting for the GM.
+        proc, gm = self.u["procurement"], self.u["gm"]
+        products = list(Product.objects.filter(category__is_expiring=True))
+        fc = plan_svc.generate_forecast(proc, 6, products)
+        approved = plan_svc.build_plan(proc, fc, f"{today:%Y}-Q{(today.month - 1) // 3 + 1}")
+        plan_svc.submit_plan(proc, approved)
+        plan_svc.decide_plan(gm, approved, {line.pk: (PurchasePlanLine.APPROVED, "")
+                                            for line in approved.lines.all()}, "Approved")
+        inv.purchase_orders_from_plan(proc, approved)
+        pending = plan_svc.build_plan(proc, fc, f"{today:%Y}-Q{(today.month - 1) // 3 + 2}")
+        plan_svc.submit_plan(proc, pending)
+        late = inv.create_purchase_order(proc, self.suppliers[3],
+                                         [(Product.objects.get(sku="FAD-PHY-20"), 200)],
+                                         expected_date=today - timedelta(days=6),
+                                         number="PO-2026-0690")
+        PurchaseOrder.objects.filter(pk=late.pk).update(order_date=today - timedelta(days=110))
+
+        # A vaccine count in progress for the Warehouse Officer.
+        inv.schedule_count(self.u["inventory"], count_type="cycle",
+                           warehouse=Warehouse.objects.get(name="Cairo Main Warehouse"),
+                           scope="category", category=ProductCategory.objects.get(
+                               name="Vaccines"), scheduled_date=today,
+                           assigned_to=self.u["warehouse"], exclude_open_dispatch=True)
+
+        # A credit order with an overdue invoice for Finance.
+        from commerce.models import Buyer
+        from inventory.models import Listing
+
+        sinai = Buyer.objects.get(commercial_register_no="CR-70002")
+        ivm = Listing.objects.get(batch__product__sku="MED-IVM-50")
+        order, _ = shop.place_order(sinai, [(ivm.pk, 150)], "Farm road 4, El Arish")
+        shop.choose_invoice(order)
+        invoice = shop.confirm_payment(self.u["finance"], order)
+        Invoice.objects.filter(pk=invoice.pk).update(
+            issue_date=today - timedelta(days=40), due_date=today - timedelta(days=10))
+
+        # A write-off waiting for the GM and QA.
+        expired = Batch.objects.get(lot_number="ELEC24X118")
+        inv.request_write_off(self.u["inventory"], expired, expired.qty_on_hand, "expired",
+                              "destruction")
+
+        # Buyer messages.
+        nile = Buyer.objects.get(commercial_register_no="CR-70001")
+        SupportMessage.objects.create(
+            buyer=nile, name=nile.contact_person, email=nile.user.email,
+            company=nile.company_name, topic="order", order=nile.orders.first(),
+            message="Hello, can you deliver our vaccine order before Thursday? Our cold room "
+                    "is ready.")
+        SupportMessage.objects.create(
+            name="Hassan Farouk", email="hassan@deltavet.example", company="Delta Vet Pharmacy",
+            phone="+20 100 222 3344", topic="account",
+            message="We are a licensed pharmacy in Tanta. Can we register if our licence is "
+                    "being renewed?")
+        answered = SupportMessage.objects.create(
+            buyer=nile, name=nile.contact_person, email=nile.user.email,
+            company=nile.company_name, topic="product",
+            message="Will more Ivermectin be listed this month?")
+        answered.reply = "Yes – we expect another batch within two weeks. Turn on new-listing " \
+                         "emails in your profile to be told first."
+        answered.status = SupportMessage.ANSWERED
+        answered.replied_by = self.u["sales"]
+        answered.replied_at = timezone.now()
+        answered.save()
+
+    def after_sales(self):
+        """Holds, a cancelled line, and returns at different stages (UC-45 to UC-53)."""
+        from commerce import orders as order_svc
+        from commerce.models import Buyer, PlatformOrder
+        from inventory.models import Listing
+
+        fin, wh = self.u["finance"], self.u["warehouse"]
+        nile = Buyer.objects.get(commercial_register_no="CR-70001")
+        pdf = lambda: SimpleUploadedFile("transfer.pdf", TINY_PDF,  # noqa: E731
+                                         content_type="application/pdf")
+
+        def paid_order(sku, qty):
+            listing = Listing.objects.get(batch__product__sku=sku, status=Listing.ACTIVE)
+            order, _ = shop.place_order(nile, [(listing.pk, qty)], nile.address,
+                                        cold_chain_confirmed=True)
+            shop.submit_bank_transfer(order, pdf(), order.total)
+            shop.confirm_payment(fin, order)
+            return order
+
+        def delivered(order, days_ago):
+            order = inv.dispatch_platform_order(
+                wh, order, {line.pk: line.batch.lot_number for line in order.lines.all()},
+                "Kubbar fleet", timezone.localdate(), cold_chain_checked=True)
+            shop.confirm_delivery(order)
+            PlatformOrder.objects.filter(pk=order.pk).update(
+                delivered_at=timezone.now() - timedelta(days=days_ago))
+            order.refresh_from_db()
+            return order
+
+        # A return waiting for Finance to decide.
+        a = delivered(paid_order("NUT-AD3E-1L", 40), 2)
+        line = a.lines.first()
+        order_svc.request_return(nile, a, [(line, 5, "damaged")],
+                                 "Five bottles arrived with broken seals.")
+        # A return approved and received, waiting for QA inspection.
+        b = delivered(paid_order("VAC-IB-1000", 30), 4)
+        rr = order_svc.request_return(nile, b, [(b.lines.first(), 10, "cold_chain")],
+                                      "The cool box was warm on arrival.")
+        order_svc.decide_return(fin, rr, True, "credit", "Accepted – cold-chain break")
+        order_svc.receive_return(wh, rr, {rl.pk: rl.qty_requested for rl in rr.lines.all()})
+        # A paid order with one line partly cancelled: a refund to pay.
+        c = paid_order("FAD-MYC-25", 20)
+        order_svc.cancel_lines(fin, c, {c.lines.first().pk: 5},
+                               "Buyer reduced the quantity by phone")
+        # An order on hold while Finance checks the transfer.
+        sinai_waiting = PlatformOrder.objects.filter(
+            buyer__commercial_register_no="CR-70002",
+            status=PlatformOrder.AWAITING_PAYMENT).first()
+        if sinai_waiting:
+            order_svc.hold_order(fin, sinai_waiting, "payment",
+                                 "Transfer amount does not match the order total")

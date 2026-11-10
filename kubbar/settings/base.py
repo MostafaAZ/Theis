@@ -71,7 +71,7 @@ else:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
-            "NAME": os.environ.get("DATABASE_NAME", BASE_DIR / "db.sqlite3"),
+            "NAME": BASE_DIR / os.environ.get("DATABASE_NAME", "db.sqlite3"),
             "OPTIONS": {"timeout": 20},
         }
     }
@@ -120,6 +120,10 @@ B2B_BASE_URL = os.environ.get("B2B_BASE_URL", "http://localhost:8001")
 # In development the 2FA one-time code is also shown on screen so the
 # prototype can be demonstrated without a mail server.
 SHOW_DEV_OTP = DEBUG
+
+# Presentation mode: one-click login as any demo user and a "Switch user" menu.
+# Only the start-presentation launchers turn it on, and never with DEBUG off.
+DEMO_MODE = DEBUG and os.environ.get("KUBBAR_DEMO_MODE") == "1"
 
 MAX_UPLOAD_MB = 10
 DATA_UPLOAD_MAX_MEMORY_SIZE = 12 * 1024 * 1024

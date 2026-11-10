@@ -1,7 +1,7 @@
 {% extends "ims/base.html" %}{% load kubbar %}
 {% block title %}Listings{% endblock %}
 {% block content %}
-<h1 class="h4 mb-3">Clearance listings <small class="text-muted fs-6">UC-40</small></h1>
+<h1 class="h4 mb-3">Clearance listings</h1>
 <div class="table-responsive"><table class="table bg-white">
 <thead><tr><th>#</th><th>Product</th><th>Lot</th><th>Days listed</th><th>Listed</th><th>Sold</th><th>Remaining</th><th>Days to expiry</th><th>Price (EGP)</th><th>Status</th><th></th></tr></thead>
 <tbody>{% for l in items %}<tr><td>{{ l.pk }}</td><td>{{ l.batch.product.name }}</td><td>{{ l.batch.lot_number }}</td><td>{{ l.published_at|timesince }}</td><td>{{ l.listed_qty }}</td><td>{{ l.sold_qty }}</td><td>{{ l.available_qty }}</td>

@@ -1,7 +1,7 @@
 {% extends "ims/base.html" %}
 {% block title %}Stock transfer{% endblock %}
 {% block content %}
-<h1 class="h4 mb-3">Transfer stock between locations <small class="text-muted fs-6">UC-07</small></h1>
+<h1 class="h4 mb-3">Transfer stock between locations</h1>
 <div class="card mb-4"><div class="card-body"><form method="post">{% csrf_token %}
 {% include "ims/_fields.html" with col="col-md-3" %}
 <button class="btn btn-primary mt-3">Confirm Transfer</button></form></div></div>

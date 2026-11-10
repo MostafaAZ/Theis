@@ -1,5 +1,6 @@
 """IMS web tests: authentication, RBAC, screens and exports."""
 import re
+from unittest import mock
 
 from django.test import TestCase, override_settings
 
@@ -85,8 +86,8 @@ class ScreenTests(TestCase):
 
         for user in User.objects.filter(account_type=User.INTERNAL):
             self.client.force_login(user)
-            for _section, items in nav_for(user):
-                for _label, url in items:
+            for section in nav_for(user):
+                for url in [item["url"] for item in section["items"]]:
                     r = self.client.get(url)
                     self.assertEqual(r.status_code, 200, f"{user.email} {url}")
                     for link in sorted(set(re.findall(r'href="(/(?:stock/batch|expiry/batch|releases|'
@@ -98,9 +99,12 @@ class ScreenTests(TestCase):
 
     def test_analytics_exports(self):  # FR-65
         self.client.force_login(User.objects.get(email="gm@kubbar.example"))
-        for key in ("inventory", "sales", "forecast", "recovery", "audit", "platform"):
+        for key in ("inventory", "sales", "forecast", "recovery", "audit", "platform",
+                    "exceptions"):
             r = self.client.get(f"/analytics/?d={key}")
             self.assertEqual(r.status_code, 200)
+        r = self.client.get("/analytics/?d=exceptions&export=xlsx")
+        self.assertTrue(r.content.startswith(b"PK"))
         r = self.client.get("/analytics/?d=sales&export=pdf")
         self.assertEqual(r["Content-Type"], "application/pdf")
         self.assertTrue(r.content.startswith(b"%PDF"))
@@ -122,3 +126,361 @@ class ScreenTests(TestCase):
                                                       "clearance_price": str(hi)})
         self.assertRedirects(r, "/releases/")
         self.assertTrue(Listing.objects.filter(release=rel).exists())
+
+
+class NewScreensTests(TestCase):
+    """Dashboards, Post to B2B, purchase orders, search, profile, reports, messages."""
+
+    def setUp(self):
+        self.w = World()
+        from inventory import services as inv
+
+        self.inv = inv
+        self.batch = self.w.batch(days=150, qty=300)
+        inv.evaluate_batch(self.batch)
+
+    def test_dashboard_lists_tasks_for_the_role(self):
+        self.client.force_login(self.w.user(Role.SALES))
+        r = self.client.get("/")
+        self.assertContains(r, "Review near-expiry batches")
+        self.assertContains(r, 'href="/b2b/post/"')
+
+    def test_coo_posts_to_b2b_directly(self):
+        from inventory.models import Listing
+
+        self.client.force_login(self.w.user(Role.COO))
+        r = self.client.get("/b2b/post/")
+        self.assertContains(r, "Post this batch")
+        r = self.client.post(f"/b2b/post/{self.batch.pk}/", {
+            "quantity": 100, "reason": "no_demand", "clearance_price": "68.00"})
+        self.assertRedirects(r, "/listings/")
+        listing = Listing.objects.get()
+        self.assertEqual((listing.listed_qty, str(listing.clearance_price)), (100, "68.00"))
+
+    def test_sales_post_goes_to_coo(self):
+        from inventory.models import Listing, SurplusRelease
+
+        self.client.force_login(self.w.user(Role.SALES))
+        r = self.client.post(f"/b2b/post/{self.batch.pk}/", {"quantity": 50,
+                                                              "reason": "no_demand"})
+        self.assertRedirects(r, "/b2b/post/")
+        self.assertFalse(Listing.objects.exists())
+        self.assertEqual(SurplusRelease.objects.get().status, SurplusRelease.PENDING)
+
+    def test_unregistered_batch_is_not_postable(self):
+        self.w.product.registrations.all().delete()
+        eligible, blocked = self.inv.b2b_candidates()
+        self.assertEqual(eligible, [])
+        self.assertIn("registration", blocked[0][2])
+
+    def test_purchase_order_by_hand(self):
+        from inventory.models import PurchaseOrder
+
+        self.client.force_login(self.w.user(Role.PROCUREMENT))
+        r = self.client.post("/purchase-orders/new/", {
+            "supplier": self.w.supplier.pk, "product_0": self.w.product.pk, "qty_0": "500"})
+        po = PurchaseOrder.objects.get()
+        self.assertRedirects(r, f"/purchase-orders/{po.pk}/")
+        self.assertEqual(po.lines.get().quantity, 500)
+
+    def test_product_create_and_detail(self):
+        self.client.force_login(self.w.user(Role.PROCUREMENT))
+        r = self.client.post("/products/new/", {
+            "sku": "NEW-1", "name": "New Product", "category": self.w.meds.pk, "unit": "bottle",
+            "storage_condition": "ambient", "original_price": "50", "unit_cost": "30",
+            "moq": "100", "lead_time_days": "60", "shelf_life_months": "24", "is_active": "on"})
+        from inventory.models import Product
+
+        p = Product.objects.get(sku="NEW-1")
+        self.assertRedirects(r, f"/products/{p.pk}/")
+        self.assertContains(self.client.get(f"/products/{p.pk}/"), "New Product")
+        img = self.client.get(f"/products/{p.pk}/image/")
+        self.assertEqual(img["Content-Type"], "image/svg+xml")
+
+    def test_global_search_and_profile(self):
+        self.client.force_login(self.w.user(Role.GM))
+        r = self.client.get("/search/?q=Enro")
+        self.assertRedirects(r, f"/products/{self.w.product.pk}/")
+        r = self.client.post("/profile/", {"password": "1", "old_password": PASSWORD,
+                                           "new_password1": "Newpass2026abc",
+                                           "new_password2": "Newpass2026abc"})
+        self.assertRedirects(r, "/profile/")
+        self.assertTrue(User.objects.get(pk=self.w.user(Role.GM).pk).check_password(
+            "Newpass2026abc"))
+
+    def test_reports_download(self):
+        self.client.force_login(self.w.user(Role.INVENTORY))
+        r = self.client.get("/reports/stock.xlsx")
+        self.assertTrue(r.content.startswith(b"PK"))
+        r = self.client.get("/reports/near-expiry.pdf")
+        self.assertTrue(r.content.startswith(b"%PDF"))
+        self.assertEqual(self.client.get("/reports/orders.pdf").status_code, 200)
+        self.client.force_login(self.w.user(Role.QA))
+        self.assertEqual(self.client.get("/reports/sales.pdf").status_code, 404)
+
+    def test_reply_to_buyer_message(self):
+        from commerce.models import SupportMessage
+
+        m = SupportMessage.objects.create(name="A", email="a@b.example", topic="other",
+                                          message="Hi")
+        self.client.force_login(self.w.user(Role.SALES))
+        r = self.client.post(f"/b2b/messages/{m.pk}/", {"reply": "Hello back"})
+        self.assertRedirects(r, "/b2b/messages/")
+        m.refresh_from_db()
+        self.assertEqual((m.status, m.reply), (SupportMessage.ANSWERED, "Hello back"))
+
+
+class PresentationModeTests(TestCase):
+    def setUp(self):
+        self.w = World()
+        self.gm = self.w.user(Role.GM)
+
+    def test_off_by_default(self):
+        self.assertEqual(self.client.get(f"/demo/login/{self.gm.pk}/").status_code, 404)
+        self.assertEqual(self.client.post("/demo/reset/").status_code, 404)
+        self.assertNotContains(self.client.get("/login/"), "Presentation mode")
+
+    @override_settings(DEMO_MODE=True)
+    @mock.patch.dict("core.demo.STAFF", {"gm@test.example": ("GM", ["Approve things"]),
+                                         "coo@test.example": ("COO", ["Release things"])})
+    def test_one_click_login_and_switch(self):
+        r = self.client.get("/login/")
+        self.assertContains(r, "Who do you want to present as?")
+        self.assertContains(r, f'/demo/login/{self.gm.pk}/')
+        r = self.client.get(f"/demo/login/{self.gm.pk}/")
+        self.assertRedirects(r, "/")
+        r = self.client.get("/")
+        self.assertContains(r, "Switch user")
+        self.assertContains(r, "Presenter notes")
+        coo = self.w.user(Role.COO)
+        self.client.get(f"/demo/login/{coo.pk}/")
+        self.assertEqual(int(self.client.session["_auth_user_id"]), coo.pk)
+
+    @override_settings(DEMO_MODE=True)
+    def test_buyers_cannot_be_used_on_ims(self):
+        b = self.w.buyer()
+        self.assertEqual(self.client.get(f"/demo/login/{b.user.pk}/").status_code, 404)
+
+
+class AfterSalesScreenTests(TestCase):
+    """Order page actions, exception queue, returns and credit notes."""
+
+    def setUp(self):
+        from commerce import services as shop
+        from core.testing import pdf
+
+        self.w = World()
+        listing = self.w.listing(qty=50)
+        self.buyer = self.w.buyer()
+        self.order, _ = shop.place_order(self.buyer, [(listing.pk, 10)], "addr")
+        shop.submit_bank_transfer(self.order, pdf("r.pdf"), self.order.total)
+        shop.confirm_payment(self.w.user(Role.FINANCE), self.order)
+
+    def test_finance_holds_and_cancels_from_the_order_page(self):
+        self.client.force_login(self.w.user(Role.FINANCE))
+        url = f"/b2b/orders/{self.order.pk}/"
+        self.assertContains(self.client.get(url), "Put on hold")
+        self.client.post(url, {"action": "hold", "reason": "payment", "note": "Check"})
+        self.order.refresh_from_db()
+        self.assertTrue(self.order.on_hold)
+        self.assertContains(self.client.get("/b2b/exceptions/"), self.order.reference)
+        self.client.post(url, {"action": "release", "comment": "OK"})
+        line = self.order.lines.get()
+        self.client.post(url, {"action": "cancel_lines", f"cancel_{line.pk}": "2",
+                               "reason": "Buyer asked"})
+        line.refresh_from_db()
+        self.assertEqual(line.cancelled_qty, 2)
+        self.assertContains(self.client.get("/b2b/credit-notes/"), "Refund due")
+        r = self.client.get(f"/b2b/orders/{self.order.pk}/packing-slip/")
+        self.assertTrue(r.content.startswith(b"%PDF"))
+
+    def test_warehouse_cannot_cancel_lines(self):
+        self.client.force_login(self.w.user(Role.WAREHOUSE))
+        line = self.order.lines.get()
+        self.client.post(f"/b2b/orders/{self.order.pk}/",
+                         {"action": "cancel_lines", f"cancel_{line.pk}": "2", "reason": "x"})
+        line.refresh_from_db()
+        self.assertEqual(line.cancelled_qty, 0)
+        self.assertEqual(self.client.get("/b2b/credit-notes/").status_code, 403)
+
+    def test_return_steps_by_role(self):
+        from commerce import orders, services as shop
+        from inventory import services as inv
+
+        o = inv.dispatch_platform_order(self.w.user(Role.WAREHOUSE), self.order,
+                                        {self.order.lines.get().pk:
+                                         self.order.lines.get().batch.lot_number},
+                                        "Fleet", self.w.today)
+        shop.confirm_delivery(o)
+        rr = orders.request_return(self.buyer, o, [(o.lines.get(), 2, "damaged")])
+        url = f"/b2b/returns/{rr.pk}/"
+        self.client.force_login(self.w.user(Role.FINANCE))
+        self.client.post(url, {"decide": "approve", "resolution": "credit"})
+        self.client.force_login(self.w.user(Role.WAREHOUSE))
+        rl = rr.lines.get()
+        self.client.post(url, {"receive": "1", f"received_{rl.pk}": "2"})
+        self.client.force_login(self.w.user(Role.QA))
+        self.client.post(url, {"inspect": "1", f"outcome_{rl.pk}": "restock",
+                               f"location_{rl.pk}": self.w.ambient.pk})
+        rr.refresh_from_db()
+        self.assertEqual(rr.status, "completed")
+        self.assertEqual(rr.credit_notes.count(), 1)
+
+
+class AnalyticsStoryTests(TestCase):
+    """Storytelling charts, analysis per perspective and AI analysis (Module 6)."""
+
+    @classmethod
+    def setUpTestData(cls):
+        from django.core.management import call_command
+
+        with override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend"):
+            call_command("seed_demo", verbosity=0)
+
+    def login(self, email):
+        self.client.force_login(User.objects.get(email=email))
+
+    def test_every_dashboard_and_perspective_renders(self):
+        from analytics.services import DASHBOARDS
+        from analytics.story import PERSPECTIVES
+
+        self.login("cfo@kubbar.example")
+        r = self.client.get("/analytics/")
+        self.assertContains(r, "Executive Briefing")
+        self.assertEqual(r.context["data"]["perspective"], "cfo")
+        for key, _label in DASHBOARDS:
+            for view, _ in PERSPECTIVES:
+                r = self.client.get(f"/analytics/?d={key}&view={view}")
+                self.assertEqual(r.status_code, 200, (key, view))
+                self.assertEqual(r.context["data"]["analysis"]["perspective"], view)
+                for c in r.context["data"]["charts"]:
+                    self.assertTrue(c["headline"] and c["view"]["explain"] and c["view"]["basis"]
+                                    and "KPIs affected" in c["view"]["impact"], (key, c["id"]))
+
+    def test_perspective_changes_the_story(self):
+        from analytics.services import Filters, build
+
+        user = User.objects.get(email="ceo@kubbar.example")
+        coo = build("executive", Filters({}, user), "coo")
+        gm = build("executive", Filters({}, user), "gm")
+        self.assertEqual(coo["charts"][0]["id"], "funnel")
+        self.assertEqual(gm["charts"][0]["id"], "moq")
+        self.assertNotEqual(coo["analysis"]["recommendations"], gm["analysis"]["recommendations"])
+        self.assertTrue(all(r["basis"] for r in gm["analysis"]["recommendations"]))
+        self.assertEqual(coo["analysis"]["perspective"], "coo")
+
+    def test_executive_report_pdf_has_charts_and_analysis(self):
+        self.login("gm@kubbar.example")
+        r = self.client.get("/reports/executive.pdf")
+        self.assertEqual(r["Content-Type"], "application/pdf")
+        r = self.client.get("/analytics/?d=executive&export=xlsx")
+        self.assertTrue(r.content.startswith(b"PK"))
+
+    def test_home_briefing_for_executives_only(self):
+        self.login("coo@kubbar.example")
+        self.assertContains(self.client.get("/"), "Executive briefing")
+        self.login("warehouse@kubbar.example")
+        r = self.client.get("/")
+        self.assertNotContains(r, "Executive briefing")
+        self.assertTrue(r.context["charts"])
+
+    def test_ai_analysis_without_key_explains_setup(self):
+        self.login("ceo@kubbar.example")
+        with mock.patch("analytics.ai.api_key", return_value=""):
+            r = self.client.post("/analytics/ai/", {"d": "executive", "view": "ceo"})
+        self.assertEqual(r.status_code, 503)
+        self.assertIn("API key", r.json()["error"])
+        self.login("sales@kubbar.example")
+        self.assertEqual(self.client.post("/analytics/ai/", {"d": "sales"}).status_code, 403)
+
+    def test_ai_analysis_maps_claude_answer_to_charts(self):
+        from django.core.cache import cache
+
+        cache.clear()
+        answer = {"summary": "Recovery lags write-offs.", "findings": ["F1"], "impacts": ["I1"],
+                  "recommendations": [{"text": "A1", "basis": "B1"}], "risks": ["R1"],
+                  "charts": [
+                      {"id": "outcomes", "explain": "E", "impact": "I", "recommendation": "R",
+                       "basis": "B"},
+                      {"id": "made_up", "explain": "?", "impact": "?", "recommendation": "?",
+                       "basis": "?"}]}
+        self.login("cfo@kubbar.example")
+        with mock.patch("analytics.ai.api_key", return_value="sk-test"), \
+                mock.patch("analytics.ai._call", return_value=answer) as call:
+            r = self.client.post("/analytics/ai/", {"d": "executive", "view": "cfo"})
+            self.assertEqual(r.status_code, 200)
+            data = r.json()
+            self.assertEqual(data["source"], "ai")
+            self.assertEqual(set(data["charts"]), {"outcomes"})
+            prompt = call.call_args[0][0]
+            self.assertIn("Group CFO", prompt)
+            self.assertIn('"outcomes"', prompt)
+            # A second request with the same data is served from the cache.
+            self.client.post("/analytics/ai/", {"d": "executive", "view": "cfo"})
+            self.assertEqual(call.call_count, 1)
+
+
+class ReminderTests(TestCase):
+    """Data-based reminders with their explanation (UC-56, UC-57)."""
+
+    @classmethod
+    def setUpTestData(cls):
+        from django.core.management import call_command
+
+        with override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend"):
+            call_command("seed_demo", verbosity=0)
+
+    def test_every_kind_is_raised_with_its_four_parts(self):
+        from core.models import Reminder
+
+        open_ = Reminder.objects.filter(status=Reminder.OPEN)
+        self.assertEqual({r.kind for r in open_}, {k for k, _ in Reminder.KINDS})
+        for r in open_:
+            self.assertTrue(r.explain and r.impact and r.recommendation and r.basis, r.key)
+            self.assertIn("KPIs affected", r.impact)
+
+    def test_roles_see_their_reminders_and_act_on_them(self):
+        from core.models import Reminder
+
+        self.client.force_login(User.objects.get(email="sales@kubbar.example"))
+        r = self.client.get("/reminders/")
+        self.assertContains(r, "What the data shows")
+        self.assertContains(r, "Based on")
+        kinds = {x.kind for x in r.context["items"]}
+        self.assertEqual(kinds, {Reminder.FOLLOW_UP})
+        self.assertContains(self.client.get("/"), "Reminders")
+        rem = r.context["items"][0]
+        self.client.post("/reminders/", {"reminder": rem.pk, "snooze": "1"})
+        rem.refresh_from_db()
+        self.assertEqual(rem.status, Reminder.SNOOZED)
+        # A role cannot act on another role's reminder.
+        audit_rem = Reminder.objects.get(kind=Reminder.AUDIT)
+        self.client.post("/reminders/", {"reminder": audit_rem.pk, "done": "1"})
+        audit_rem.refresh_from_db()
+        self.assertEqual(audit_rem.status, Reminder.OPEN)
+        self.client.force_login(User.objects.get(email="inventory@kubbar.example"))
+        self.client.post("/reminders/", {"reminder": audit_rem.pk, "done": "1"})
+        audit_rem.refresh_from_db()
+        self.assertEqual(audit_rem.status, Reminder.DONE)
+
+    def test_reminder_resolves_when_the_data_clears(self):
+        from core import reminders
+        from core.models import Reminder
+        from inventory.models import CustomerOffer
+
+        offer = CustomerOffer.objects.get(outcome=CustomerOffer.PENDING)
+        self.assertEqual(Reminder.objects.get(key=f"offer-{offer.pk}").status, Reminder.OPEN)
+        CustomerOffer.objects.filter(pk=offer.pk).update(outcome=CustomerOffer.DECLINED)
+        reminders.generate()
+        self.assertEqual(Reminder.objects.get(key=f"offer-{offer.pk}").status,
+                         Reminder.RESOLVED)
+
+    def test_new_reminder_notifies_the_role(self):
+        from core import reminders
+        from core.models import Notification, Reminder
+
+        Reminder.objects.filter(kind=Reminder.FORECAST).delete()
+        reminders.generate()
+        self.assertTrue(Notification.objects.filter(
+            user__email="procurement@kubbar.example",
+            message__startswith="Reminder: Refresh the demand forecast").exists())

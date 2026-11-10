@@ -1,0 +1,11 @@
+{% extends "ims/base.html" %}{% load kubbar %}
+{% block content %}
+<h1 class="h4">Platform orders</h1>
+<ul class="nav nav-tabs mb-3"><li class="nav-item"><a class="nav-link {% if not status %}active{% endif %}" href="?">All</a></li>{% for v, l in statuses %}<li class="nav-item"><a class="nav-link {% if status == v %}active{% endif %}" href="?status={{ v }}">{{ l }} <span class="badge text-bg-light">{{ counts|get_item:v }}</span></a></li>{% endfor %}</ul>
+<div class="table-wrap"><table class="table table-hover align-middle"><thead><tr><th>Order</th><th>Buyer</th><th>Placed</th><th>Products</th><th>Payment</th><th class="num">Total (EGP)</th><th>Status</th><th></th></tr></thead>
+<tbody>{% for o in orders %}<tr><td class="fw-semibold">{{ o.reference }}</td><td>{{ o.buyer }}</td><td>{{ o.created_at|date:"d M Y H:i" }}</td>
+<td class="small">{% for l in o.lines.all %}{{ l.batch.product.name }} × {{ l.quantity }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</td><td>{{ o.get_payment_method_display|default:"–" }}</td><td class="num">{{ o.total|egp }}</td>
+<td><span class="badge {{ o.status|status_class }}">{{ o.get_status_display }}</span>{% if o.delivery_issue %} <span class="badge text-bg-danger">issue</span>{% endif %}</td>
+<td class="text-end text-nowrap">{% if o.status == 'awaiting_payment' and 'finance' in user.roles %}<a class="btn btn-sm btn-primary" href="/payments/{{ o.pk }}/">Confirm payment</a>{% elif o.status == 'confirmed' and 'warehouse' in user.roles %}<a class="btn btn-sm btn-primary" href="/dispatch/{{ o.pk }}/">Dispatch</a>{% else %}<a class="btn btn-sm btn-outline-secondary" href="/b2b/orders/{{ o.pk }}/">View</a>{% endif %}</td></tr>
+{% empty %}<tr><td colspan="8"><div class="empty-state"><i class="bi bi-receipt"></i>No orders.</div></td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

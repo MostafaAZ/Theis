@@ -1,0 +1,9 @@
+{% extends "ims/base.html" %}{% load kubbar %}
+{% block content %}
+<h1 class="h4">Returns</h1>
+<div class="steps"><span class="step"><b>1</b>Buyer requests</span><span class="step"><b>2</b>Finance decides</span><span class="step"><b>3</b>Warehouse receives</span><span class="step"><b>4</b>QA inspects</span></div>
+<ul class="nav nav-tabs mb-3"><li class="nav-item"><a class="nav-link {% if status == 'open' %}active{% endif %}" href="?status=open">Open</a></li>{% for v, l in statuses %}<li class="nav-item"><a class="nav-link {% if status == v %}active{% endif %}" href="?status={{ v }}">{{ l }}</a></li>{% endfor %}<li class="nav-item"><a class="nav-link {% if status == 'all' %}active{% endif %}" href="?status=all">All</a></li></ul>
+<div class="table-wrap"><table class="table table-hover align-middle"><thead><tr><th>Return</th><th>Order</th><th>Buyer</th><th>Requested</th><th>Resolution</th><th class="num">Value (EGP)</th><th>Status</th></tr></thead><tbody>
+{% for r in items %}<tr class="pick" onclick="location.href='/b2b/returns/{{ r.pk }}/'"><td class="fw-semibold"><a href="/b2b/returns/{{ r.pk }}/">{{ r.number }}</a></td><td>{{ r.order.reference }}</td><td>{{ r.buyer }}</td><td>{{ r.requested_at|date:"d M Y" }}</td><td>{{ r.get_resolution_display|default:"–" }}</td><td class="num">{{ r.value|egp }}</td><td><span class="badge {{ r.status|status_class }}">{{ r.get_status_display }}</span></td></tr>
+{% empty %}<tr><td colspan="7"><div class="empty-state"><i class="bi bi-arrow-return-left"></i>No returns here.</div></td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

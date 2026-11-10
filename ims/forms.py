@@ -2,6 +2,7 @@ from datetime import date
 
 from django import forms
 from django.contrib.auth.password_validation import validate_password
+from django.db.models import F
 
 from core.models import (AuditLog, BinLocation, BuyerType, Market, ProductCategory,
                          ReasonCode, Region, Role, StorageType, Supplier, User, Warehouse)
@@ -187,7 +188,9 @@ class RegistrationForm(BootstrapMixin, forms.ModelForm):
 
 # --- Module 4 -------------------------------------------------------------
 class WriteOffForm(BootstrapMixin, forms.Form):
-    batch = forms.ModelChoiceField(queryset=Batch.objects.filter(qty_on_hand__gt=0))
+    # Only batches with stock that is not reserved or already in a write-off.
+    batch = forms.ModelChoiceField(queryset=Batch.objects.filter(
+        qty_on_hand__gt=F("qty_reserved") + F("blocked_for_write_off")))
     quantity = forms.IntegerField(min_value=1)
     reason = forms.ChoiceField(choices=WriteOff.REASONS)
     disposal_method = forms.ChoiceField(choices=WriteOff.METHODS,

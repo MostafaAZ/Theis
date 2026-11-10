@@ -1,0 +1,25 @@
+{% extends "ims/base.html" %}{% load kubbar %}
+{% block content %}
+<h1 class="h4">Post {{ batch.product.name }} to B2B</h1>
+<div class="steps"><span class="step done"><b>✓</b>Batch chosen</span><span class="step active"><b>2</b>Quantity{% if is_coo %} &amp; price{% endif %}</span><span class="step"><b>3</b>{% if is_coo %}Live on the platform{% else %}COO approves{% endif %}</span></div>
+<div class="row g-3">
+<div class="col-lg-5"><div class="card"><div class="card-body">
+  <div class="d-flex gap-3 align-items-center mb-3"><img src="/products/{{ batch.product.pk }}/image/" class="prod-thumb" style="width:72px;height:72px" alt=""><div><div class="fw-semibold">{{ batch.product.name }}</div><div class="small text-muted">Lot {{ batch.lot_number }} · {{ batch.product.category }}</div></div></div>
+  <dl class="row dl-grid mb-0">
+    <dt class="col-6">Expiry</dt><dd class="col-6">{{ batch.expiry_date }} <span class="badge {{ batch.days_to_expiry|expiry_class }}">{{ batch.days_to_expiry }}d</span></dd>
+    <dt class="col-6">Available to post</dt><dd class="col-6">{{ free }} {{ batch.product.unit }}</dd>
+    <dt class="col-6">Projected unsold</dt><dd class="col-6">{{ unsold }}</dd>
+    <dt class="col-6">Original price</dt><dd class="col-6">{{ batch.product.original_price|egp }} EGP</dd>
+    <dt class="col-6">Allowed price</dt><dd class="col-6 fw-semibold">{{ band.0|egp }} – {{ band.1|egp }} EGP</dd>
+    <dt class="col-6">Storage</dt><dd class="col-6">{{ batch.get_storage_condition_display }}</dd>
+  </dl>
+  <div class="section-title">Offers already made</div>
+  <ul class="small mb-0">{% for o in offers %}<li>{{ o.customer }}: {{ o.qty_offered }} – {{ o.get_outcome_display }}</li>{% empty %}<li class="text-muted">None. Consider offering to existing customers first.</li>{% endfor %}</ul>
+</div></div></div>
+<div class="col-lg-7"><div class="card"><div class="card-body">
+<form method="post">{% csrf_token %}{% include "ims/_fields.html" with col="col-md-6" %}
+{% if is_coo %}<p class="form-text mt-2">Price must be {{ min_pct|floatformat:0 }}–{{ max_pct|floatformat:0 }}% of the original. As COO your post goes live immediately.</p>
+{% else %}<p class="form-text mt-2">The COO sets the price (65–70% of the original) and approves the release. You'll get a notification when it is live.</p>{% endif %}
+<div class="d-flex gap-2 mt-3"><button class="btn btn-primary"><i class="bi bi-send me-1"></i>{% if is_coo %}Publish to B2B{% else %}Send to COO for approval{% endif %}</button><a href="/b2b/post/" class="btn btn-outline-secondary">Back</a></div>
+</form></div></div></div></div>
+{% endblock %}
